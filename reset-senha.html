@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Redefinir Senha</title>
+    <link rel="icon" type="image/png" href="log.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .bg-header-gradient {
+            background: linear-gradient(135deg, #FFB74D, #FF9800);
+            backdrop-filter: blur(20px);
+        }
+        .btn-premium {
+            background: linear-gradient(135deg, #FFB74D, #FF9800);
+            box-shadow: 0 8px 25px rgba(255, 140, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 140, 0, 0.4);
+        }
+        .input-field {
+            border: none;
+            background: #efeff0;
+            padding: 1rem 1.25rem;
+            width: 100%;
+            transition: all 0.3s ease-in-out;
+            color: #374151;
+            font-size: 1rem;
+            padding-left: 3rem;
+        }
+        .input-field::placeholder {
+            color: #9ca3af;
+        }
+        .input-field:focus {
+            border: 1px solid #FF9800;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.3);
+        }
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0px 1000px #efeff0 inset !important;
+            -webkit-text-fill-color: #374151 !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+        .form-container {
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+            padding: 3rem 2.5rem;
+            width: 90%;
+            max-width: 500px;
+            margin: auto;
+            text-align: center;
+        }
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .popup-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        }
+        .overlay.active .popup-card {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 2rem 1.5rem;
+            }
+            .input-field {
+                padding: 0.875rem 1rem;
+                font-size: 0.95rem;
+                padding-left: 3rem;
+            }
+            .btn-premium {
+                padding: 0.875rem 1.5rem;
+                font-size: 1rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .form-container {
+                padding: 1.5rem 1rem;
+            }
+            .input-field {
+                padding: 0.75rem;
+                font-size: 0.9rem;
+                padding-left: 2.5rem;
+            }
+            .btn-premium {
+                padding: 0.75rem 1.25rem;
+                font-size: 0.95rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-header-gradient shadow-xl py-4 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50">
+        <div class="text-2xl font-bold text-white flex items-center">
+            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-3">
+                <img src="log.png" alt="Lume Logo" class="w-full h-full object-cover bg-gray-600 rounded-xl p-1">
+            </div>
+            <a href="index.html" class="hover:text-gray-200 transition duration-300">Lume</a>
+        </div>
+        <nav>
+            <ul class="flex space-x-6 md:space-x-10 items-center">
+                <li><a href="index.html#prices" class="text-white hover:text-gray-200 font-medium transition duration-300">Preços</a></li>
+                <li><a href="index.html#contact" class="text-white hover:text-gray-200 font-medium transition duration-300">Contatos</a></li>
+                <li><a href="login.html" class="text-white hover:text-gray-200 font-medium transition duration-300">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center py-8 px-4 md:px-8">
+        <div class="form-container">
+            <div class="text-center mb-8">
+                <img src="log.png" alt="Lume Logo" class="w-16 h-16 mx-auto mb-4 p-1 rounded-xl">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Redefinir Senha</h2>
+                <p class="text-gray-600">Crie uma nova senha para sua conta Lume.</p>
+            </div>
+
+            <form id="reset-password-form">
+                <div class="mb-5 relative">
+                    <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <label for="new-password" class="block text-gray-700 text-sm font-medium mb-2 sr-only">Nova Senha</label>
+                    <input type="password" id="new-password" class="input-field" placeholder="Nova senha" required autocomplete="new-password">
+                    <p class="text-xs text-gray-500 mt-1 text-left">Mínimo de 6 caracteres.</p>
+                </div>
+                <div class="mb-6 relative">
+                    <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <label for="confirm-new-password" class="block text-gray-700 text-sm font-medium mb-2 sr-only">Confirmar Nova Senha</label>
+                    <input type="password" id="confirm-new-password" class="input-field" placeholder="Confirme a nova senha" required autocomplete="new-password">
+                </div>
+                
+                <button type="submit" id="reset-password-btn" class="btn-premium text-white font-bold py-3 px-6 rounded-full text-lg w-full mb-4">
+                    Redefinir Senha
+                </button>
+                
+                <div id="message" class="text-center text-sm font-medium mt-4"></div>
+            </form>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6 px-4 md:px-12 rounded-t-xl text-center">
+        <div class="max-w-7xl mx-auto">
+            <p class="text-gray-500 text-sm md:text-base">&copy; 2025 Lume. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <div id="popup-overlay" class="overlay">
+        <div class="popup-card">
+            <h3 id="popup-icon" class="text-4xl mb-4">✓</h3>
+            <h2 id="popup-title" class="text-2xl font-bold text-gray-800 mb-3">Senha Redefinida!</h2>
+            <p id="popup-message" class="text-gray-600 mb-6">Sua senha foi redefinida com sucesso. Faça login com a nova senha.</p>
+            <button id="close-popup" class="btn-premium text-white font-bold py-3 px-6 rounded-full text-lg">Ir para Login</button>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gnehkswoqlpchtlgyjyj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduZWhrc3dvcWxwY2h0bGd5anlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTY3NjYsImV4cCI6MjA2OTQ3Mjc2Nn0.8giA1bDvCzgvlcW_pkimGO9qHRF2I0QfhG6nx9U_tdY';
+
+        let supabaseClient;
+        
+        window.addEventListener('load', () => {
+            if (typeof supabase === 'undefined') {
+                showMessage('❌ Erro de conexão. Recarregue a página ou verifique sua internet.', 'text-red-500');
+            } else {
+                try {
+                    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    checkUrlForAccessToken(); // Verifica o token na URL ao carregar
+                } catch (error) {
+                    console.error('Erro ao inicializar Supabase:', error);
+                    showMessage('❌ Erro de inicialização. Recarregue a página.', 'text-red-500');
+                }
+            }
+        });
+
+        const resetPasswordForm = document.getElementById('reset-password-form');
+        const newPasswordInput = document.getElementById('new-password');
+        const confirmNewPasswordInput = document.getElementById('confirm-new-password');
+        const messageDiv = document.getElementById('message');
+        const resetPasswordBtn = document.getElementById('reset-password-btn');
+        const popupOverlay = document.getElementById('popup-overlay');
+        const popupIcon = document.getElementById('popup-icon');
+        const popupTitle = document.getElementById('popup-title');
+        const popupMessage = document.getElementById('popup-message');
+        const closePopupButton = document.getElementById('close-popup');
+
+        function showPopup(icon, title, msg, isSuccess = true) {
+            popupIcon.textContent = icon;
+            popupIcon.className = `text-4xl mb-4 ${isSuccess ? 'text-green-600' : 'text-red-600'}`;
+            popupTitle.textContent = title;
+            popupMessage.textContent = msg;
+            popupOverlay.classList.add('active');
+        }
+
+        function showMessage(text, colorClass) {
+            messageDiv.textContent = text;
+            messageDiv.className = `text-center text-sm font-medium mt-4 ${colorClass}`;
+        }
+
+        function setLoadingState(button, isLoading, originalText) {
+            if (isLoading) {
+                button.innerHTML = `<span class="loading-spinner"></span>${originalText}...`;
+                button.disabled = true;
+            } else {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        closePopupButton.addEventListener('click', () => {
+            popupOverlay.classList.remove('active');
+            window.location.href = 'login.html'; // Redireciona para o login após fechar o popup
+        });
+
+        async function checkUrlForAccessToken() {
+            const hash = window.location.hash;
+            const params = new URLSearchParams(hash.substring(1)); // Remove o '#' e parseia
+            const accessToken = params.get('access_token');
+            const type = params.get('type');
+
+            if (accessToken && type === 'recovery') {
+                // Supabase vai automaticamente processar o access_token e autenticar o usuário
+                // Podemos então prosseguir para a tela de redefinição de senha
+                const { data: { user }, error } = await supabaseClient.auth.getUser();
+
+                if (error || !user) {
+                    console.error('Erro ao obter usuário após recuperação:', error?.message);
+                    showMessage('Link de redefinição inválido ou expirado. Tente novamente.', 'text-red-500');
+                    // Opcional: redirecionar para login.html após um tempo
+                    setTimeout(() => window.location.href = 'login.html', 3000);
+                } else {
+                    showMessage('Por favor, defina sua nova senha.', 'text-green-600');
+                    // O formulário já estará visível
+                }
+            } else {
+                // Se não houver token de recuperação, redireciona para o login ou exibe mensagem
+                showMessage('Este link é para redefinir sua senha. Por favor, solicite um novo link se necessário.', 'text-blue-500');
+                // Esconde o formulário se o token não for válido/existente
+                resetPasswordForm.style.display = 'none'; 
+                // Permite que o usuário entenda o que aconteceu antes de redirecionar
+                setTimeout(() => window.location.href = 'login.html', 5000);
+            }
+        }
+
+        resetPasswordForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const newPassword = newPasswordInput.value;
+            const confirmNewPassword = confirmNewPasswordInput.value;
+
+            if (newPassword !== confirmNewPassword) {
+                showMessage('As senhas não coincidem.', 'text-red-500');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showMessage('A senha deve ter no mínimo 6 caracteres.', 'text-red-500');
+                return;
+            }
+
+            setLoadingState(resetPasswordBtn, true, 'Redefinindo Senha');
+            showMessage('Redefinindo sua senha...', 'text-orange-500');
+
+            try {
+                // Usar updateUser para atualizar a senha do usuário atualmente autenticado via o link de recuperação
+                const { data, error } = await supabaseClient.auth.updateUser({
+                    password: newPassword
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                showPopup(
+                    '✅',
+                    'Senha Redefinida!',
+                    'Sua senha foi redefinida com sucesso. Agora você pode fazer login com a nova senha.',
+                    true
+                );
+                resetPasswordForm.reset(); // Limpa o formulário
+                // O redirecionamento para o login acontece ao fechar o popup
+            } catch (error) {
+                console.error('Erro ao redefinir senha:', error.message);
+                if (error.message.includes('Invalid Grant: Invalid session')) {
+                    showMessage('❌ Sessão expirada ou link inválido. Por favor, solicite um novo link de redefinição.', 'text-red-500');
+                } else {
+                    showMessage(`❌ Erro: ${error.message}. Tente novamente.`, 'text-red-500');
+                }
+            } finally {
+                setLoadingState(resetPasswordBtn, false, 'Redefinir Senha');
+            }
+        });
+    </script>
+</body>
+</html>

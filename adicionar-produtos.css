@@ -1,0 +1,649 @@
+/* ===== ADICIONAR PRODUTOS - ESTILOS ===== */
+
+body {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    font-family: 'Inter', sans-serif;
+    color: #374151;
+}
+
+.page-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 2rem auto;
+    margin-left: 6%;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.page-header h1 {
+    font-size: 1.15rem;
+    font-weight: 450;
+    color: #4a5568;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; 
+}
+
+.header-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+.back-button, .incorporate-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.back-button {
+    background-color: #e2e8f0;
+    color: #4a5568;
+}
+
+.back-button:hover {
+    background-color: #cbd5e0;
+}
+
+.incorporate-button {
+    background-color: #10b981;
+    color: white;
+}
+
+.incorporate-button:hover {
+    background-color: #059669;
+}
+
+.full-width-divider {
+    border: none;
+    height: 2px;
+    background-color: #FF9800;
+    margin-bottom: 2rem;
+}
+
+/* ===== NAVEGAÇÃO DAS ABAS ===== */
+.tab-nav {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.tab-nav-item {
+    padding: 0.75rem 0;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: #6b7280;
+    font-size: 0.95rem;
+    font-weight: 500;
+    position: relative;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease-in-out;
+}
+
+.tab-nav-item:hover {
+    color: #111827;
+}
+
+.tab-nav-item.active {
+    color: #FF9800;
+    font-weight: 600;
+    border-bottom-color: #FF9800;
+}
+
+/* ===== CONTEÚDO DAS ABAS ===== */
+.tab-pane { 
+    display: none; 
+    background: transparent;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tab-pane.active { 
+    display: block; 
+}
+
+.tab-title {
+    margin-bottom: 1.5rem; 
+    color: #1f2937; 
+    font-weight: 600;
+}
+
+.tab-description {
+    color: #6b7280; 
+    margin-bottom: 2rem;
+}
+
+/* ===== SEÇÃO DE VALORES DO PRODUTO ===== */
+.values-section {
+    margin: 2rem 0;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.values-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+}
+
+/* ===== SEÇÃO DE PESO E DIMENSÕES ===== */
+.dimensions-illustration {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0 3rem 0;
+}
+
+.box-image {
+    max-width: 200px;
+    height: auto;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+}
+
+.dimensions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+    font-size: 0.9rem;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.input-field.with-icon {
+    padding-left: 2.5rem;
+}
+
+/* ===== LAYOUT DO FORMULÁRIO ===== */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-grid-full {
+    grid-column: 1 / -1;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.form-group label i {
+    color: #6b7280;
+    cursor: help;
+}
+
+.field-description {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-style: italic;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.required::after {
+    content: " *";
+    color: #ef4444;
+}
+
+/* ===== CAMPOS DE INPUT ===== */
+.input-field {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: #FF9800;
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
+}
+
+.input-field[readonly] {
+    background-color: #f9fafb;
+    cursor: not-allowed;
+}
+
+/* ===== SELECT MODERNO ===== */
+.select-field {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1em 1em;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.select-field:hover {
+    border-color: #9ca3af;
+}
+
+.select-field:focus {
+    outline: none;
+    border-color: #FF9800;
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23FF9800' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+
+/* ===== SELECT COM BOTÃO ADICIONAR ===== */
+.select-with-add {
+    position: relative;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.select-with-add .select-field {
+    flex: 1;
+}
+
+.btn-add-item {
+    background-color: rgba(255, 152, 0, 0.6);
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    width: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-add-item:hover {
+    background-color: #e68a00;
+}
+
+/* ===== CAIXA DE INFORMAÇÃO ===== */
+.info-box {
+    background-color: rgba(255, 152, 0, 0.15);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.info-box i {
+    color: #0495dd;
+    margin-top: 2px;
+}
+
+.info-box-content {
+    font-size: 0.875rem;
+    color: #bb7102;
+    line-height: 1.5;
+}
+
+/* ===== ÁREA DE UPLOAD DE IMAGENS ===== */
+.image-upload-area {
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 3rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #fafafa;
+}
+
+.image-upload-area:hover,
+.image-upload-area.drag-over {
+    border-color: #FF9800;
+    background-color: rgba(255, 152, 0, 0.05);
+}
+
+.upload-placeholder i {
+    font-size: 3rem;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+}
+
+.upload-placeholder p {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.upload-placeholder small {
+    color: #6b7280;
+}
+
+.image-preview-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.image-preview {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-preview img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.image-remove {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background-color: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    transition: background-color 0.2s;
+}
+
+.image-remove:hover {
+    background-color: #dc2626;
+}
+
+/* ===== BOTÕES DE AÇÃO ===== */
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn-cancel {
+    background-color: transparent;
+    color: #6b7280;
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.75rem 2rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+    background-color: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.btn-save {
+    background-color: #FF9800;
+    color: white;
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-save:hover {
+    background-color: #e68a00;
+    transform: translateY(-1px);
+}
+
+.btn-save:disabled {
+    background-color: #d1d5db;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ===== MODAL ===== */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: scale(1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.modal-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #374151;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+/* ===== LISTA DE ITENS NO MODAL ===== */
+.items-list-title {
+    margin: 1rem 0 0.5rem 0; 
+    font-size: 0.9rem; 
+    color: #374151;
+}
+
+.items-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.item-row:last-child {
+    border-bottom: none;
+}
+
+.item-name {
+    font-weight: 500;
+}
+
+.btn-delete {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.btn-delete:hover {
+    background-color: #fee2e2;
+}
+
+.empty-list {
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* ===== UTILITÁRIOS ===== */
+.hidden {
+    display: none;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 768px) {
+    .page-container {
+        padding: 1rem;
+        margin: 1rem auto;
+    }
+    
+    .tab-nav {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .tab-nav-item {
+        font-size: 0.85rem;
+    }
+    
+    .form-grid, .values-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .modal-content {
+        width: 95%;
+        padding: 1.5rem;
+    }
+    
+    .image-preview-container {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .tab-pane {
+        padding: 1.5rem;
+    }
+    
+    .upload-placeholder {
+        padding: 2rem 1rem;
+    }
+    
+    .upload-placeholder i {
+        font-size: 2rem;
+    }
+}

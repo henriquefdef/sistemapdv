@@ -1,0 +1,272 @@
+/* Este arquivo contém TODOS os estilos centrais do sistema */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    overflow-x: hidden;
+    /* ADIÇÃO: Empurra o conteúdo para não ficar embaixo da sidebar */
+    padding-left: 100px; 
+    transition: padding-left 0.3s ease;
+}
+
+/* --- BARRA LATERAL (AGORA COMEÇA DO TOPO) --- */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 80px;
+    height: 100vh;
+    background: white;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    transition: width 0.3s ease;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar:hover {
+    width: 280px;
+}
+
+.sidebar-content {
+    padding-top: 20px;
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.sidebar-content::-webkit-scrollbar { width: 4px; }
+.sidebar-content::-webkit-scrollbar-track { background: transparent; }
+.sidebar-content::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+.menu-item {
+    margin-bottom: 8px;
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+.menu-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    cursor: pointer;
+    position: relative;
+    color: #666;
+    transition: all 0.3s ease;
+}
+
+.menu-header:hover {
+    background: linear-gradient(135deg, #FFB74D, #FF9800);
+    color: white;
+}
+
+.menu-header i:first-child {
+    font-size: 20px;
+    width: 40px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.menu-text {
+    margin-left: 15px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.sidebar:hover .menu-text {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.expand-icon {
+    margin-left: auto;
+    font-size: 12px;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.3s ease;
+}
+
+.sidebar:hover .expand-icon {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.menu-item:hover .expand-icon {
+    transform: rotate(90deg);
+}
+
+.submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: #f8f9fa;
+}
+
+.menu-item:hover .submenu {
+    max-height: 300px;
+}
+
+.submenu-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px 10px 75px;
+    color: #666;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    opacity: 0;
+    transform: translateX(-10px);
+    white-space: nowrap;
+}
+
+.submenu-item i {
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.sidebar:hover .submenu-item {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.submenu-item:hover {
+    background: #e9ecef;
+    color: #FF9800;
+    padding-left: 80px;
+}
+
+/* --- ÁREA DE USUÁRIO NA SIDEBAR --- */
+.user-area {
+    position: relative;
+    padding: 15px 10px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.user-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: rgba(131, 129, 129, 0.1);
+    border: none;
+    color: #4b4b4a;
+    padding: 8px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sidebar:hover .user-btn {
+    justify-content: flex-start;
+    padding: 8px 16px;
+}
+
+.user-btn:hover {
+    background: #f3cc61;
+    transform: translateY(-1px);
+}
+
+.user-btn i:first-of-type {
+    font-size: 20px;
+}
+
+.user-btn #user-name, .user-btn .fa-chevron-down {
+    display: none;
+}
+
+.sidebar:hover .user-btn #user-name, .sidebar:hover .user-btn .fa-chevron-down {
+    display: block;
+}
+
+.user-dropdown-content {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 10px;
+    right: 10px;
+    background: white;
+    min-width: 260px;
+    box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.user-dropdown-content.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-dropdown-content a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.user-dropdown-content a:last-child { border-bottom: none; }
+.user-dropdown-content a:hover { background: #f8f9fa; color: #FF9800; }
+.logout-btn { color: #dc3545 !important; }
+.logout-btn:hover { background: #f8d7da !important; color: #721c24 !important; }
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== REGRAS ADICIONADAS PARA O LAYOUT FUNCIONAR ===== */
+
+/* 1. Ajusta o padding do body quando o menu expande */
+body.sidebar-expanded {
+    padding-left: 300px;
+}
+
+/* 2. Estilo para a área de conteúdo principal da sua página */
+.main-content {
+    padding: 30px;
+}
+
+/* ========================================= */
+/* ADICIONAR AO FINAL DO ARQUIVO: header.css */
+/* ========================================= */
+
+/* Efeito de placeholder para carregamento do nome do usuário */
+.loading-placeholder {
+    background-color: #e2e8f0;
+    color: transparent !important; /* Esconde o texto temporário */
+    border-radius: 8px;
+    animation: pulse 1.5s infinite ease-in-out;
+    user-select: none;
+}
+
+@keyframes pulse {
+    0% { background-color: #e2e8f0; }
+    50% { background-color: #cbd5e0; }
+    100% { background-color: #e2e8f0; }
+}
+
+/* Desabilita o botão de usuário durante o carregamento */
+.user-btn:disabled {
+    cursor: wait;
+    background-color: #f7fafc;
+}

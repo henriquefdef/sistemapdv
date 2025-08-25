@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Gerenciar Categorias</title>
+    
+    <link rel="icon" type="image/png" href="log.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="header.css">
+
+    <style>
+        /* CSS AJUSTADO CONFORME O NOVO DESIGN */
+        body {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            font-family: 'Inter', sans-serif;
+            color: #374151;
+        }
+
+        .page-container {
+            padding: 2rem;
+            max-width: 800px;
+            margin: 2rem auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.25rem; /* Título menor */
+            font-weight: 500;   /* Fonte mais leve */
+            color: #4a5568;
+        }
+
+        .back-button { /* Botão Voltar ajustado */
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: #e2e8f0;
+            color: #4a5568;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .back-button:hover {
+            background-color: #cbd5e0;
+        }
+
+        /* Linha laranja que atravessa a tela */
+        .full-width-divider {
+            border: none;
+            height: 2px;
+            background-color: #FF9800;
+            margin-bottom: 2rem;
+        }
+        
+        /* Navegação das abas */
+        .tab-nav {
+            display: flex;
+            gap: 2rem; /* Espaçamento entre os botões da aba */
+            margin-bottom: 2.5rem;
+        }
+
+        .tab-nav-item {
+            padding: 0.5rem 0;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: #6b7280;
+            font-size: 1rem;
+            font-weight: 500;
+            position: relative;
+            border-bottom: 2px solid transparent; /* Borda invisível para manter o alinhamento */
+            transition: color 0.2s ease-in-out;
+        }
+
+        .tab-nav-item:hover {
+            color: #111827;
+        }
+
+        .tab-nav-item.active {
+            color: #FF9800;
+            font-weight: 600;
+            border-bottom-color: #FF9800; /* Borda visível apenas na aba ativa */
+        }
+        
+        /* Conteúdo das abas */
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+        /* Estilos do formulário */
+        .form-group { max-width: 450px; /* Limita a largura do campo de input */ }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 500; }
+        .input-wrapper { position: relative; }
+        .input-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #a0aec0; }
+        .input-field { width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; background-color: #fff; }
+        .input-field:focus { outline: none; border-color: #FF9800; box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2); }
+        .btn-save { background-color: #FF9800; color: white; font-weight: 500; font-size: 0.9rem; padding: 0.7rem 2rem; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.2s, transform 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem; }
+        .btn-save:hover { background-color: #e68a00; transform: translateY(-1px); }
+        
+        /* Estilos da lista de categorias */
+        .categories-list { list-style: none; padding: 0; margin: 0; background-color: #fff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1.2rem; border-bottom: 1px solid #f3f4f6; }
+        .list-item:last-child { border-bottom: none; }
+        .category-name { font-weight: 500; }
+        .list-actions button { background: none; border: none; cursor: pointer; font-size: 0.9rem; margin-left: 1rem; color: #6b7280; padding: 0.5rem; border-radius: 6px; width: 30px; height: 30px; transition: background-color 0.2s, color 0.2s; }
+        .edit-btn:hover { background-color: #f3f4f6; color: #1f2937; }
+        .delete-btn:hover { background-color: #fee2e2; color: #ef4444; }
+        .list-feedback { text-align: center; padding: 2rem; color: #6b7280; background-color: #fff; border: 1px solid #e5e7eb; border-radius: 8px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <header id="header-container"></header>
+
+    <div class="page-container">
+        
+        <div class="page-header">
+            <h1>Estoque > Categorias</h1>
+            <a href="javascript:history.back()" class="back-button">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+
+        <hr class="full-width-divider">
+
+        <div class="tab-nav">
+            <button class="tab-nav-item active" data-tab="add-category">Adicionar Categoria</button>
+            <button class="tab-nav-item" data-tab="manage-categories">Alterar e Excluir Categorias</button>
+        </div>
+
+        <div class="tab-content">
+            <div id="add-category" class="tab-pane active">
+                <form id="category-form" novalidate>
+                    <div class="form-group">
+                        <label for="category-name-input">Nome da Nova Categoria</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-plus input-icon"></i>
+                            <input type="text" id="category-name-input" class="input-field" required>
+                        </div>
+                    </div>
+                    <button type="submit" id="save-btn" class="btn-save">
+                        <span id="btn-text">Salvar Categoria</span>
+                        <i id="btn-spinner" class="fas fa-spinner fa-spin hidden"></i>
+                    </button>
+                    <div id="add-message-container" style="max-width: 450px;"></div>
+                </form>
+            </div>
+
+            <div id="manage-categories" class="tab-pane">
+                <ul id="categories-list-ul" class="categories-list"></ul>
+                <div id="list-feedback-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+    <script>
+    // O JAVASCRIPT PERMANECE O MESMO DA VERSÃO ANTERIOR, POIS JÁ ERA FUNCIONAL
+    document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('userDataReady', initializePage);
+
+        const tabButtons = document.querySelectorAll('.tab-nav-item');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        const categoryForm = document.getElementById('category-form');
+        const categoryNameInput = document.getElementById('category-name-input');
+        const addMessageContainer = document.getElementById('add-message-container');
+        const saveBtn = document.getElementById('save-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnSpinner = document.getElementById('btn-spinner');
+        const categoriesListUl = document.getElementById('categories-list-ul');
+        const listFeedbackContainer = document.getElementById('list-feedback-container');
+        
+        function initializePage() {
+            setupTabEvents();
+            setupFormEvents();
+            setupListEvents();
+            fetchAndDisplayCategories();
+        }
+
+        function setupTabEvents() {
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabPanes.forEach(pane => pane.classList.remove('active'));
+                    button.classList.add('active');
+                    const tabId = button.dataset.tab;
+                    document.getElementById(tabId).classList.add('active');
+                    if (tabId === 'manage-categories') {
+                        fetchAndDisplayCategories();
+                    }
+                });
+            });
+        }
+        
+        function setupFormEvents() {
+            categoryForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const categoryName = categoryNameInput.value.trim();
+                if (!categoryName) {
+                    showMessage('Digite o nome da categoria.', 'error', addMessageContainer);
+                    return;
+                }
+                setLoading(true);
+                try {
+                    const { error } = await supabaseClient.from('categorias').insert([{
+                        NomeCategoria: categoryName,
+                        id_empresa: window.currentCompanyId,
+                        auth_user_id: window.currentUser.auth_user_id
+                    }]);
+                    if (error) throw error;
+                    showMessage(`Categoria "${categoryName}" salva!`, 'success', addMessageContainer);
+                    categoryForm.reset();
+                    fetchAndDisplayCategories();
+                } catch (error) {
+                    const errorMessage = error.code === '23505' ? 'Essa categoria já existe.' : error.message;
+                    showMessage(errorMessage, 'error', addMessageContainer);
+                } finally {
+                    setLoading(false);
+                }
+            });
+        }
+
+        async function fetchAndDisplayCategories() {
+            showListFeedback('<span><i class="fas fa-spinner fa-spin"></i> Carregando categorias...</span>');
+            try {
+                const { data: categories, error } = await supabaseClient
+                    .from('categorias')
+                    .select('id, NomeCategoria')
+                    .eq('id_empresa', window.currentCompanyId)
+                    .order('NomeCategoria', { ascending: true });
+                if (error) throw error;
+                
+                categoriesListUl.innerHTML = '';
+                if (categories.length === 0) {
+                    showListFeedback('Nenhuma categoria cadastrada.');
+                } else {
+                    hideListFeedback();
+                    categories.forEach(category => {
+                        const li = document.createElement('li');
+                        li.className = 'list-item';
+                        li.setAttribute('data-id', category.id);
+                        li.innerHTML = `
+                            <span class="category-name">${category.NomeCategoria}</span>
+                            <div class="list-actions">
+                                <button class="edit-btn" title="Editar"><i class="fas fa-pencil-alt"></i></button>
+                                <button class="delete-btn" title="Excluir"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        `;
+                        categoriesListUl.appendChild(li);
+                    });
+                }
+            } catch (error) {
+                showListFeedback(`<span style="color: #c53030;">Erro ao carregar: ${error.message}</span>`);
+            }
+        }
+        
+        function setupListEvents() {
+            categoriesListUl.addEventListener('click', async (event) => {
+                const listItem = event.target.closest('.list-item');
+                if (!listItem) return;
+
+                const categoryId = listItem.dataset.id;
+                const categoryName = listItem.querySelector('.category-name').textContent;
+
+                if (event.target.closest('.delete-btn')) {
+                    if (confirm(`Tem certeza que deseja excluir a categoria "${categoryName}"?`)) {
+                        await deleteCategory(categoryId, listItem);
+                    }
+                }
+                if (event.target.closest('.edit-btn')) {
+                     const newName = prompt(`Digite o novo nome para a categoria "${categoryName}":`, categoryName);
+                     if (newName && newName.trim() !== '' && newName !== categoryName) {
+                         await updateCategory(categoryId, newName.trim(), listItem);
+                     }
+                }
+            });
+        }
+
+        async function deleteCategory(categoryId, listItemElement) {
+            try {
+                const { error } = await supabaseClient.from('categorias').delete().match({ id: categoryId });
+                if (error) throw error;
+                listItemElement.remove();
+                if (categoriesListUl.children.length === 0) {
+                    showListFeedback('Nenhuma categoria cadastrada.');
+                }
+            } catch (error) {
+                alert(`Não foi possível excluir. Erro: ${error.message}`);
+            }
+        }
+
+        async function updateCategory(categoryId, newName, listItemElement) {
+            try {
+                const { error } = await supabaseClient.from('categorias').update({ NomeCategoria: newName }).match({ id: categoryId });
+                if(error) throw error;
+                listItemElement.querySelector('.category-name').textContent = newName;
+            } catch (error) {
+                alert(`Não foi possível atualizar. Erro: ${error.message}`);
+            }
+        }
+        
+        function showListFeedback(messageHtml) {
+            categoriesListUl.style.display = 'none';
+            listFeedbackContainer.innerHTML = `<div class="list-feedback">${messageHtml}</div>`;
+        }
+        function hideListFeedback() {
+             categoriesListUl.style.display = 'block';
+             listFeedbackContainer.innerHTML = '';
+        }
+        function setLoading(isLoading) {
+            saveBtn.disabled = isLoading;
+            btnText.classList.toggle('hidden', isLoading);
+            btnSpinner.classList.toggle('hidden', !isLoading);
+        }
+        function showMessage(message, type, container) {
+            // Adicionado para formatar a mensagem
+            container.innerHTML = `<div class="message ${type}">${message}</div>`;
+            setTimeout(() => { container.innerHTML = ''; }, 4000);
+        }
+    });
+    </script>
+
+</body>
+</html>
