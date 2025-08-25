@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Sistema de Cashback</title>
+    <link rel="icon" type="image/png" href="log.png">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Header CSS -->
+    <link href="header.css" rel="stylesheet">
+    <!-- Cashback CSS -->
+    <link href="cashback.css" rel="stylesheet">
+</head>
+<body>
+    <div id="header-container"></div>
+
+    <main class="main-container">
+        <!-- Header Cashback Simplificado -->
+        <div class="cashback-header">
+            <div class="header-content">
+                <h1 class="header-title">Sistema de Cashback</h1>
+                <p class="header-subtitle">Gerencie o programa de fidelidade e recompensas dos seus clientes</p>
+            </div>
+        </div>
+
+        <!-- Cards de Estatísticas Fora do Header -->
+        <div class="stats-section">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="fas fa-piggy-bank"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="total-cashback-disponivel">R$ 0,00</div>
+                            <div class="stat-label">Total Disponível</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="total-clientes-cashback">0</div>
+                            <div class="stat-label">Clientes Ativos</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-month"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="cashback-mes-atual">R$ 0,00</div>
+                            <div class="stat-label">Gerado Este Mês</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="cashback-utilizado">R$ 0,00</div>
+                            <div class="stat-label">Utilizado</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controles de Ano e Filtros -->
+        <div class="year-month-controls">
+            <div class="year-selector">
+                <button class="year-nav-btn" id="prev-year">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span class="current-year" id="current-year">2025</span>
+                <button class="year-nav-btn" id="next-year">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <div class="filter-controls">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-cliente" placeholder="Buscar cliente...">
+                </div>
+                <select id="filter-status" class="filter-select">
+                    <option value="todos">Todos os Status</option>
+                    <option value="com-saldo">Com Saldo</option>
+                    <option value="sem-saldo">Sem Saldo</option>
+                    <option value="recentes">Atividade Recente</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Gráfico de Cashback -->
+        <div class="chart-section">
+            <div class="chart-header">
+                <h3>Evolução do Cashback por Mês</h3>
+                <div class="chart-legend">
+                    <span class="legend-item gerado"><i class="fas fa-circle"></i> Gerado</span>
+                    <span class="legend-item utilizado"><i class="fas fa-circle"></i> Utilizado</span>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="cashback-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Lista de Clientes com Cashback -->
+        <div class="clientes-section">
+            <div class="section-header">
+                <h3>Clientes com Cashback</h3>
+                <div class="section-actions">
+                    <button class="action-btn" id="btn-campanha-whatsapp">
+                        <i class="fas fa-bullhorn"></i>
+                        Campanha WhatsApp
+                    </button>
+                    <button class="action-btn" id="btn-relatorio">
+                        <i class="fas fa-file-export"></i>
+                        Exportar Relatório
+                    </button>
+                </div>
+            </div>
+            
+            <div class="clientes-grid" id="clientes-grid">
+                <!-- Cards dos clientes serão inseridos aqui -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Histórico de Cashback -->
+    <div id="historico-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="historico-modal-title">Histórico de Cashback</h3>
+                <button class="modal-close" id="historico-modal-close">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Resumo do Cliente -->
+                <div class="cliente-resumo" id="cliente-resumo">
+                    <div class="resumo-item">
+                        <div class="resumo-valor saldo" id="resumo-saldo">R$ 0,00</div>
+                        <div class="resumo-label">Saldo Atual</div>
+                    </div>
+                    <div class="resumo-item">
+                        <div class="resumo-valor gerado" id="resumo-total-gerado">R$ 0,00</div>
+                        <div class="resumo-label">Total Gerado</div>
+                    </div>
+                    <div class="resumo-item">
+                        <div class="resumo-valor utilizado" id="resumo-total-utilizado">R$ 0,00</div>
+                        <div class="resumo-label">Total Utilizado</div>
+                    </div>
+                    <div class="resumo-item">
+                        <div class="resumo-valor operacoes" id="resumo-operacoes">0</div>
+                        <div class="resumo-label">Operações</div>
+                    </div>
+                </div>
+
+                <!-- Tabela de Histórico -->
+                <div class="historico-table">
+                    <div class="table-header">
+                        <div>Data</div>
+                        <div>Operação</div>
+                        <div>Descrição</div>
+                        <div>Valor</div>
+                        <div>Saldo</div>
+                    </div>
+                    
+                    <div class="table-body" id="historico-table-body">
+                        <!-- Dados serão inseridos aqui -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Comprovante -->
+    <div id="comprovante-modal" class="modal-overlay">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h3 class="modal-title">Enviar Comprovante de Cashback</h3>
+                <button class="modal-close" id="comprovante-modal-close">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="comprovante-preview" id="comprovante-preview">
+                    <div class="preview-header">
+                        <h4>Comprovante de Cashback</h4>
+                        <p class="preview-cliente">Cliente: <span id="preview-cliente-nome"></span></p>
+                    </div>
+                    <div class="preview-saldo">
+                        <span class="preview-label">Saldo Disponível:</span>
+                        <span class="preview-valor" id="preview-saldo-valor">R$ 0,00</span>
+                    </div>
+                    <div class="preview-footer">
+                        <p>Use seu cashback na próxima compra!</p>
+                        <small>Válido até 12 meses após a geração</small>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="comprovante-whatsapp">WhatsApp do Cliente</label>
+                    <input type="tel" id="comprovante-whatsapp" placeholder="(11) 99999-9999">
+                </div>
+                
+                <div class="form-group">
+                    <label for="comprovante-mensagem">Mensagem Personalizada</label>
+                    <textarea id="comprovante-mensagem" rows="3" placeholder="Mensagem adicional (opcional)"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" id="btn-cancel-comprovante">Cancelar</button>
+                    <button type="button" class="btn-send" id="btn-send-comprovante">
+                        <i class="fas fa-paper-plane"></i>
+                        Enviar Comprovante
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Lembrete WhatsApp -->
+    <div id="lembrete-modal" class="modal-overlay">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h3 class="modal-title">Lembrete de Cashback</h3>
+                <button class="modal-close" id="lembrete-modal-close">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="lembrete-tipo">
+                    <h4>Tipo de Lembrete</h4>
+                    <div class="tipo-opcoes">
+                        <label class="tipo-opcao">
+                            <input type="radio" name="tipo-lembrete" value="individual" checked>
+                            <span class="radio-custom"></span>
+                            <div class="opcao-info">
+                                <div class="opcao-titulo">Individual</div>
+                                <div class="opcao-desc">Enviar para cliente específico</div>
+                            </div>
+                        </label>
+                        <label class="tipo-opcao">
+                            <input type="radio" name="tipo-lembrete" value="campanha">
+                            <span class="radio-custom"></span>
+                            <div class="opcao-info">
+                                <div class="opcao-titulo">Campanha</div>
+                                <div class="opcao-desc">Enviar para todos com saldo</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="whatsapp-individual">
+                    <label for="lembrete-whatsapp">WhatsApp do Cliente</label>
+                    <input type="tel" id="lembrete-whatsapp" placeholder="(11) 99999-9999">
+                </div>
+
+                <div class="form-group">
+                    <label for="lembrete-template">Template da Mensagem</label>
+                    <select id="lembrete-template">
+                        <option value="padrao">Padrão - Lembrete de cashback</option>
+                        <option value="promocional">Promocional - Volta e ganha desconto</option>
+                        <option value="urgencia">Urgência - Cashback expirando</option>
+                        <option value="personalizado">Personalizado</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="lembrete-mensagem">Mensagem</label>
+                    <textarea id="lembrete-mensagem" rows="4" placeholder="Mensagem será gerada automaticamente..."></textarea>
+                </div>
+
+                <div class="campanha-info" id="campanha-info" style="display: none;">
+                    <div class="info-item">
+                        <span class="info-label">Clientes com saldo:</span>
+                        <span class="info-valor" id="total-clientes-campanha">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Valor total:</span>
+                        <span class="info-valor" id="total-valor-campanha">R$ 0,00</span>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" id="btn-cancel-lembrete">Cancelar</button>
+                    <button type="button" class="btn-send" id="btn-send-lembrete">
+                        <i class="fas fa-paper-plane"></i>
+                        <span id="btn-send-text">Enviar Lembrete</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+    <script src="cashback.js"></script>
+</body>
+</html>

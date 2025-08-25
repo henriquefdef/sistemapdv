@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Adicionar Produtos</title>
+    
+    <link rel="icon" type="image/png" href="log.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="etiquetas-modal.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="adicionar-produtos.css">
+</head>
+<body>
+
+    <header id="header-container"></header>
+
+    <div class="page-container">
+        
+        <div class="page-header">
+            <h1>Estoque > <strong>Adicionar Produtos</strong></h1>
+            <div class="header-buttons">
+                <a href="movimentar.html" class="incorporate-button">
+                    <i class="fas fa-plus-circle"></i> Incorporar
+                </a>
+                <a href="javascript:history.back()" class="back-button">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+
+            </div>
+        </div>
+
+        <hr class="full-width-divider">
+
+        <div class="tab-nav">
+            <button class="tab-nav-item active" data-tab="informacoes-gerais">Informações gerais</button>
+            <button class="tab-nav-item" data-tab="origem">Origem</button>
+            <button class="tab-nav-item" data-tab="Variações">Variações</button>
+            <button class="tab-nav-item" data-tab="estoque">Estoque</button>
+            <button class="tab-nav-item" data-tab="imagens">Imagens</button>
+            <button class="tab-nav-item" data-tab="pesos-dimensoes">Pesos e dimensões</button>
+            <button class="tab-nav-item" data-tab="dados-fiscais">Dados fiscais</button>
+        </div>
+
+        <form id="product-form">
+            
+            <!-- Aba: Informações Gerais -->
+            <div id="informacoes-gerais" class="tab-pane active">
+                <h3 class="tab-title">Informações gerais</h3>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nome-produto" class="required">Nome do Produto</label>
+                        <input type="text" id="nome-produto" class="input-field" placeholder="Ex: Camiseta Feminina" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoria-produto">Categoria de produto</label>
+                        <div class="select-with-add">
+                            <select id="categoria-produto" class="select-field">
+                                <option value="">Selecione</option>
+                            </select>
+                            <button type="button" class="btn-add-item" onclick="openModal('categoria')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="quantidade-estoque">Quantidade</label>
+                        <input type="number" id="quantidade-estoque" class="input-field" placeholder="0" min="0">
+                    </div>
+                </div>
+
+                <!-- Seção de Valores do Produto -->
+                <div class="values-section">
+                    <h4 class="section-title">Valores do produto</h4>
+                    <div class="values-grid">
+                        <div class="form-group">
+                            <label for="preco-custo">Valor de Custo</label>
+                            <div class="input-with-icon">
+                                <span class="input-icon">R$</span>
+                                <input type="number" id="preco-custo" class="input-field with-icon" placeholder="0,00" step="0.01">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="markup">Markup <i class="fas fa-info-circle" title="Percentual de lucro sobre o custo"></i></label>
+                            <div class="input-with-icon">
+                                <span class="input-icon">%</span>
+                                <input type="number" id="markup" class="input-field with-icon" placeholder="0,00" step="0.01">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="preco-venda" class="required">Valor de Venda</label>
+                            <div class="input-with-icon">
+                                <span class="input-icon">R$</span>
+                                <input type="number" id="preco-venda" class="input-field with-icon" placeholder="0,00" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i>
+                    <div class="info-box-content">
+                        <strong>Código de barras e SKU</strong><br>
+                        Atenção! Se você deixar os campos de código de barras e SKU em branco, o sistema irá gerar esses números automaticamente quando você salvar o seu cadastro. Esses códigos são importantes para identificação dos produtos em suas vendas e estoques.
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="codigo-sku" class="required">Código do produto (SKU)</label>
+                        <input type="text" id="codigo-sku" class="input-field" placeholder="Gerado automaticamente">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="codigo-barras" class="required">Código de barras</label>
+                        <input type="text" id="codigo-barras" class="input-field" placeholder="Gerado automaticamente">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba: Origem -->
+            <div id="origem" class="tab-pane">
+                <h3 class="tab-title">Origem</h3>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="marca">Marca</label>
+                        <div class="select-with-add">
+                            <select id="marca" class="select-field">
+                                <option value="">Ex: Gucci</option>
+                            </select>
+                            <button type="button" class="btn-add-item" onclick="openModal('marca')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="colecao">Coleção</label>
+                        <div class="select-with-add">
+                            <select id="colecao" class="select-field">
+                                <option value="">Selecione</option>
+                            </select>
+                            <button type="button" class="btn-add-item" onclick="openModal('colecao')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group form-grid-full">
+                        <label for="fornecedor">Fornecedor</label>
+                        <div class="select-with-add">
+                            <select id="fornecedor" class="select-field">
+                                <option value="">Selecione</option>
+                            </select>
+                            <button type="button" class="btn-add-item" onclick="openModal('fornecedor')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba: Variações -->
+            <div id="Variações" class="tab-pane">
+                <h3 class="tab-title">Variações</h3>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="tipo-unidade">Tipo de Unidade</label>
+                        <select id="tipo-unidade" class="select-field">
+                            <option value="UN">UN</option>
+                            <option value="KG">KG</option>
+                            <option value="L">L</option>
+                            <option value="M">M</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tamanho">Tamanho</label>
+                        <select id="tamanho" class="select-field">
+                            <option value="">Selecione</option>
+                            <optgroup label="Roupas - Letras">
+                                <option value="PP">PP</option>
+                                <option value="P">P</option>
+                                <option value="M">M</option>
+                                <option value="G">G</option>
+                                <option value="GG">GG</option>
+                                <option value="XG">XG</option>
+                                <option value="XXG">XXG</option>
+                                <option value="EG">EG</option>
+                                <option value="EXG">EXG</option>
+                            </optgroup>
+                            <optgroup label="Roupas - Números">
+                                <option value="32">32</option>
+                                <option value="34">34</option>
+                                <option value="36">36</option>
+                                <option value="38">38</option>
+                                <option value="40">40</option>
+                                <option value="42">42</option>
+                                <option value="44">44</option>
+                                <option value="46">46</option>
+                                <option value="48">48</option>
+                                <option value="50">50</option>
+                                <option value="52">52</option>
+                                <option value="54">54</option>
+                                <option value="56">56</option>
+                                <option value="58">58</option>
+                                <option value="60">60</option>
+                            </optgroup>
+                            <optgroup label="Calçados - Feminino">
+                                <option value="33">33</option>
+                                <option value="34">34</option>
+                                <option value="35">35</option>
+                                <option value="36">36</option>
+                                <option value="37">37</option>
+                                <option value="38">38</option>
+                                <option value="39">39</option>
+                                <option value="40">40</option>
+                                <option value="41">41</option>
+                                <option value="42">42</option>
+                            </optgroup>
+                            <optgroup label="Calçados - Masculino">
+                                <option value="38">38</option>
+                                <option value="39">39</option>
+                                <option value="40">40</option>
+                                <option value="41">41</option>
+                                <option value="42">42</option>
+                                <option value="43">43</option>
+                                <option value="44">44</option>
+                                <option value="45">45</option>
+                                <option value="46">46</option>
+                                <option value="47">47</option>
+                                <option value="48">48</option>
+                            </optgroup>
+                            <optgroup label="Infantil - Roupas">
+                                <option value="RN">RN (Recém-nascido)</option>
+                                <option value="0-3M">0-3 meses</option>
+                                <option value="3-6M">3-6 meses</option>
+                                <option value="6-9M">6-9 meses</option>
+                                <option value="9-12M">9-12 meses</option>
+                                <option value="1">1 ano</option>
+                                <option value="2">2 anos</option>
+                                <option value="3">3 anos</option>
+                                <option value="4">4 anos</option>
+                                <option value="6">6 anos</option>
+                                <option value="8">8 anos</option>
+                                <option value="10">10 anos</option>
+                                <option value="12">12 anos</option>
+                                <option value="14">14 anos</option>
+                                <option value="16">16 anos</option>
+                            </optgroup>
+                            <optgroup label="Infantil - Calçados">
+                                <option value="15">15</option>
+                                <option value="16">16</option>
+                                <option value="17">17</option>
+                                <option value="18">18</option>
+                                <option value="19">19</option>
+                                <option value="20">20</option>
+                                <option value="21">21</option>
+                                <option value="22">22</option>
+                                <option value="23">23</option>
+                                <option value="24">24</option>
+                                <option value="25">25</option>
+                                <option value="26">26</option>
+                                <option value="27">27</option>
+                                <option value="28">28</option>
+                                <option value="29">29</option>
+                                <option value="30">30</option>
+                                <option value="31">31</option>
+                                <option value="32">32</option>
+                            </optgroup>
+                            <optgroup label="Outros">
+                                <option value="Único">Tamanho Único</option>
+                                <option value="Universal">Universal</option>
+                                <option value="Ajustável">Ajustável</option>
+                            </optgroup>
+                        </select>
+                        <small class="field-description">Tamanhos comuns para roupas, calçados e produtos infantis.</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cor">Cor</label>
+                        <div class="select-with-add">
+                            <select id="cor" class="select-field">
+                                <option value="">Ex: Preto, Branco, Azul, Vermelho...</option>
+                            </select>
+                            <button type="button" class="btn-add-item" onclick="openModal('cor')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <small class="field-description">Pode ser combinado com tamanho (ex: Camiseta P - Azul)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="material">Material</label>
+                        <div class="select-with-add">
+                            <select id="material" class="select-field">
+                                <option value="">Ex: Couro, Algodão, Plástico...</option>
+                            </select>
+                            <button type="button" class="btn-add-item" onclick="openModal('material')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="modelo">Modelo</label>
+                        <input type="text" id="modelo" class="input-field" placeholder="Quando o produto principal é o mesmo, mas muda o modelo">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="genero">Gênero</label>
+                        <select id="genero" class="select-field">
+                            <option value="">Selecione</option>
+                            <option value="masculino">Masculino</option>
+                            <option value="feminino">Feminino</option>
+                            <option value="unissex">Unissex</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group form-grid-full">
+                        <label for="observacoes">Observações</label>
+                        <textarea id="observacoes" class="input-field" rows="3" placeholder="Observações adicionais sobre o produto"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba: Estoque -->
+            <div id="estoque" class="tab-pane">
+                <h3 class="tab-title">Estoque</h3>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="estoque-minimo">Estoque Mínimo</label>
+                        <input type="number" id="estoque-minimo" class="input-field" placeholder="0" min="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="estoque-maximo">Estoque Máximo</label>
+                        <input type="number" id="estoque-maximo" class="input-field" placeholder="0" min="0">
+                    </div>
+                    
+                    <div class="form-group form-grid-full">
+                        <label for="localizacao">Localização no Estoque</label>
+                        <div class="select-with-add">
+                            <select id="localizacao" class="select-field">
+                                <option value="">Ex: Prateleira A1</option>
+                            </select>
+                            <button type="button" class="btn-add-item" onclick="openModal('localizacao')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba: Imagens -->
+            <div id="imagens" class="tab-pane">
+                <h3 class="tab-title">Imagens</h3>
+                
+                <div class="image-upload-area" id="image-upload-area">
+                    <div class="upload-placeholder">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Arraste imagens aqui ou clique para selecionar</p>
+                        <small>Formatos aceitos: JPG, PNG, WEBP (máx. 5MB cada)</small>
+                    </div>
+                    <input type="file" id="image-input" accept="image/*" multiple style="display: none;">
+                </div>
+                
+                <div id="image-preview-container" class="image-preview-container"></div>
+            </div>
+
+            <!-- Aba: Pesos e dimensões -->
+            <div id="pesos-dimensoes" class="tab-pane">
+                <h3 class="tab-title">Peso e dimensões</h3>
+                
+                <!-- Ilustração da caixa -->
+                <div class="dimensions-illustration">
+                    <img src="caixa.png" alt="Ilustração da caixa com dimensões" class="box-image">
+                </div>
+                
+                <div class="dimensions-grid">
+                    <div class="form-group">
+                        <label for="peso">Peso líquido</label>
+                        <div class="input-with-icon">
+                            <span class="input-icon">Kg</span>
+                            <input type="number" id="peso" class="input-field with-icon" placeholder="0,0000" step="0.0001">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="altura">Altura</label>
+                        <div class="input-with-icon">
+                            <span class="input-icon">cm</span>
+                            <input type="number" id="altura" class="input-field with-icon" placeholder="0,00" step="0.01">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="largura">Largura</label>
+                        <div class="input-with-icon">
+                            <span class="input-icon">cm</span>
+                            <input type="number" id="largura" class="input-field with-icon" placeholder="0,00" step="0.01">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="comprimento">Profundidade</label>
+                        <div class="input-with-icon">
+                            <span class="input-icon">cm</span>
+                            <input type="number" id="comprimento" class="input-field with-icon" placeholder="0,00" step="0.01">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba: Dados fiscais -->
+            <div id="dados-fiscais" class="tab-pane">
+                <h3 class="tab-title">Dados fiscais</h3>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="ncm">NCM</label>
+                        <input type="text" id="ncm" class="input-field" placeholder="00000000" maxlength="8">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cfop">CFOP</label>
+                        <input type="text" id="cfop" class="input-field" placeholder="5102" maxlength="4">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nf">Número da Nota Fiscal</label>
+                        <input type="text" id="nf" class="input-field" placeholder="Ex: 123456">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="serial">Serial</label>
+                        <input type="text" id="serial" class="input-field" placeholder="Ex: SN123456789">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="origem-produto">Origem do produto (0 a 8)</label>
+                        <select id="origem-produto" class="select-field">
+                            <option value="">Selecione</option>
+                            <option value="0">0 - Nacional, exceto as indicadas nos códigos 3, 4, 5 e 8</option>
+                            <option value="1">1 - Estrangeira - Importação direta, exceto a indicada no código 6</option>
+                            <option value="2">2 - Estrangeira - Adquirida no mercado interno, exceto a indicada no código 7</option>
+                            <option value="3">3 - Nacional, mercadoria ou bem com Conteúdo de Importação superior a 40% e inferior ou igual a 70%</option>
+                            <option value="4">4 - Nacional, cuja produção tenha sido feita em conformidade com os processos produtivos básicos de que tratam as legislações citadas nos Ajustes</option>
+                            <option value="5">5 - Nacional, mercadoria ou bem com Conteúdo de Importação inferior ou igual a 40%</option>
+                            <option value="6">6 - Estrangeira - Importação direta, sem similar nacional, constante em lista da CAMEX e gás natural</option>
+                            <option value="7">7 - Estrangeira - Adquirida no mercado interno, sem similar nacional, constante lista CAMEX e gás natural</option>
+                            <option value="8">8 - Nacional, mercadoria ou bem com Conteúdo de Importação superior a 70%</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="csosn">CSOSN (Simples Nacional)</label>
+                        <select id="csosn" class="select-field">
+                            <option value="">Selecione</option>
+                            <option value="101">101 - Tributada pelo Simples Nacional com permissão de crédito</option>
+                            <option value="102">102 - Tributada pelo Simples Nacional sem permissão de crédito</option>
+                            <option value="103">103 - Isenção do ICMS no Simples Nacional para faixa de receita bruta</option>
+                            <option value="201">201 - Tributada pelo Simples Nacional com permissão de crédito e com cobrança do ICMS por substituição tributária</option>
+                            <option value="202">202 - Tributada pelo Simples Nacional sem permissão de crédito e com cobrança do ICMS por substituição tributária</option>
+                            <option value="203">203 - Isenção do ICMS no Simples Nacional para faixa de receita bruta e com cobrança do ICMS por substituição tributária</option>
+                            <option value="300">300 - Imune</option>
+                            <option value="400">400 - Não tributada pelo Simples Nacional</option>
+                            <option value="500">500 - ICMS cobrado anteriormente por substituição tributária</option>
+                            <option value="900">900 - Outros</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cst-pis-cofins">CST PIS / CST COFINS</label>
+                        <select id="cst-pis-cofins" class="select-field">
+                            <option value="">Selecione</option>
+                            <option value="01">01 - Operação Tributável - Base de Cálculo = Valor da Operação Alíquota Normal</option>
+                            <option value="02">02 - Operação Tributável - Base de Cálculo = Valor da Operação (Alíquota Diferenciada)</option>
+                            <option value="03">03 - Operação Tributável - Base de Cálculo = Quantidade Vendida x Alíquota por Unidade de Produto</option>
+                            <option value="04">04 - Operação Tributável - Tributação Monofásica - (Alíquota Zero)</option>
+                            <option value="05">05 - Operação Tributável (ST)</option>
+                            <option value="06">06 - Operação Tributável - Alíquota Zero</option>
+                            <option value="07">07 - Operação Isenta da Contribuição</option>
+                            <option value="08">08 - Operação Sem Incidência da Contribuição</option>
+                            <option value="09">09 - Operação com Suspensão da Contribuição</option>
+                            <option value="49">49 - Outras Operações de Saída</option>
+                            <option value="50">50 - Operação com Direito a Crédito - Vinculada Exclusivamente a Receita Tributada no Mercado Interno</option>
+                            <option value="51">51 - Operação com Direito a Crédito - Vinculada Exclusivamente a Receita Não Tributada no Mercado Interno</option>
+                            <option value="52">52 - Operação com Direito a Crédito - Vinculada Exclusivamente a Receita de Exportação</option>
+                            <option value="53">53 - Operação com Direito a Crédito - Vinculada a Receitas Tributadas e Não-Tributadas no Mercado Interno</option>
+                            <option value="54">54 - Operação com Direito a Crédito - Vinculada a Receitas Tributadas no Mercado Interno e de Exportação</option>
+                            <option value="55">55 - Operação com Direito a Crédito - Vinculada a Receitas Não-Tributadas no Mercado Interno e de Exportação</option>
+                            <option value="56">56 - Operação com Direito a Crédito - Vinculada a Receitas Tributadas e Não-Tributadas no Mercado Interno, e de Exportação</option>
+                            <option value="60">60 - Crédito Presumido - Operação de Aquisição Vinculada Exclusivamente a Receita Tributada no Mercado Interno</option>
+                            <option value="61">61 - Crédito Presumido - Operação de Aquisição Vinculada Exclusivamente a Receita Não-Tributada no Mercado Interno</option>
+                            <option value="62">62 - Crédito Presumido - Operação de Aquisição Vinculada Exclusivamente a Receita de Exportação</option>
+                            <option value="63">63 - Crédito Presumido - Operação de Aquisição Vinculada a Receitas Tributadas e Não-Tributadas no Mercado Interno</option>
+                            <option value="64">64 - Crédito Presumido - Operação de Aquisição Vinculada a Receitas Tributadas no Mercado Interno e de Exportação</option>
+                            <option value="65">65 - Crédito Presumido - Operação de Aquisição Vinculada a Receitas Não-Tributadas no Mercado Interno e de Exportação</option>
+                            <option value="66">66 - Crédito Presumido - Operação de Aquisição Vinculada a Receitas Tributadas e Não-Tributadas no Mercado Interno e de Exportação</option>
+                            <option value="67">67 - Crédito Presumido - Outras Operações</option>
+                            <option value="70">70 - Operação de Aquisição sem Direito a Crédito</option>
+                            <option value="71">71 - Operação de Aquisição com Isenção</option>
+                            <option value="72">72 - Operação de Aquisição com Suspensão</option>
+                            <option value="73">73 - Operação de Aquisição a Alíquota Zero</option>
+                            <option value="74">74 - Operação de Aquisição sem Incidência da Contribuição</option>
+                            <option value="75">75 - Operação de Aquisição por Substituição Tributária</option>
+                            <option value="98">98 - Outras Operações de Entrada</option>
+                            <option value="99">99 - Outras Operações</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cest">CEST</label>
+                        <input type="text" id="cest" class="input-field" placeholder="0100100" maxlength="7">
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button type="button" class="btn-cancel" onclick="window.history.back()">Cancelar</button>
+                <button type="submit" class="btn-save">
+                    <span id="btn-text">Salvar</span>
+                    <i id="btn-spinner" class="fas fa-spinner fa-spin hidden"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal para adicionar itens -->
+    <div id="add-item-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Adicionar Item</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <div id="modal-body">
+                <div class="form-group">
+                    <label for="item-name" id="item-label">Nome do Item</label>
+                    <input type="text" id="item-name" class="input-field" placeholder="Digite o nome">
+                </div>
+                
+                <div id="items-list-container">
+                    <h4 class="items-list-title">Itens existentes:</h4>
+                    <div id="items-list" class="items-list">
+                        <div class="empty-list">Nenhum item cadastrado</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button>
+                <button type="button" class="btn-save" id="save-item-btn" onclick="saveItem()">
+                    <span>Salvar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+    <script src="adicionar-produtos-supa.js"></script>
+    <script src="adicionar-produtos-img.js"></script>
+    <script src="adicionar-produtos.js"></script>
+
+    <script src="etiquetas-modal.js"></script>
+    <script src="etiquetas-gerar.js"></script>
+
+</body>
+</html>

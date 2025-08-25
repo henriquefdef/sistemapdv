@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Início - Lume</title>
+    <link rel="icon" type="image/png" href="log.png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="inicio.css">
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="header-container"></div>
+
+    <main class="main-content">
+        <div class="time-display-corner">
+            <span id="current-time"></span>
+            <span id="greeting-text"></span>
+        </div>
+
+        <section class="hero-section">
+            <div class="hero-content">
+                <div class="company-logo">
+                    <img src="log.png" alt="Lume Logo" class="logo-image">
+                </div>
+                <h1 class="hero-title">
+                    <span class="title-line">Bem-vindo, <span class="highlight" id="user-name-hero">Usuário</span>!</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Use os botões da barra lateral para gerenciar vendas, estoque e muito mais
+                </p>
+            </div>
+            <div class="hero-visual">
+                <div class="floating-elements">
+                    <a href="contas-financeiro.html" class="element element-1" title="Ir para Contas Financeiras">
+                        <i class="fas fa-chart-line"></i>
+                    </a>
+                    <a href="nova-venda.html" class="element element-2" title="Criar Nova Venda">
+                        <i class="fas fa-shopping-cart"></i>
+                    </a>
+                    <a href="adicionar-produtos.html" class="element element-3" title="Adicionar Novo Produto">
+                        <i class="fas fa-box-open"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="quick-stats">
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Hoje</div>
+                    <div class="stat-value" id="today-sales">R$ 0,00</div>
+                </div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Vendas</div>
+                    <div class="stat-value" id="today-orders">0</div>
+                </div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Estoque</div>
+                    <div class="stat-value" id="total-stock">0</div>
+                </div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Clientes</div>
+                    <div class="stat-value" id="total-clients">0</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="floating-support">
+        <a href="https://wa.me/5534999999999" target="_blank" class="floating-btn whatsapp" data-tooltip="Suporte WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+        </a>
+        <a href="https://instagram.com/lume_sistema" target="_blank" class="floating-btn instagram" data-tooltip="Instagram">
+            <i class="fab fa-instagram"></i>
+        </a>
+    </div>
+
+    <script src="header.js"></script>
+    <script src="inicio.js"></script>
+</body>
+</html>

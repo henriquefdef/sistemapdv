@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Produtos</title>
+    <link rel="icon" type="image/png" href="log.png">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="lista-produtos.css">
+</head>
+<body>
+    <header id="header-container"></header>
+
+    <main class="main-content">
+        <!-- CABEÇALHO DA PÁGINA -->
+        <div class="page-header">
+            <h1>Produtos</h1>
+            <div class="header-actions">
+                <a href="adicionar-produtos.html" class="btn btn-primary"><i class="fas fa-plus"></i> Cadastrar produto</a>
+            </div>
+        </div>
+
+        <!-- CONTROLES DA TABELA -->
+        <div class="table-controls">
+            <div class="main-actions">
+                <button class="btn btn-secondary" id="open-filter-panel-btn"><i class="fas fa-filter"></i> Filtro</button>
+                <button class="btn btn-secondary" id="export-excel-btn"><i class="fas fa-file-excel"></i> Baixar Excel</button>
+                <div class="dropdown-container">
+                    <button class="btn btn-secondary" id="more-actions-btn" disabled>
+                        Mais ações <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu" id="more-actions-menu">
+                        <a href="#" class="dropdown-item">Reajustar preço de venda</a>
+                        <a href="#" class="dropdown-item danger" id="delete-selected-btn">Excluir selecionados</a>
+                    </div>
+                </div>
+            </div>
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="search-input" placeholder="Pesquisar por nome, SKU ou código...">
+            </div>
+        </div>
+        
+        <div id="active-filters-container" class="active-filters-container"></div>
+
+        <!-- CONTAINER DA TABELA -->
+        <div class="table-container">
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="select-all-checkbox"></th>
+                        <th class="sortable" data-sort="nome"><span>Produto</span><i class="fas fa-sort"></i></th>
+                        <th class="sortable" data-sort="categoria"><span>Categoria</span><i class="fas fa-sort"></i></th>
+                        <th class="sortable" data-sort="preco_venda"><span>Preço</span><i class="fas fa-sort"></i></th>
+                        <th class="sortable" data-sort="quantidade_estoque"><span>Estoque</span><i class="fas fa-sort"></i></th>
+                        <th><span>Cód. SKU</span></th>
+                        <th class="actions-col"><span>Ações</span></th>
+                    </tr>
+                </thead>
+                <tbody id="product-table-body"></tbody>
+            </table>
+        </div>
+        
+        <!-- PAGINAÇÃO -->
+        <div class="pagination-container">
+            <button id="prev-page" class="btn-pagination" disabled><i class="fas fa-chevron-left"></i></button>
+            <span id="page-info">Página 1 de 1</span>
+            <button id="next-page" class="btn-pagination" disabled><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </main>
+
+    <!-- CONTAINER PARA MODAIS E PAINÉIS (SERÃO INJETADOS AQUI PELO JS ) -->
+    <div id="dynamic-container"></div>
+
+    <!-- SCRIPTS -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="header.js"></script>
+    <script src="lista-produtos.js"></script>
+</body>
+</html>

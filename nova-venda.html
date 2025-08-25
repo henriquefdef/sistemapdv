@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Nova Venda (PDV)</title>
+    <link rel="icon" type="image/png" href="log.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="header.css"> 
+    <link rel="stylesheet" href="nova-venda.css">
+    <link rel="stylesheet" href="nova-venda-pag.css">
+</head>
+<body>
+
+    <header id="header-container"></header>
+
+    <div class="pdv-container">
+        <div class="main-content-area">
+            <main class="pdv-main">
+                <div class="search-and-actions">
+                    <div class="search-bar">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="search-input" placeholder="Pesquise por nome, código de barras ou SKU...">
+                        <div id="search-spinner" class="spinner hidden"></div>
+                    </div>
+                    <div class="main-actions">
+                        <button id="customer-btn" class="action-btn">
+                            <i class="fa-solid fa-user-plus"></i>
+                            <span>Cliente</span>
+                        </button>
+                        <button id="settings-btn" class="action-btn-round" title="Configurações do PDV">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+                 <div id="search-placeholder" class="search-placeholder">
+                    <i class="fa-solid fa-cash-register"></i>
+                    <h2>Ponto de Venda Lume</h2>
+                    <p>Use a barra de busca acima para encontrar produtos ou adicione itens da sua barra de acesso rápido abaixo.</p>
+                </div>
+            </main>
+
+            <!-- NOVA SEÇÃO DE ACESSO RÁPIDO COM CATEGORIAS -->
+            <div class="bottom-products-bar">
+                <div class="bottom-bar-header">
+                    <div class="header-left">
+                        
+                       <!-- <h3 class="quick-access-title">
+                            <i class="fa-solid fa-star"></i>
+                            Acesso Rápido
+                        </h3>  -->
+                        
+                        <!-- Tabs das Categorias na mesma linha -->
+                        <div class="category-tabs" id="category-tabs">
+                            <div class="category-tab active" data-category="mais-vendidos">
+                                <i class="fa-solid fa-fire"></i>
+                                <span>Mais Vendidos</span>
+                            </div>
+                            <div class="category-tab" data-category="ultimos-cadastrados">
+                                <i class="fa-solid fa-clock"></i>
+                                <span>Últimos</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botão de configuração estilo Apple -->
+                    <button class="apple-settings-btn" id="manage-categories-btn" title="Gerenciar Abas">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                </div>
+
+                <!-- Grid de Produtos -->
+                <div id="recent-products-grid" class="products-grid">
+                    <!-- Produtos serão inseridos aqui dinamicamente -->
+                </div>
+            </div>
+        </div>
+
+        <aside class="pdv-cart">
+            <div class="cart-header">
+                <div class="cart-title-row">
+                    <h2><i class="fa-solid fa-cart-shopping"></i> Carrinho (<span id="cart-item-count">0</span> itens)</h2>
+                    <button id="cancel-sale-btn" class="cancel-sale-btn" title="Cancelar Venda">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+                <div id="selected-customer-display" class="hidden">
+                    <i class="fa-solid fa-user"></i>
+                    <span id="customer-name-display"></span>
+                    <button id="remove-customer-btn">&times;</button>
+                </div>
+            </div>
+            <div id="cart-items-container" class="cart-items">
+                <div class="empty-cart-message">
+                    <i class="fa-solid fa-basket-shopping"></i>
+                    <p>Seu carrinho está vazio.</p>
+                    <span>Adicione produtos para iniciar uma venda.</span>
+                </div>
+            </div>
+            <div class="cart-footer">
+                <div class="totals-summary">
+                    <div class="summary-line">
+                        <span>Subtotal</span>
+                        <span id="subtotal-value">R$ 0,00</span>
+                    </div>
+                    <div class="summary-line discount-line">
+                        <span>Descontos</span>
+                        <span id="discount-value">- R$ 0,00</span>
+                    </div>
+                    <div class="summary-line total-line">
+                        <span>Total</span>
+                        <span id="total-value">R$ 0,00</span>
+                    </div>
+                </div>
+                <button id="finalize-sale-btn" class="finalize-btn" disabled>
+                    <i class="fa-solid fa-check"></i>
+                    Finalizar Venda (F4)
+                </button>
+            </div>
+        </aside>
+    </div>
+    
+    <div id="edit-item-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="edit-item-title">Editar Item</h3>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group"><label for="item-quantity">Quantidade</label><input type="number" id="item-quantity" min="1" step="1"></div>
+                <div class="form-group"><label for="item-discount-type">Tipo de Desconto</label><select id="item-discount-type"><option value="none">Nenhum</option><option value="percent">Porcentagem (%)</option><option value="fixed">Valor Fixo (R$)</option></select></div>
+                <div class="form-group"><label for="item-discount-value">Valor do Desconto</label><input type="number" id="item-discount-value" min="0" step="0.01"></div>
+            </div>
+            <div class="modal-footer"><button id="remove-item-btn" class="btn-danger">Remover do Carrinho</button><button id="save-item-changes-btn" class="btn-primary">Salvar Alterações</button></div>
+        </div>
+    </div>
+    
+    <div id="customer-selection-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Selecionar Cliente</h3>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="customer-search-container">
+                    <div class="search-bar-modal">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="customer-search-input" placeholder="Buscar cliente por nome ou telefone...">
+                        <div id="customer-search-spinner" class="spinner hidden"></div>
+                    </div>
+                </div>
+                <div id="customer-list" class="customer-list-modal"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Configurações do PDV</h3>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h4>Pagamento e Comprovante</h4>
+                    <div class="settings-option">
+                        <input type="checkbox" id="setting-ask-payment">
+                        <label for="setting-ask-payment">Deseja selecionar a forma de pagamento ou emissão de comprovante não fiscal?</label>
+                    </div>
+                    <div class="settings-option">
+                        <input type="checkbox" id="setting-ask-receipt">
+                        <label for="setting-ask-receipt">Solicitar envio de comprovante por email/WhatsApp</label>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>Máquina de Cartão Padrão</h4>
+                    <div class="form-group">
+                        <label for="default-card-machine">Selecione a máquina padrão:</label>
+                        <select id="default-card-machine" class="select-field">
+                            <option value="">Selecione uma máquina</option>
+                            <option value="stone">Stone</option>
+                            <option value="mercadopago">Mercado Pago</option>
+                            <option value="cielo">Cielo</option>
+                            <option value="rede">Rede</option>
+                            <option value="getnet">Getnet</option>
+                            <option value="pagseguro">PagSeguro</option>
+                            <option value="sumup">SumUp</option>
+                            <option value="moderninha">Moderninha</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="card-fees-payer">Taxas do cartão pagas por:</label>
+                        <select id="card-fees-payer" class="select-field">
+                            <option value="casa">Casa</option>
+                            <option value="cliente">Cliente</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>Visualização</h4>
+                    <div class="settings-option">
+                        <input type="checkbox" id="setting-show-quick-access" checked>
+                        <label for="setting-show-quick-access">Mostrar barra de acesso rápido de produtos</label>
+                    </div>
+                    <div class="settings-option">
+                        <input type="checkbox" id="setting-show-images" checked>
+                        <label for="setting-show-images">Mostrar imagens dos produtos</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-settings-btn" class="btn-primary">Salvar Configurações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE GERENCIAMENTO DE CATEGORIAS - Estilo Apple -->
+    <div id="manage-categories-modal" class="modal-overlay hidden">
+        <div class="modal-content modal-content-apple">
+            <div class="modal-header-apple">
+                <h3>Gerenciar Abas</h3>
+                <button class="close-btn-apple">&times;</button>
+            </div>
+            
+            <div class="modal-body-apple">
+                <!-- Lista de Categorias Existentes -->
+                <div class="categories-section-apple">
+                    <h4>Abas Existentes</h4>
+                    <div id="categories-list" class="categories-list-apple">
+                        <!-- Categorias serão listadas aqui -->
+                    </div>
+                </div>
+
+                <!-- Formulário para Nova Categoria -->
+                <div class="add-category-section-apple">
+                    <h4>Adicionar Nova Aba</h4>
+                    <form id="category-form" class="category-form-apple">
+                        <div class="form-grid-apple">
+                            <div class="form-group-apple">
+                                <label for="category-name">Nome</label>
+                                <input type="text" id="category-name" placeholder="Ex: Roupas Masculinas" required>
+                            </div>
+                            <div class="form-group-apple">
+                                <label for="category-icon">Ícone</label>
+                                <select id="category-icon" required>
+                                    <option value="">Selecione um ícone</option>
+                                    <option value="fa-fire">🔥 Mais Vendidos</option>
+                                    <option value="fa-clock">⏰ Últimos</option>
+                                    
+                                    <option value="fa-shirt">👕 Roupas</option>
+                                    <option value="fa-spray-can">🌸 Perfumes</option>
+                                    <option value="fa-gem">💎 Joias</option>
+                                    <option value="fa-mobile">📱 Eletrônicos</option>
+                                    <option value="fa-home">🏠 Casa</option>
+                                    <option value="fa-gamepad">🎮 Games</option>
+                                    <option value="fa-book">📚 Livros</option>
+                                    <option value="fa-car">🚗 Automotivo</option>
+                                    <option value="fa-dumbbell">💪 Fitness</option>
+                                    <option value="fa-baby">👶 Infantil</option>
+                                    <option value="fa-utensils">🍴 Alimentação</option>
+                                    <option value="fa-paw">🐾 Pet Shop</option>
+                                    <option value="fa-tags">🏷️ Promoções</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group-apple">
+                            <label for="category-type">Tipo de Categoria</label>
+                            <select id="category-type" required>
+                                <option value="">Selecione o tipo</option>
+                                <option value="manual">Manual (Produtos Selecionados)</option>
+                                <option value="categoria">Por Categoria de Produto</option>
+                                <option value="mais-vendidos">Mais Vendidos</option>
+                                <option value="ultimos">Últimos Cadastrados</option>
+                                <option value="promocao">Em Promoção</option>
+                                <option value="estoque-baixo">Estoque Baixo</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group-apple hidden" id="category-value-group">
+                            <label for="category-value">Categoria de Produto</label>
+                            <select id="category-value">
+                                <option value="">Selecione a categoria</option>
+                            </select>
+                        </div>
+
+                        <div class="form-actions-apple">
+                            <button type="submit" class="btn-apple-primary">
+                                <i class="fa-solid fa-plus"></i>
+                                Adicionar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA GERENCIAR PRODUTOS DA CATEGORIA -->
+    <div id="manage-products-modal" class="modal-overlay hidden">
+        <div class="modal-content modal-content-large-apple">
+            <div class="modal-header-apple">
+                <h3 id="manage-products-title">Gerenciar Produtos da Categoria</h3>
+                <button class="close-btn-apple">&times;</button>
+            </div>
+            
+            <div class="modal-body-apple">
+                <div class="products-management">
+                    <div class="search-products-section">
+                        <h4>Adicionar Produtos</h4>
+                        <div class="search-bar-apple">
+                            <i class="fa-solid fa-search"></i>
+                            <input type="text" id="search-products-input" placeholder="Buscar produtos para adicionar...">
+                        </div>
+                        <div id="available-products-list" class="products-list-apple">
+                            <!-- Produtos disponíveis serão listados aqui -->
+                        </div>
+                    </div>
+                    
+                    <div class="selected-products-section">
+                        <h4>Produtos na Categoria</h4>
+                        <div id="selected-products-list" class="products-list-apple">
+                            <!-- Produtos selecionados serão listados aqui -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer-apple">
+                <button id="save-products-btn" class="btn-apple-primary">
+                    <i class="fa-solid fa-save"></i>
+                    Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="payment-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header"><h3>Forma de Pagamento</h3><button class="close-modal-btn">&times;</button></div>
+            <div class="modal-body">
+                <div class="payment-total-display"><span>Total a Pagar:</span><strong id="payment-modal-total">R$ 0,00</strong></div>
+                <div class="payment-methods"><button class="payment-method-btn active" data-method="Dinheiro"><i class="fa-solid fa-money-bill-wave"></i> Dinheiro</button><button class="payment-method-btn" data-method="Cartão"><i class="fa-solid fa-credit-card"></i> Cartão</button><button class="payment-method-btn" data-method="PIX"><i class="fa-brands fa-pix"></i> PIX</button></div>
+                <div id="cash-payment-details"><div class="form-group"><label for="amount-received">Valor Recebido (R$)</label><input type="number" id="amount-received" placeholder="0,00"></div><div class="change-display"><span>Troco:</span><strong id="change-value">R$ 0,00</strong></div></div>
+                <div id="receipt-details" class="form-group hidden"><label for="receipt-contact">Enviar comprovante para (Email/WhatsApp)</label><input type="text" id="receipt-contact" placeholder="Digite o email ou telefone"></div>
+            </div>
+            <div class="modal-footer"><button id="confirm-payment-btn" class="btn-primary btn-full">Confirmar Pagamento</button></div>
+        </div>
+    </div>
+    <div id="success-modal" class="modal-overlay hidden">
+        <div class="modal-content text-center">
+            <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <h3 class="success-title">Venda Realizada com Sucesso!</h3>
+            <p class="success-message">Venda número: <strong id="sale-id-display">#12345</strong></p>
+            <div class="modal-footer-success"><button id="print-receipt-btn" class="btn-secondary"><i class="fa-solid fa-print"></i> Imprimir Cupom</button><button id="new-sale-btn" class="btn-primary"><i class="fa-solid fa-plus"></i> Nova Venda</button></div>
+        </div>
+    </div>
+    
+    <script src="header.js"></script>
+    <script src="nova-venda-supa.js"></script> 
+    <script src="nova-venda-supa-integracoes.js"></script> 
+    <script src="nova-venda-cupom.js"></script>
+    <script src="nova-venda-whats.js"></script>
+    <script src="nova-venda-pag-config.js"></script>  
+    <script src="nova-venda-pag-logic.js"></script>  
+    <script src="nova-venda-pag-func.js"></script>   
+    <script src="nova-venda-data.js"></script>
+    <script src="nova-venda-ui.js"></script>
+    <script src="nova-venda-formas-pag.js"></script>
+    <!-- NOVO SCRIPT PARA CATEGORIAS -->
+    <script src="nova-venda-abas.js"></script>
+</body>
+</html>

@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Acessar o Sistema</title>
+    <link rel="icon" type="image/png" href="log.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .bg-gradient-orange {
+            background: linear-gradient(135deg, #FFB74D, #FF9800);
+        }
+        .bg-header-gradient {
+            background: linear-gradient(135deg, #FFB74D, #FF9800);
+            backdrop-filter: blur(20px);
+        }
+        .btn-premium {
+            background: linear-gradient(135deg, #FFB74D, #FF9800);
+            box-shadow: 0 8px 25px rgba(255, 140, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 140, 0, 0.4);
+        }
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid #FF9800;
+            color: #FF9800;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: #FF9800;
+            color: white;
+            transform: translateY(-1px);
+        }
+        .input-field {
+            border: none;
+            border-radius: 0;
+            background: #efeff0;
+            padding: 1rem 1.25rem;
+            width: 100%;
+            transition: all 0.3s ease-in-out;
+            color: #374151;
+            font-size: 1rem;
+            padding-left: 3rem;
+        }
+        .input-field::placeholder {
+            color: #9ca3af;
+        }
+        .input-field:focus {
+            border: 1px solid #FF9800;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.3);
+        }
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0px 1000px #efeff0 inset !important;
+            -webkit-text-fill-color: #374151 !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+        .form-container {
+            display: flex;
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 90%;
+            max-width: 960px;
+            margin: auto;
+            min-height: 450px;
+        }
+        .welcome-section {
+            background: linear-gradient(135deg, #FFB74D, #FF9800);
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: white;
+            text-align: center;
+        }
+        .login-form-section {
+            width: 60%;
+            padding: 3rem 2.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        #login-btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            width: 50%;
+            margin: 0 auto;
+            display: block;
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .popup-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        }
+        .overlay.active .popup-card {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        @media (max-width: 768px) {
+            .form-container {
+                flex-direction: column;
+                width: 95%;
+                max-width: 500px;
+                min-height: auto;
+            }
+            .welcome-section {
+                width: 100%;
+                padding: 1.5rem;
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
+                height: 180px;
+            }
+            .login-form-section {
+                width: 100%;
+                padding: 2rem 1.5rem;
+            }
+            .form-card-modern, .input-field {
+                padding: 0.875rem 1rem;
+                font-size: 0.95rem;
+                padding-left: 3rem;
+            }
+            .btn-premium, .btn-secondary {
+                padding: 0.875rem 1.5rem;
+                font-size: 1rem;
+            }
+            #login-btn {
+                width: 70%;
+                margin: 0 auto;
+            }
+            header {
+                padding: 1rem;
+            }
+            header .text-2xl {
+                font-size: 1.5rem;
+            }
+            header nav ul {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .login-form-section {
+                padding: 1.5rem 1rem;
+            }
+            .input-field {
+                padding: 0.75rem;
+                font-size: 0.9rem;
+                padding-left: 2.5rem;
+            }
+            .btn-premium, .btn-secondary {
+                padding: 0.75rem 1.25rem;
+                font-size: 0.95rem;
+            }
+            #login-btn {
+                width: 80%;
+                margin: 0 auto;
+            }
+            header {
+                padding: 0.75rem;
+            }
+            header .text-2xl {
+                font-size: 1.25rem;
+            }
+            header nav ul {
+                gap: 0.5rem;
+                font-size: 0.8rem;
+            }
+            header .w-10.h-10 {
+                width: 2rem;
+                height: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-header-gradient shadow-xl py-4 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50">
+        <div class="text-2xl font-bold text-white flex items-center">
+            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-3">
+                <img src="log.png" alt="Lume Logo" class="w-full h-full object-cover bg-gray-600 rounded-xl p-1">
+            </div>
+            <a href="index.html" class="hover:text-gray-200 transition duration-300">Lume</a>
+        </div>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center py-8 px-4 md:px-8">
+        <div class="form-container">
+            <div class="welcome-section">
+                <h2 class="text-3xl md:text-4xl font-extrabold mb-4">Bem-vindo!</h2>
+                <p class="text-base md:text-lg text-white text-opacity-80">
+                    Mantenha-se conectado(a) com a gente para acessar suas informações pessoais.
+                </p>
+                <a href="inscricao.html" class="mt-8 px-6 py-3 border border-white rounded-full text-white font-semibold hover:bg-white hover:text-[#FF9800] transition duration-300">
+                    CRIAR CONTA
+                </a>
+            </div>
+
+            <div class="login-form-section">
+                <div class="text-center mb-8">
+                    <img src="log.png" alt="Lume Logo" class="w-16 h-16 mx-auto mb-4 p-1 rounded-xl animate-float">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Acessar o Sistema</h2>
+                    <p class="text-gray-600">Insira seus dados para continuar</p>
+                </div>
+
+                <form id="login-form">
+                    <div class="mb-5 relative">
+                        <i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <label for="email" class="block text-gray-700 text-sm font-medium mb-2 sr-only">Email</label>
+                        <input type="email" id="email" class="input-field" placeholder="Email" required autocomplete="email">
+                    </div>
+                    <div class="mb-6 relative">
+                        <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <label for="password" class="block text-gray-700 text-sm font-medium mb-2 sr-only">Senha</label>
+                        <input type="password" id="password" class="input-field" placeholder="Senha" required autocomplete="current-password">
+                    </div>
+                    
+                    <div class="flex items-center justify-between mb-6">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="remember-me" class="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500">
+                            <span class="ml-2 text-sm text-gray-600">Lembrar de mim</span>
+                        </label>
+                        <button type="button" id="forgot-password" class="text-sm text-orange-500 hover:text-orange-600 font-medium transition duration-300">
+                            Esqueci minha senha
+                        </button>
+                    </div>
+                    
+                    <button type="submit" id="login-btn" class="btn-premium text-white font-bold py-3 px-6 rounded-full text-lg mb-4">
+                        Entrar
+                    </button>
+                    
+                    <div id="message" class="text-center text-sm font-medium mt-4"></div>
+                </form>
+
+                <form id="reset-form" class="hidden">
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Redefinir Senha</h3>
+                        <p class="text-gray-600 text-sm">Digite seu email para receber o link de redefinição</p>
+                    </div>
+                    <div class="mb-5 relative">
+                        <i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <label for="reset-email" class="block text-gray-700 text-sm font-medium mb-2 sr-only">Email</label>
+                        <input type="email" id="reset-email" class="input-field" placeholder="seuemail@exemplo.com" required>
+                    </div>
+                    <button type="submit" id="reset-btn" class="btn-secondary font-bold py-3 px-6 rounded-full text-lg w-full mb-4">
+                        Enviar Link de Redefinição
+                    </button>
+                    <button type="button" id="back-to-login" class="text-orange-500 hover:text-orange-600 font-medium w-full text-center">
+                        ← Voltar ao Login
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <div id="popup-overlay" class="overlay">
+        <div class="popup-card">
+            <h3 id="popup-icon" class="text-4xl mb-4">✓</h3>
+            <h2 id="popup-title" class="text-2xl font-bold text-gray-800 mb-3">Login Realizado!</h2>
+            <p id="popup-message" class="text-gray-600 mb-6">Redirecionando para o seu painel...</p>
+            <button id="close-popup" class="btn-premium text-white font-bold py-3 px-6 rounded-full text-lg">Entendi</button>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('load', () => {
+            if (typeof supabase === 'undefined') {
+                showMessage('❌ Erro de conexão. Recarregue a página ou verifique sua internet.', 'text-red-500');
+            }
+        });
+
+        const SUPABASE_URL = 'https://gnehkswoqlpchtlgyjyj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduZWhrc3dvcWxwY2h0bGd5anlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTY3NjYsImV4cCI6MjA2OTQ3Mjc2Nn0.8giA1bDvCzgvlcW_pkimGO9qHRF2I0QfhG6nx9U_tdY';
+
+        let supabaseClient;
+        
+        try {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (error) {
+            console.error('Erro ao inicializar Supabase:', error);
+            showMessage('❌ Erro de inicialização. Recarregue a página.', 'text-red-500');
+        }
+
+        const loginForm = document.getElementById('login-form');
+        const resetForm = document.getElementById('reset-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const rememberMeInput = document.getElementById('remember-me');
+        const messageDiv = document.getElementById('message');
+        const popupOverlay = document.getElementById('popup-overlay');
+        const closePopupButton = document.getElementById('close-popup');
+        const forgotPasswordBtn = document.getElementById('forgot-password');
+        const backToLoginBtn = document.getElementById('back-to-login');
+        const loginBtn = document.getElementById('login-btn');
+        const resetBtn = document.getElementById('reset-btn');
+
+        function showMessage(text, colorClass) {
+            messageDiv.textContent = text;
+            messageDiv.className = `text-center text-sm font-medium mt-4 ${colorClass}`;
+        }
+
+        function setLoadingState(button, isLoading, originalText) {
+            if (isLoading) {
+                button.innerHTML = `<span class="loading-spinner"></span>${originalText}...`;
+                button.disabled = true;
+            } else {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        closePopupButton.addEventListener('click', () => {
+            popupOverlay.classList.remove('active');
+        });
+
+        forgotPasswordBtn.addEventListener('click', () => {
+            loginForm.classList.add('hidden');
+            resetForm.classList.remove('hidden');
+            showMessage('', '');
+        });
+
+        backToLoginBtn.addEventListener('click', () => {
+            resetForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            showMessage('', '');
+        });
+
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const rememberMe = rememberMeInput.checked;
+
+            if (!email || !password) {
+                showMessage('❌ Por favor, preencha todos os campos.', 'text-red-500');
+                return;
+            }
+
+            setLoadingState(loginBtn, true, 'Entrando');
+            showMessage('Fazendo login...', 'text-orange-500');
+
+            try {
+                if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+                    throw new Error('Erro de conexão: Supabase não carregado. Verifique sua conexão com a internet.');
+                }
+
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                if (data.user && data.session) {
+                    if (rememberMe) {
+                        localStorage.setItem('lume_remember_email', email);
+                    } else {
+                        localStorage.removeItem('lume_remember_email');
+                    }
+
+                    loginForm.reset();
+                    showMessage('✅ Login realizado! Redirecionando para o seu painel...', 'text-green-600');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'inicio.html';
+                    }, 1000);
+
+                } else {
+                    throw new Error('Erro inesperado no login');
+                }
+
+            } catch (error) {
+                console.error('Erro ao fazer login:', error.message);
+
+                if (error.message.includes('Supabase não carregado')) {
+                    showMessage('❌ Erro de conexão. Verifique sua internet e tente novamente.', 'text-red-500');
+                } else if (error.message.includes('Invalid login credentials') || error.message.includes('Invalid credentials')) {
+                    showMessage('❌ Email ou senha incorretos. Verifique seus dados.', 'text-red-500');
+                } else if (error.message.includes('Email not confirmed')) {
+                    showMessage('❌ Confirme seu email antes de fazer login. Verifique sua caixa de entrada.', 'text-red-500');
+                } else if (error.message.includes('Too many requests')) {
+                    showMessage('❌ Muitas tentativas. Aguarde alguns minutos e tente novamente.', 'text-red-500');
+                } else if (error.message.includes('Network')) {
+                    showMessage('❌ Erro de conexão. Verifique sua internet e tente novamente.', 'text-red-500');
+                } else {
+                    showMessage(`❌ Erro: ${error.message}`, 'text-red-500');
+                }
+            }
+
+            setLoadingState(loginBtn, false, 'Entrar');
+        });
+
+        resetForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const resetEmail = document.getElementById('reset-email').value;
+
+            if (!resetEmail) {
+                showMessage('❌ Por favor, digite seu email.', 'text-red-500');
+                return;
+            }
+
+            setLoadingState(resetBtn, true, 'Enviando');
+            showMessage('Enviando link de redefinição...', 'text-orange-500');
+
+            try {
+                if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+                    throw new Error('Erro de conexão: Supabase não carregado.');
+                }
+
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(resetEmail, {
+                    redirectTo: window.location.origin + '/reset-senha.html',
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                // Removed showPopup for reset password as it's less critical than login success.
+                showMessage('📧 Link enviado! Verifique seu email para redefinir sua senha.', 'text-green-600');
+                resetForm.reset();
+
+            } catch (error) {
+                console.error('Erro ao enviar reset:', error.message);
+
+                if (error.message.includes('Supabase não carregado')) {
+                    showMessage('❌ Erro de conexão. Verifique sua internet e tente novamente.', 'text-red-500');
+                } else if (error.message.includes('rate limit')) {
+                    showMessage('❌ Muitas tentativas. Aguarde alguns minutos.', 'text-red-500');
+                } else {
+                    showMessage(`❌ Erro: ${error.message}`, 'text-red-500');
+                }
+            }
+
+            setLoadingState(resetBtn, false, 'Enviar Link de Redefinição');
+        });
+
+        window.addEventListener('load', () => {
+            const savedEmail = localStorage.getItem('lume_remember_email');
+            if (savedEmail) {
+                emailInput.value = savedEmail;
+                rememberMeInput.checked = true;
+            }
+        });
+
+        window.addEventListener('load', async () => {
+            try {
+                if (supabaseClient) {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (session) {
+                        showMessage('ℹ️ Você já está logado na sua conta Lume.', 'text-blue-500');
+                    }
+                }
+            } catch (error) {
+                console.log('Erro ao verificar sessão:', error);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Relatório de Vendas</title>
+    <link rel="icon" type="image/png" href="log.png">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <!-- Header CSS -->
+    <link href="header.css" rel="stylesheet">
+    <!-- Relatório CSS -->
+    <link href="relatorio-vendas.css" rel="stylesheet">
+</head>
+<body>
+    <div id="header-container"></div>
+
+    <main class="main-container">
+        <!-- Header do Relatório -->
+        <div class="relatorio-header">
+            <div class="header-content">
+                <div class="header-main">
+                    <h1 class="header-title">Relatório de Vendas</h1>
+                    <p class="header-subtitle">Dashboard completo de análise de vendas e performance</p>
+                </div>
+                
+                <div class="header-today-stats">
+                    <div class="today-card">
+                        <div class="today-icon">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <div class="today-info">
+                            <div class="today-label">Vendas Hoje</div>
+                            <div class="today-value" id="today-vendas">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="today-card">
+                        <div class="today-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="today-info">
+                            <div class="today-label">Valor Hoje</div>
+                            <div class="today-value" id="today-valor">R$ 0,00</div>
+                        </div>
+                    </div>
+                    
+                    <div class="today-card">
+                        <div class="today-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="today-info">
+                            <div class="today-label">Produtos Hoje</div>
+                            <div class="today-value" id="today-produtos">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controles de Período -->
+        <div class="period-controls">
+            <div class="period-selector">
+                <div class="period-buttons">
+                    <button class="period-btn active" data-period="7">7 dias</button>
+                    <button class="period-btn" data-period="30">30 dias</button>
+                    <button class="period-btn" data-period="90">90 dias</button>
+                    <button class="period-btn" data-period="365">1 ano</button>
+                    <button class="period-btn" data-period="custom">Personalizado</button>
+                </div>
+            </div>
+            
+            <div class="date-inputs" id="custom-dates" style="display: none;">
+                <div class="date-group">
+                    <label for="start-date">Data Inicial:</label>
+                    <input type="date" id="start-date">
+                </div>
+                <div class="date-group">
+                    <label for="end-date">Data Final:</label>
+                    <input type="date" id="end-date">
+                </div>
+                <button class="apply-btn" id="apply-custom-period">Aplicar</button>
+            </div>
+
+            <div class="refresh-controls">
+                <button class="refresh-btn" id="refresh-data">
+                    <i class="fas fa-sync-alt"></i>
+                    Atualizar
+                </button>
+                <button class="export-btn" id="export-report">
+                    <i class="fas fa-download"></i>
+                    Exportar
+                </button>
+            </div>
+        </div>
+
+        <!-- Cards de Estatísticas -->
+        <div class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon total-vendas">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="total-vendas">R$ 0,00</div>
+                            <div class="stat-label">Total de Vendas</div>
+                            <div class="stat-change" id="total-vendas-change">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon numero-vendas">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="numero-vendas">0</div>
+                            <div class="stat-label">Número de Vendas</div>
+                            <div class="stat-change" id="numero-vendas-change">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon produtos-vendidos">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="produtos-vendidos">0</div>
+                            <div class="stat-label">Produtos Vendidos</div>
+                            <div class="stat-change" id="produtos-vendidos-change">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon descontos">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="descontos-concedidos">R$ 0,00</div>
+                            <div class="stat-label">Descontos Concedidos</div>
+                            <div class="stat-change" id="descontos-change">
+                                <i class="fas fa-arrow-down"></i>
+                                <span>0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Evolução de Vendas -->
+        <div class="chart-section">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Evolução de Vendas</h3>
+                    <div class="chart-controls">
+                        <select id="chart-type">
+                            <option value="valor">Valor (R$)</option>
+                            <option value="quantidade">Quantidade</option>
+                            <option value="ambos">Ambos</option>
+                        </select>
+                        <select id="chart-period">
+                            <option value="day">Por Dia</option>
+                            <option value="week">Por Semana</option>
+                            <option value="month">Por Mês</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="vendas-evolution-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid de Gráficos Adicionais -->
+        <div class="additional-charts-section">
+            <div class="charts-grid">
+                <!-- Top 10 Produtos -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Top 10 Produtos</h3>
+                        <div class="chart-info">
+                            <i class="fas fa-info-circle" title="Produtos mais vendidos por valor"></i>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-small">
+                        <canvas id="top-produtos-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Formas de Pagamento -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Formas de Pagamento</h3>
+                        <div class="chart-info">
+                            <i class="fas fa-info-circle" title="Distribuição por forma de pagamento"></i>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-small">
+                        <canvas id="formas-pagamento-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Vendas por Dia da Semana -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Vendas por Dia da Semana</h3>
+                        <div class="chart-info">
+                            <i class="fas fa-info-circle" title="Performance por dia da semana"></i>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-small">
+                        <canvas id="dias-semana-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Vendas por Horário -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Vendas por Horário</h3>
+                        <div class="chart-info">
+                            <i class="fas fa-info-circle" title="Distribuição de vendas ao longo do dia"></i>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-small">
+                        <canvas id="horarios-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Filtros Avançados -->
+        <div class="filters-section">
+            <div class="filters-header">
+                <h3>Filtros Avançados</h3>
+                <button class="toggle-filters" id="toggle-filters">
+                    <i class="fas fa-filter"></i>
+                    <span>Mostrar Filtros</span>
+                </button>
+            </div>
+            
+            <div class="filters-content" id="filters-content" style="display: none;">
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="filter-vendedor">Vendedor:</label>
+                        <select id="filter-vendedor">
+                            <option value="">Todos os vendedores</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filter-forma-pagamento">Forma de Pagamento:</label>
+                        <select id="filter-forma-pagamento">
+                            <option value="">Todas as formas</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Cartao">Cartão</option>
+                            <option value="PIX">PIX</option>
+                            <option value="Crediario">Crediário</option>
+                            <option value="Cashback">Cashback</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filter-canal">Canal de Venda:</label>
+                        <select id="filter-canal">
+                            <option value="">Todos os canais</option>
+                            <option value="presencial">Presencial</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="publicidade">Publicidade</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filter-cliente">Cliente:</label>
+                        <input type="text" id="filter-cliente" placeholder="Nome do cliente...">
+                    </div>
+                </div>
+                
+                <div class="filters-actions">
+                    <button class="apply-filters-btn" id="apply-filters">Aplicar Filtros</button>
+                    <button class="clear-filters-btn" id="clear-filters">Limpar Filtros</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading-overlay" id="loading-overlay" style="display: none;">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p>Carregando dados...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+    <script src="relatorio-vendas.js"></script>
+    <script src="relatorio-vendas-data.js"></script>
+    <script src="relatorio-vendas-charts.js"></script>
+    <script src="relatorio-vendas-ui.js"></script>
+    <script src="relatorio-vendas-chart2.js"></script>
+
+</body>
+</html>

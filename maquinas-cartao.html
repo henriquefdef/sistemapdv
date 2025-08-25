@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Máquinas de Cartão</title>
+    
+    <link rel="icon" type="image/png" href="log.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="header.css">
+    
+    <style>
+        :root {
+            --primary-color: #FF9800;
+            --primary-hover: #e68a00;
+            --text-primary: #1f2937;
+            --text-secondary: #4a5568;
+            --text-light: #6b7280;
+            --border-color: #e5e7eb;
+            --background-light: #f8fafc;
+            --background-gradient: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+        }
+
+        body {
+            background: var(--background-gradient);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-secondary);
+        }
+
+        .page-container {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 2rem auto;
+            margin-left: 6%;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.15rem;
+            font-weight: 450;
+            color: var(--text-secondary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; 
+        }
+
+        .back-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: #e2e8f0;
+            color: var(--text-secondary);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .back-button:hover { background-color: #cbd5e0; }
+
+        .full-width-divider {
+            border: none;
+            height: 2px;
+            background-color: var(--primary-color);
+            margin-bottom: 2rem;
+        }
+
+        /* Abas */
+        .tab-nav {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .tab-nav-item {
+            padding: 0.75rem 0;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--text-light);
+            font-size: 0.95rem;
+            font-weight: 500;
+            position: relative;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+        }
+        .tab-nav-item:hover { color: var(--text-primary); }
+        .tab-nav-item.active {
+            color: var(--primary-color);
+            font-weight: 600;
+            border-bottom-color: var(--primary-color);
+        }
+
+        /* Conteúdo das abas */
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+        .tab-title {
+            margin-bottom: 1.5rem; 
+            color: var(--text-primary); 
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        /* Formulário */
+        .form-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            max-width: 520px;
+            margin: 0;
+        }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .required::after {
+            content: " *";
+            color: var(--error-color);
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
+        }
+        .fees-description {
+            color: var(--text-light);
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+        .fees-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .fee-item { text-align: center; }
+        .fee-item label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 0 0 0.5rem 0;
+            display: block;
+        }
+        .fee-input-container { position: relative; }
+        .fee-input-container input {
+            width: 100%;
+            padding: 0.75rem;
+            padding-right: 2rem;
+            text-align: center;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        .fee-input-container span {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+
+        /* Lista de Máquinas */
+        .machines-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+        .machine-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .machine-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        .machine-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .machine-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .machine-name i { color: var(--primary-color); }
+        .machine-actions { display: flex; gap: 0.5rem; }
+        .btn-delete {
+            width: 32px; height: 32px; border: none; border-radius: 6px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; font-size: 0.85rem;
+            background-color: #fef2f2; color: var(--error-color);
+        }
+        .btn-delete:hover { background-color: #fee2e2; color: #dc2626; }
+        .fees-display {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+        .fee-display-item {
+            background-color: #f8f9fa; border: 1px solid #e9ecef;
+            border-radius: 6px; padding: 0.75rem; text-align: center;
+        }
+        .fee-label {
+            font-size: 0.75rem; font-weight: 500; color: var(--text-light);
+            margin-bottom: 0.25rem; text-transform: uppercase;
+        }
+        .fee-value { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); }
+
+        /* Estado Vazio */
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-light); }
+        .empty-state i { font-size: 4rem; margin-bottom: 1.5rem; color: #d1d5db; }
+        .empty-state h3 { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; }
+
+        /* Botões Ação */
+        .action-buttons {
+            display: flex; gap: 1rem; justify-content: flex-end;
+            margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);
+        }
+        .btn-cancel, .btn-save {
+            font-weight: 500; font-size: 0.9rem; padding: 0.75rem 2rem;
+            border-radius: 8px; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-cancel { background-color: transparent; color: var(--text-light); border: 1px solid #d1d5db; }
+        .btn-cancel:hover { background-color: #f9fafb; border-color: #9ca3af; }
+        .btn-save { background-color: var(--primary-color); color: white; border: none; display: flex; align-items: center; gap: 0.5rem; }
+        .btn-save:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
+        .btn-save:disabled { background-color: #d1d5db; cursor: not-allowed; transform: none; }
+
+        /* Notificações */
+        .notification {
+            position: fixed; top: 2rem; right: 2rem; padding: 1rem 1.5rem;
+            border-radius: 8px; color: white; font-weight: 500;
+            z-index: 1001; max-width: 400px; animation: slideIn 0.3s ease;
+            display: flex; align-items: center; gap: 1rem;
+        }
+        .notification.success { background-color: var(--success-color); }
+        .notification.error { background-color: var(--error-color); }
+        .notification.info { background-color: var(--info-color); }
+        .notification button { background: none; border: none; color: white; margin-left: auto; cursor: pointer; font-size: 1rem; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        .hidden { display: none !important; }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .page-container { padding: 1rem; margin-left: 2%; }
+            .form-container { padding: 1.5rem; }
+            .fees-grid, .fees-display { grid-template-columns: repeat(3, 1fr); }
+            .machines-list { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) {
+            .fees-grid, .fees-display { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <header id="header-container"></header>
+
+    <div class="page-container">
+        
+        <div class="page-header">
+            <h1>Cadastros > <strong>Máquinas de Cartão</strong></h1>
+            <a href="javascript:history.back()" class="back-button">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+
+        <hr class="full-width-divider">
+
+        <div class="tab-nav">
+            <button class="tab-nav-item active" data-tab="nova-maquina">Nova Máquina</button>
+            <button class="tab-nav-item" data-tab="maquinas-cadastradas">Máquinas Cadastradas</button>
+        </div>
+
+        <div id="nova-maquina" class="tab-pane active">
+            <div class="form-container">
+                <h3 class="tab-title">Dados da Máquina e Taxas</h3>
+                <p class="fees-description">Configure um nome e as taxas para cada tipo de transação.</p>
+                
+                <form id="machine-form" novalidate>
+                    <div class="form-group">
+                        <label for="machine-name" class="required">Nome da Máquina</label>
+                        <input type="text" id="machine-name" class="input-field" placeholder="Ex: PagSeguro, Stone..." required>
+                    </div>
+                    
+                    <div id="fees-grid" class="fees-grid"></div>
+
+                    <div class="action-buttons">
+                        <button type="button" class="btn-cancel" id="btn-cancel">Cancelar</button>
+                        <button type="submit" class="btn-save">
+                            <span id="btn-text">Salvar</span>
+                            <i id="btn-spinner" class="fas fa-spinner fa-spin hidden"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="maquinas-cadastradas" class="tab-pane">
+            <h3 class="tab-title">Máquinas Cadastradas</h3>
+            
+            <div id="machines-list" class="machines-list">
+                </div>
+
+            <div class="empty-state hidden" id="empty-state">
+                <i class="fas fa-credit-card"></i>
+                <h3>Nenhuma máquina cadastrada</h3>
+                <p>Vá para a aba "Nova Máquina" para adicionar a sua primeira.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+    
+    <script>
+    document.addEventListener('userDataReady', () => {
+        if (!window.currentCompanyId) {
+            console.error("❌ ID da empresa não foi encontrado. A aplicação não pode continuar.");
+            showNotification('Erro crítico: ID da empresa não encontrado.', 'error');
+            return;
+        }
+
+        console.log('🚀 INICIALIZANDO SCRIPT DE MÁQUINAS DE CARTÃO 🚀');
+        console.log('🏢 Company ID:', window.currentCompanyId);
+        
+        // --- CONFIGURAÇÃO E ESTADO ---
+        const supabaseClient = supabase.createClient(
+            'https://gnehkswoqlpchtlgyjyj.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduZWhrc3dvcWxwY2h0bGd5anlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTY3NjYsImV4cCI6MjA2OTQ3Mjc2Nn0.8giA1bDvCzgvlcW_pkimGO9qHRF2I0QfhG6nx9U_tdY'
+        );
+
+        const feeTypes = [
+            { id: 'debit', label: 'Débito' }, { id: '1x', label: '1x' }, { id: '2x', label: '2x' },
+            { id: '3x', label: '3x' },   { id: '4x', label: '4x' },   { id: '5x', label: '5x' },
+            { id: '6x', label: '6x' },   { id: '7x', label: '7x' },   { id: '8x', label: '8x' },
+            { id: '9x', label: '9x' },   { id: '10x', label: '10x' }, { id: '11x', label: '11x' },
+            { id: '12x', label: '12x' }
+        ];
+
+        let state = {
+            machines: [],
+            isLoading: false
+        };
+        
+        // --- ELEMENTOS DO DOM ---
+        const elements = {
+            form: document.getElementById('machine-form'),
+            saveBtn: document.querySelector('.btn-save'),
+            btnText: document.getElementById('btn-text'),
+            btnSpinner: document.getElementById('btn-spinner'),
+            machinesList: document.getElementById('machines-list'),
+            emptyState: document.getElementById('empty-state'),
+            feesGrid: document.getElementById('fees-grid'),
+            tabNav: document.querySelector('.tab-nav')
+        };
+
+        // --- FUNÇÕES DE RENDERIZAÇÃO E UI ---
+        
+        const renderFeeInputs = () => {
+            elements.feesGrid.innerHTML = feeTypes.map(fee => `
+                <div class="fee-item">
+                    <label for="fee-${fee.id}">${fee.label}</label>
+                    <div class="fee-input-container">
+                        <input type="number" id="fee-${fee.id}" step="0.01" min="0" max="100" placeholder="0.00">
+                        <span>%</span>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        const renderMachines = () => {
+            const hasMachines = state.machines.length > 0;
+            elements.machinesList.style.display = hasMachines ? 'grid' : 'none';
+            elements.emptyState.classList.toggle('hidden', hasMachines);
+
+            if (hasMachines) {
+                elements.machinesList.innerHTML = state.machines.map(createMachineCard).join('');
+            }
+        };
+
+        const createMachineCard = (machine) => {
+            const feesHTML = feeTypes.map(fee => {
+                const dbKey = fee.id === 'debit' ? 'taxa_debito' : `taxa_${fee.id}`;
+                const value = machine[dbKey] || 0;
+                return `
+                    <div class="fee-display-item">
+                        <div class="fee-label">${fee.label}</div>
+                        <div class="fee-value">${value.toFixed(2).replace('.', ',')}%</div>
+                    </div>`;
+            }).join('');
+
+            return `
+                <div class="machine-card" data-id="${machine.id}">
+                    <div class="machine-header">
+                        <div class="machine-name"><i class="fas fa-credit-card"></i>${machine.nome}</div>
+                        <div class="machine-actions">
+                            <button class="btn-delete" title="Excluir"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="fees-display">${feesHTML}</div>
+                </div>`;
+        };
+        
+        const setupTabs = () => {
+            elements.tabNav.addEventListener('click', (e) => {
+                const button = e.target.closest('.tab-nav-item');
+                if (!button) return;
+
+                const tabId = button.dataset.tab;
+                console.log(`[UI] Tab clicada: ${tabId}`);
+
+                elements.tabNav.querySelectorAll('.tab-nav-item').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+                
+                button.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+                
+                // Ao mudar para a aba de cadastro, limpa o formulário para evitar confusão
+                if (tabId === 'nova-maquina') {
+                    clearForm();
+                }
+            });
+        };
+        
+        const showNotification = (message, type = 'info') => {
+            const existing = document.querySelector('.notification');
+            if (existing) existing.remove();
+
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+            
+            notification.innerHTML = `
+                <i class="fas ${icon}"></i>
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
+        };
+
+        const setLoadingState = (loading) => {
+            state.isLoading = loading;
+            elements.saveBtn.disabled = loading;
+            elements.btnText.classList.toggle('hidden', loading);
+            elements.btnSpinner.classList.toggle('hidden', !loading);
+        };
+
+        const clearForm = () => {
+            console.log('[FORM] Limpando formulário.');
+            elements.form.reset();
+        };
+
+        // --- LÓGICA DE DADOS (CRUD) ---
+        
+        const loadMachines = async () => {
+            console.log('📥 Carregando máquinas do Supabase...');
+            try {
+                const { data, error } = await supabaseClient
+                    .from('maquinas')
+                    .select('*')
+                    .eq('id_empresa', window.currentCompanyId)
+                    .order('nome', { ascending: true });
+
+                if (error) throw error;
+
+                console.log(`✅ ${data.length} máquinas carregadas com sucesso.`);
+                state.machines = data || [];
+                renderMachines();
+            } catch (error) {
+                console.error('❌ Erro ao carregar máquinas:', error);
+                showNotification('Erro ao carregar máquinas.', 'error');
+            }
+        };
+
+        const handleFormSubmit = async (e) => {
+            e.preventDefault();
+            if (state.isLoading) return;
+
+            const machineName = document.getElementById('machine-name').value.trim();
+            if (!machineName) {
+                showNotification('O nome da máquina é obrigatório.', 'error');
+                return;
+            }
+            
+            setLoadingState(true);
+            const machineData = collectFormData();
+            console.log('📋 Dados coletados do formulário:', machineData);
+
+            try {
+                console.log('➕ Salvando nova máquina...');
+                const result = await saveMachine(machineData);
+
+                if (result.success) {
+                    showNotification(result.message, 'success');
+                    await loadMachines();
+                    document.querySelector('.tab-nav-item[data-tab="maquinas-cadastradas"]').click();
+                    clearForm();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('❌ Erro na submissão:', error);
+                showNotification(`Erro: ${error.message}`, 'error');
+            } finally {
+                setLoadingState(false);
+            }
+        };
+
+        const collectFormData = () => {
+            const data = {
+                nome: document.getElementById('machine-name').value.trim(),
+                id_empresa: window.currentCompanyId,
+                auth_user_id: window.currentUser.auth_user_id
+            };
+            feeTypes.forEach(fee => {
+                const dbKey = fee.id === 'debit' ? 'taxa_debito' : `taxa_${fee.id}`;
+                const input = document.getElementById(`fee-${fee.id}`);
+                data[dbKey] = parseFloat(input.value) || 0;
+            });
+            return data;
+        };
+
+        const saveMachine = async (machineData) => {
+            console.log('🔎 Verificando se já existe máquina com o mesmo nome...');
+            const { data: existing, error: checkError } = await supabaseClient
+                .from('maquinas')
+                .select('id')
+                .eq('id_empresa', window.currentCompanyId)
+                .eq('nome', machineData.nome)
+                .maybeSingle();
+
+            if (checkError) return { success: false, error: checkError.message };
+            if (existing) return { success: false, error: 'Já existe uma máquina com este nome.' };
+
+            console.log('💾 Inserindo no Supabase...');
+            const { error } = await supabaseClient.from('maquinas').insert([machineData]);
+            
+            if (error) return { success: false, error: error.message };
+            return { success: true, message: 'Máquina salva com sucesso!' };
+        };
+
+        const handleListClick = (e) => {
+            const deleteBtn = e.target.closest('.btn-delete');
+            if (!deleteBtn) return;
+            
+            const card = e.target.closest('.machine-card');
+            const machineId = parseInt(card.dataset.id, 10);
+
+            if (deleteBtn) deleteMachine(machineId);
+        };
+        
+        const deleteMachine = async (id) => {
+            if (!confirm('Tem certeza que deseja excluir esta máquina? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+            console.log(`🗑️ Excluindo máquina ID: ${id}`);
+            try {
+                const { error } = await supabaseClient
+                    .from('maquinas')
+                    .delete()
+                    .eq('id', id)
+                    .eq('id_empresa', window.currentCompanyId);
+
+                if (error) throw error;
+                
+                showNotification('Máquina excluída com sucesso!', 'success');
+                await loadMachines();
+
+            } catch (error) {
+                console.error('❌ Erro ao excluir:', error);
+                showNotification(`Erro ao excluir: ${error.message}`, 'error');
+            }
+        };
+
+        // --- INICIALIZAÇÃO ---
+        const init = () => {
+            renderFeeInputs();
+            setupTabs();
+            elements.form.addEventListener('submit', handleFormSubmit);
+            document.getElementById('btn-cancel').addEventListener('click', clearForm);
+            elements.machinesList.addEventListener('click', handleListClick);
+            loadMachines();
+            console.log('✅ Script de máquinas inicializado com sucesso!');
+        };
+        
+        init();
+    });
+    </script>
+
+</body>
+</html>

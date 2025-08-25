@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Fornecedores</title>
+    
+    <link rel="icon" type="image/png" href="log.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="header.css">
+    
+    <style>
+        :root {
+            --primary-color: #FF9800; /* Verde para fornecedores */
+            --primary-hover: #FF9800;
+            --text-primary: #1f2937;
+            --text-secondary: #4a5568;
+            --text-light: #6b7280;
+            --border-color: #e5e7eb;
+            --background-light: #f8fafc;
+            --background-gradient: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+        }
+
+        body {
+            background: var(--background-gradient);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-secondary);
+        }
+
+        .page-container {
+            padding: 2rem; max-width: 1200px; margin: 2rem auto; margin-left: 6%;
+        }
+
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.15rem; font-weight: 450; color: var(--text-secondary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; 
+        }
+
+        .back-button {
+            display: flex; align-items: center; gap: 0.5rem; background-color: #e2e8f0;
+            color: var(--text-secondary); padding: 0.4rem 0.8rem; border-radius: 6px;
+            text-decoration: none; font-size: 0.8rem; font-weight: 500; transition: background-color 0.2s;
+        }
+        .back-button:hover { background-color: #cbd5e0; }
+
+        .full-width-divider {
+            border: none; height: 2px; background-color: var(--primary-color); margin-bottom: 2rem;
+        }
+
+        .tab-nav {
+            display: flex; gap: 2rem; margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .tab-nav-item {
+            padding: 0.75rem 0; cursor: pointer; border: none; background: none;
+            color: var(--text-light); font-size: 0.95rem; font-weight: 500;
+            position: relative; border-bottom: 2px solid transparent; transition: all 0.2s ease-in-out;
+        }
+        .tab-nav-item:hover { color: var(--text-primary); }
+        .tab-nav-item.active {
+            color: var(--primary-color); font-weight: 600; border-bottom-color: var(--primary-color);
+        }
+
+        .tab-pane { 
+            display: none; 
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            padding: 2.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .tab-pane.active { display: block; }
+
+        .tab-title {
+            margin: 0 0 1.5rem 0; color: var(--text-primary); 
+            font-weight: 600; font-size: 1.25rem;
+        }
+
+        .form-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 2rem;
+        }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group.full-width { grid-column: 1 / -1; }
+
+        .form-group label {
+            margin-bottom: 0.5rem; font-size: 0.875rem;
+            font-weight: 500; color: var(--text-primary);
+        }
+        .required::after { content: " *"; color: var(--error-color); }
+        
+        .input-with-icon { position: relative; }
+        .input-with-icon .fas, .input-with-icon .far {
+            position: absolute; left: 1rem; top: 50%;
+            transform: translateY(-50%); color: #9ca3af; transition: color 0.2s;
+        }
+        .input-field, .textarea-field {
+            width: 100%; padding: 0.75rem; padding-left: 2.75rem;
+            border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem;
+            background-color: #fff; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box;
+        }
+        .textarea-field { padding-left: 0.75rem; }
+        .input-field:focus, .textarea-field:focus {
+            outline: none; border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+        }
+        .input-field:focus ~ .fas, .input-field:focus ~ .far { color: var(--primary-color); }
+        
+        .fornecedores-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; min-height: 300px; }
+        .fornecedor-card { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .fornecedor-card:hover { border-color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .fornecedor-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .fornecedor-info h3 { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin: 0 0 0.25rem 0; display: flex; align-items: center; gap: 0.75rem; }
+        .fornecedor-info h3 i { color: var(--primary-color); }
+        .fornecedor-info p { font-size: 0.9rem; color: var(--text-light); margin: 0; }
+        .fornecedor-actions { display: flex; gap: 0.5rem; }
+        .btn-edit, .btn-delete { width: 32px; height: 32px; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.85rem; }
+        .btn-edit { background-color: #f3f4f6; color: var(--text-light); }
+        .btn-edit:hover { background-color: #e5e7eb; color: var(--text-primary); }
+        .btn-delete { background-color: #fef2f2; color: var(--error-color); }
+        .btn-delete:hover { background-color: #fee2e2; color: #dc2626; }
+        .fornecedor-details { border-top: 1px solid var(--border-color); padding-top: 1rem; font-size: 0.875rem; color: var(--text-secondary); }
+        .detail-item { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+        .detail-item i { color: var(--text-light); width: 16px; text-align: center; }
+        .pagination-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
+        .pagination-info { font-size: 0.9rem; color: var(--text-light); }
+        .pagination-buttons button { background-color: #fff; border: 1px solid #d1d5db; color: var(--text-secondary); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+        .pagination-buttons button:hover { background-color: #f9fafb; border-color: #9ca3af; }
+        .pagination-buttons button:disabled { background-color: #f3f4f6; color: #9ca3af; cursor: not-allowed; border-color: #e5e7eb; }
+        .pagination-buttons { display: flex; gap: 0.5rem; }
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-light); }
+        .empty-state i { font-size: 4rem; margin-bottom: 1.5rem; color: #d1d5db; }
+        .empty-state h3 { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .action-buttons { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color); }
+        .btn-cancel, .btn-save { font-weight: 500; font-size: 0.9rem; padding: 0.75rem 2rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .btn-cancel { background-color: transparent; color: var(--text-light); border: 1px solid #d1d5db; }
+        .btn-cancel:hover { background-color: #f9fafb; border-color: #9ca3af; }
+        .btn-save { background-color: var(--primary-color); color: white; border: none; display: flex; align-items: center; gap: 0.5rem; }
+        .btn-save:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
+        .btn-save:disabled { background-color: #d1d5db; cursor: not-allowed; transform: none; }
+        .notification { position: fixed; top: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 8px; color: white; font-weight: 500; z-index: 1001; max-width: 400px; animation: fadeIn 0.3s ease; display: flex; align-items: center; gap: 1rem; }
+        .notification.success { background-color: var(--success-color); }
+        .notification.error { background-color: var(--error-color); }
+        .notification.info { background-color: var(--info-color); }
+        .notification button { background: none; border: none; color: white; margin-left: auto; cursor: pointer; font-size: 1rem; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .hidden { display: none !important; }
+        @media (max-width: 992px) { .form-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .page-container { padding: 1rem; margin-left: 2%; } .tab-pane { padding: 1.5rem; } .fornecedores-list { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <header id="header-container"></header>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>Cadastros > <strong>Fornecedores</strong></h1>
+            <a href="javascript:history.back()" class="back-button"><i class="fas fa-arrow-left"></i> Voltar</a>
+        </div>
+
+        <hr class="full-width-divider">
+
+        <div class="tab-nav">
+            <button class="tab-nav-item active" data-tab="novo-fornecedor">Novo Fornecedor</button>
+            <button class="tab-nav-item" data-tab="fornecedores-cadastrados">Fornecedores Cadastrados</button>
+        </div>
+
+        <div id="novo-fornecedor" class="tab-pane active">
+            <h3 class="tab-title">Informações do Fornecedor</h3>
+            <form id="fornecedor-form" novalidate>
+                <div class="form-grid">
+                    <div class="form-group"><label for="razao_social" class="required">Razão Social</label><div class="input-with-icon"><i class="fas fa-building"></i><input type="text" id="razao_social" class="input-field" required></div></div>
+                    <div class="form-group"><label for="cnpj">CNPJ</label><div class="input-with-icon"><i class="fas fa-id-badge"></i><input type="text" id="cnpj" class="input-field"></div></div>
+                    <div class="form-group"><label for="nome_fantasia">Nome Fantasia</label><div class="input-with-icon"><i class="far fa-building"></i><input type="text" id="nome_fantasia" class="input-field"></div></div>
+                    <div class="form-group"><label for="site">Site</label><div class="input-with-icon"><i class="fas fa-globe"></i><input type="url" id="site" class="input-field"></div></div>
+                    <div class="form-group"><label for="telefone_principal" class="required">Telefone Principal</label><div class="input-with-icon"><i class="fas fa-phone"></i><input type="tel" id="telefone_principal" class="input-field" required></div></div>
+                    <div class="form-group"><label for="email_principal">Email Principal</label><div class="input-with-icon"><i class="fas fa-envelope"></i><input type="email" id="email_principal" class="input-field"></div></div>
+                    <div class="form-group"><label for="nome_contato">Pessoa de Contato</label><div class="input-with-icon"><i class="fas fa-user"></i><input type="text" id="nome_contato" class="input-field"></div></div>
+                    <div class="form-group"><label for="telefone_contato">Telefone do Contato</label><div class="input-with-icon"><i class="fas fa-mobile-alt"></i><input type="tel" id="telefone_contato" class="input-field"></div></div>
+                    <div class="form-group full-width"><label for="logradouro">Endereço</label><div class="input-with-icon"><i class="fas fa-road"></i><input type="text" id="logradouro" class="input-field"></div></div>
+                    <div class="form-group"><label for="numero">Número</label><div class="input-with-icon"><i class="fas fa-hashtag"></i><input type="text" id="numero" class="input-field"></div></div>
+                    <div class="form-group"><label for="bairro">Bairro</label><div class="input-with-icon"><i class="fas fa-map-marked-alt"></i><input type="text" id="bairro" class="input-field"></div></div>
+                    <div class="form-group"><label for="cep">CEP</label><div class="input-with-icon"><i class="fas fa-map-pin"></i><input type="text" id="cep" class="input-field"></div></div>
+                    <div class="form-group"><label for="cidade">Cidade</label><div class="input-with-icon"><i class="fas fa-city"></i><input type="text" id="cidade" class="input-field"></div></div>
+                    <div class="form-group"><label for="estado">Estado</label><div class="input-with-icon"><i class="fas fa-flag"></i><input type="text" id="estado" class="input-field"></div></div>
+                    <div class="form-group full-width"><label for="observacoes">Observações</label><textarea id="observacoes" class="textarea-field"></textarea></div>
+                </div>
+                <div class="action-buttons"><button type="button" class="btn-cancel" id="btn-cancel">Cancelar</button><button type="submit" class="btn-save"><span id="btn-text">Salvar</span><i id="btn-spinner" class="fas fa-spinner fa-spin hidden"></i></button></div>
+            </form>
+        </div>
+
+        <div id="fornecedores-cadastrados" class="tab-pane">
+            <h3 class="tab-title">Fornecedores Cadastrados</h3>
+            <div id="fornecedores-list" class="fornecedores-list"></div>
+            <div class="pagination-controls hidden" id="pagination-controls"><span class="pagination-info" id="pagination-info"></span><div class="pagination-buttons"><button id="prev-page"><i class="fas fa-arrow-left"></i> Anterior</button><button id="next-page">Próxima <i class="fas fa-arrow-right"></i></button></div></div>
+            <div class="empty-state hidden" id="empty-state"><i class="fas fa-dolly"></i><h3>Nenhum fornecedor cadastrado</h3><p>Vá para a aba "Novo Fornecedor" para adicionar o seu primeiro.</p></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+    
+    <script>
+    document.addEventListener('userDataReady', () => {
+        if (!window.currentCompanyId) {
+            console.error("❌ ID da empresa não encontrado."); showNotification('Erro crítico: ID da empresa não encontrado.', 'error'); return;
+        }
+        console.log('🚀 INICIALIZANDO SCRIPT DE FORNECEDORES 🚀');
+        
+        const supabaseClient = supabase.createClient('https://gnehkswoqlpchtlgyjyj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduZWhrc3dvcWxwY2h0bGd5anlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTY3NjYsImV4cCI6MjA2OTQ3Mjc2Nn0.8giA1bDvCzgvlcW_pkimGO9qHRF2I0QfhG6nx9U_tdY');
+        const formFieldIds = ['razao_social', 'nome_fantasia', 'cnpj', 'site', 'telefone_principal', 'email_principal', 'nome_contato', 'telefone_contato', 'logradouro', 'numero', 'bairro', 'cep', 'cidade', 'estado', 'observacoes'];
+        
+        let state = { fornecedores: [], editingFornecedorId: null, isLoading: false, currentPage: 1, itemsPerPage: 20, totalItems: 0 };
+        const elements = {
+            form: document.getElementById('fornecedor-form'),
+            saveBtn: document.querySelector('.btn-save'),
+            btnText: document.getElementById('btn-text'),
+            btnSpinner: document.getElementById('btn-spinner'),
+            listContainer: document.getElementById('fornecedores-list'),
+            emptyState: document.getElementById('empty-state'),
+            tabNav: document.querySelector('.tab-nav'),
+            pagination: { controls: document.getElementById('pagination-controls'), info: document.getElementById('pagination-info'), prevBtn: document.getElementById('prev-page'), nextBtn: document.getElementById('next-page') }
+        };
+        
+        const renderList = () => { elements.listContainer.innerHTML = state.fornecedores.length > 0 ? state.fornecedores.map(createCard).join('') : ''; };
+        const renderPagination = () => {
+            const hasItems = state.totalItems > 0;
+            elements.pagination.controls.classList.toggle('hidden', !hasItems);
+            elements.emptyState.classList.toggle('hidden', hasItems);
+            if (!hasItems) return;
+            const totalPages = Math.ceil(state.totalItems / state.itemsPerPage);
+            elements.pagination.info.textContent = `Página ${state.currentPage} de ${totalPages}`;
+            elements.pagination.prevBtn.disabled = state.currentPage === 1;
+            elements.pagination.nextBtn.disabled = state.currentPage === totalPages;
+        };
+
+        const createCard = (item) => {
+            return `<div class="fornecedor-card" data-id="${item.id}"><div class="fornecedor-header"><div class="fornecedor-info"><h3><i class="fas fa-building"></i>${item.razao_social||'Fornecedor sem nome'}</h3>${item.cnpj?`<p>${item.cnpj}</p>`:''}</div><div class="fornecedor-actions"><button class="btn-edit" title="Editar"><i class="fas fa-edit"></i></button><button class="btn-delete" title="Excluir"><i class="fas fa-trash"></i></button></div></div><div class="fornecedor-details">${item.telefone_principal?`<div class="detail-item"><i class="fas fa-phone"></i> ${item.telefone_principal}</div>`:''}${item.email_principal?`<div class="detail-item"><i class="fas fa-envelope"></i> ${item.email_principal}</div>`:''}${item.nome_contato?`<div class="detail-item"><i class="fas fa-user"></i> ${item.nome_contato}</div>`:''}</div></div>`;
+        };
+        
+        const switchToTab = (tabId) => {
+            elements.tabNav.querySelectorAll('.tab-nav-item').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            const button = document.querySelector(`.tab-nav-item[data-tab="${tabId}"]`);
+            if (button) button.classList.add('active');
+            const pane = document.getElementById(tabId);
+            if (pane) pane.classList.add('active');
+        };
+
+        const setupTabs = () => {
+            elements.tabNav.addEventListener('click', (e) => {
+                const button = e.target.closest('.tab-nav-item');
+                if (!button) return;
+                const tabId = button.dataset.tab;
+                switchToTab(tabId);
+                if (tabId === 'novo-fornecedor' && state.editingFornecedorId) {
+                    clearForm();
+                } else if (tabId === 'fornecedores-cadastrados') {
+                    loadItems();
+                }
+            });
+        };
+
+        const showNotification = (message, type = 'info') => {
+            const el = document.createElement('div'); el.className = `notification ${type}`;
+            const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+            el.innerHTML = `<i class="fas ${icon}"></i><span>${message}</span><button onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
+            document.body.appendChild(el); setTimeout(() => el.remove(), 5000);
+        };
+
+        const setLoadingState = (loading) => {
+            state.isLoading = loading;
+            elements.saveBtn.disabled = loading;
+            elements.btnText.classList.toggle('hidden', loading);
+            elements.btnSpinner.classList.toggle('hidden', !loading);
+        };
+
+        const clearForm = () => {
+            elements.form.reset();
+            state.editingFornecedorId = null;
+            elements.btnText.textContent = 'Salvar';
+        };
+
+        const loadItems = async () => {
+            try {
+                const from = (state.currentPage - 1) * state.itemsPerPage;
+                const { data, error, count } = await supabaseClient
+                    .from('fornecedores').select('*', { count: 'exact' })
+                    .eq('id_empresa', window.currentCompanyId).order('razao_social', { ascending: true }).range(from, from + state.itemsPerPage - 1);
+                if (error) throw error;
+                state.fornecedores = data || [];
+                state.totalItems = count || 0;
+                renderList();
+                renderPagination();
+            } catch (error) { showNotification('Erro ao carregar fornecedores.', 'error'); }
+        };
+
+        const handleFormSubmit = async (e) => {
+            e.preventDefault();
+            if (state.isLoading) return;
+            const data = collectFormData();
+            if (!data.razao_social || !data.telefone_principal) { // <<< VALIDAÇÃO CORRIGIDA
+                showNotification('Razão Social e Telefone Principal são obrigatórios.', 'error'); return; // <<< MENSAGEM CORRIGIDA
+            }
+            setLoadingState(true);
+            try {
+                const result = state.editingFornecedorId ? await updateItem(state.editingFornecedorId, data) : await saveItem(data);
+                if (result.success) {
+                    showNotification(result.message, 'success');
+                    state.currentPage = 1; 
+                    await loadItems();
+                    switchToTab('fornecedores-cadastrados');
+                    clearForm();
+                } else { throw new Error(result.error); }
+            } catch (error) { showNotification(`Erro: ${error.message}`, 'error');
+            } finally { setLoadingState(false); }
+        };
+
+        const collectFormData = () => {
+            const data = { id_empresa: window.currentCompanyId, auth_user_id: window.currentUser.auth_user_id };
+            formFieldIds.forEach(id => { const input = document.getElementById(id); data[id] = input.value.trim() || null; });
+            return data;
+        };
+
+        const saveItem = async (data) => {
+            const { error } = await supabaseClient.from('fornecedores').insert([data]);
+            return { success: !error, message: 'Fornecedor salvo com sucesso!', error: error?.message };
+        };
+
+        const updateItem = async (id, data) => {
+            const { error } = await supabaseClient.from('fornecedores').update(data).eq('id', id).eq('id_empresa', window.currentCompanyId);
+            return { success: !error, message: 'Fornecedor atualizado com sucesso!', error: error?.message };
+        };
+
+        const handleListClick = (e) => {
+            const editBtn = e.target.closest('.btn-edit');
+            const deleteBtn = e.target.closest('.btn-delete');
+            if (!editBtn && !deleteBtn) return;
+            const card = e.target.closest('.fornecedor-card');
+            const id = parseInt(card.dataset.id, 10);
+            if (editBtn) editItem(id);
+            if (deleteBtn) deleteItem(id);
+        };
+        
+        const editItem = (id) => {
+            const item = state.fornecedores.find(i => i.id === id);
+            if (!item) { showNotification('Erro: não foi possível encontrar os dados.', 'error'); return; }
+            state.editingFornecedorId = id;
+            formFieldIds.forEach(fieldId => {
+                const input = document.getElementById(fieldId);
+                if (input) input.value = item[fieldId] || '';
+            });
+            elements.btnText.textContent = 'Alterar';
+            switchToTab('novo-fornecedor');
+            window.scrollTo(0, 0);
+        };
+
+        const deleteItem = async (id) => {
+            if (!confirm('Tem certeza que deseja excluir este fornecedor?')) return;
+            try {
+                const { error } = await supabaseClient.from('fornecedores').delete().eq('id', id).eq('id_empresa', window.currentCompanyId);
+                if (error) throw error;
+                showNotification('Fornecedor excluído com sucesso!', 'success');
+                if (state.fornecedores.length === 1 && state.currentPage > 1) state.currentPage--;
+                await loadItems();
+            } catch (error) { showNotification(`Erro ao excluir: ${error.message}`, 'error'); }
+        };
+        
+        const handlePagination = async (direction) => {
+            const totalPages = Math.ceil(state.totalItems / state.itemsPerPage);
+            if (direction === 'next' && state.currentPage < totalPages) state.currentPage++;
+            else if (direction === 'prev' && state.currentPage > 1) state.currentPage--;
+            await loadItems();
+        };
+
+        const init = () => {
+            setupTabs();
+            elements.form.addEventListener('submit', handleFormSubmit);
+            document.getElementById('btn-cancel').addEventListener('click', clearForm);
+            elements.listContainer.addEventListener('click', handleListClick);
+            elements.pagination.prevBtn.addEventListener('click', () => handlePagination('prev'));
+            elements.pagination.nextBtn.addEventListener('click', () => handlePagination('next'));
+            loadItems();
+        };
+        
+        init();
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Dados da Empresa</title>
+    <link rel="icon" type="image/png" href="log.png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <link href="header.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --cor-laranja: #FF9800;
+            --cor-laranja-hover: #FB8C00;
+            --cor-fundo-pagina: #f4f7f6;
+            --cor-fundo-card: #ffffff;
+            --cor-texto-principal: #2c3e50;
+            --cor-texto-secundario: #7f8c8d;
+            --cor-borda: #e0e6ed;
+            --sombra-card: 0 10px 40px -10px rgba(0, 64, 128, 0.1);
+        }
+
+        body {
+            background-color: var(--cor-fundo-pagina);
+            color: var(--cor-texto-principal);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding-left: 80px;
+            transition: padding-left 0.3s ease;
+        }
+
+        .main-container {
+            padding: 30px 40px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .form-card {
+            background-color: var(--cor-fundo-card);
+            border-radius: 16px;
+            box-shadow: var(--sombra-card);
+            overflow: hidden;
+        }
+
+        .form-card-body {
+            padding: 40px;
+        }
+        
+        /* Divisória elegante entre as seções */
+        .section-divider {
+            border: 0;
+            height: 1px;
+            background-color: var(--cor-borda);
+            margin: 40px 0;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .section-header i {
+            font-size: 1.2rem;
+            color: var(--cor-laranja);
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .form-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+        }
+
+        .form-grid-full {
+            grid-column: 1 / -1;
+        }
+        
+        .form-group { 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        .form-group label { 
+            margin-bottom: 8px; 
+            font-weight: 500; 
+            color: #555; 
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px 15px;
+            border: 1px solid var(--cor-borda);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--cor-laranja);
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
+        }
+
+        .form-group input:read-only {
+            background-color: #f0f2f5;
+            cursor: not-allowed;
+        }
+
+        .required::after {
+            content: " *";
+            color: #e74c3c;
+        }
+
+
+        
+        /* Rodapé com botão */
+        .form-footer {
+            margin-top: 40px;
+            padding: 20px 40px;
+            background-color: #f8f9fa;
+            border-top: 1px solid var(--cor-borda);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        
+        #message { 
+            font-weight: 600; 
+            margin-right: auto; 
+        }
+        
+        .btn-salvar {
+            background: linear-gradient(135deg, var(--cor-laranja), var(--cor-laranja-hover));
+            color: white; 
+            border: none; 
+            padding: 12px 30px; 
+            border-radius: 8px;
+            font-weight: bold; 
+            font-size: 1rem; 
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-salvar:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 20px -5px rgba(255, 152, 0, 0.5); 
+        }
+
+        .btn-salvar:disabled { 
+            background: #bdc3c7; 
+            cursor: not-allowed; 
+            transform: none; 
+            box-shadow: none; 
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .logo-preview {
+                width: 120px;
+                height: 120px;
+            }
+
+            .main-container {
+                padding: 20px;
+            }
+
+            .form-card-body {
+                padding: 20px;
+            }
+
+            .form-footer {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            #message {
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header-container"></div>
+
+    <main class="main-container">
+        <div class="form-card">
+            <div class="form-card-body">
+                
+                <form id="empresa-form">
+                    
+                    <section>
+                        <div class="section-header">
+                            <i class="fas fa-building"></i>
+                            <h2>Identificação Principal</h2>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="razao_social">Razão Social</label>
+                                <input type="text" id="razao_social" placeholder="Nome oficial da empresa">
+                            </div>
+                            <div class="form-group">
+                                <label for="nome_fantasia" class="required">Nome Fantasia</label>
+                                <input type="text" id="nome_fantasia" placeholder="Nome comercial da empresa" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ramo_empresa">Ramo da Empresa</label>
+                                <select id="ramo_empresa">
+                                    <option value="">Selecione o ramo</option>
+                                    <option value="alimentacao">Alimentação</option>
+                                    <option value="varejo">Varejo</option>
+                                    <option value="servicos">Serviços</option>
+                                    <option value="tecnologia">Tecnologia</option>
+                                    <option value="saude">Saúde</option>
+                                    <option value="educacao">Educação</option>
+                                    <option value="construcao">Construção</option>
+                                    <option value="transporte">Transporte</option>
+                                    <option value="outro">Outro</option>
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <hr class="section-divider">
+
+                    <!-- Dados Fiscais -->
+                    <section>
+                        <div class="section-header">
+                            <i class="fas fa-file-invoice"></i>
+                            <h2>Dados Fiscais</h2>
+                        </div>
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label for="cnpj">CNPJ</label>
+                                <input type="text" id="cnpj" placeholder="00.000.000/0000-00">
+                            </div>
+                            <div class="form-group">
+                                <label for="inscricao_estadual">Inscrição Estadual</label>
+                                <input type="text" id="inscricao_estadual" placeholder="000.000.000.000">
+                            </div>
+                            <div class="form-group">
+                                <label for="inscricao_municipal">Inscrição Municipal</label>
+                                <input type="text" id="inscricao_municipal" placeholder="000000000">
+                            </div>
+                        </div>
+                    </section>
+
+                    <hr class="section-divider">
+
+                    <!-- Informações de Contato -->
+                    <section>
+                        <div class="section-header">
+                            <i class="fas fa-phone"></i>
+                            <h2>Informações de Contato</h2>
+                        </div>
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label for="telefone_empresa">Telefone da Empresa</label>
+                                <input type="tel" id="telefone_empresa" placeholder="(00) 0000-0000">
+                            </div>
+                            <div class="form-group">
+                                <label for="email_empresa">E-mail da Empresa</label>
+                                <input type="email" id="email_empresa" placeholder="contato@empresa.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="whatsapp_responsavel" class="required">WhatsApp do Responsável</label>
+                                <input type="tel" id="whatsapp_responsavel" placeholder="(00) 90000-0000" required>
+                            </div>
+                        </div>
+                    </section>
+
+                    <hr class="section-divider">
+
+                    <!-- Endereço -->
+                    <section>
+                        <div class="section-header">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <h2>Endereço</h2>
+                        </div>
+                        <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
+                            <div class="form-group" style="grid-column: 1 / 2;">
+                                <label for="cep">CEP</label>
+                                <input type="text" id="cep" placeholder="00000-000">
+                            </div>
+                            <div class="form-group" style="grid-column: 2 / 5;">
+                                <label for="rua">Rua</label>
+                                <input type="text" id="rua" placeholder="Preenchido automaticamente" readonly>
+                            </div>
+                            <div class="form-group" style="grid-column: 5 / 6;">
+                                <label for="numero">Número</label>
+                                <input type="text" id="numero" placeholder="Ex: 123">
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / 3;">
+                                <label for="complemento">Complemento</label>
+                                <input type="text" id="complemento" placeholder="Sala, Andar, etc.">
+                            </div>
+                            <div class="form-group" style="grid-column: 3 / 5;">
+                                <label for="bairro">Bairro</label>
+                                <input type="text" id="bairro" placeholder="Preenchido automaticamente" readonly>
+                            </div>
+                            <div class="form-group" style="grid-column: 5 / 6;">
+                                <label for="cidade">Cidade</label>
+                                <input type="text" id="cidade" placeholder="Preenchido automaticamente" readonly>
+                            </div>
+                        </div>
+                    </section>
+
+                </form>
+            </div>
+            
+            <div class="form-footer">
+                <div id="message"></div>
+                <button type="submit" form="empresa-form" class="btn-salvar">
+                    <i class="fas fa-save"></i> Salvar Dados da Empresa
+                </button>
+            </div>
+        </div>
+    </main>
+    
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+
+    <script>
+        document.addEventListener('userDataReady', () => {
+            if (!window.currentCompanyId) {
+                console.error("ID da empresa não encontrado.");
+                return;
+            }
+            
+            // DESABILITAR AUTOCOMPLETE E CACHE PARA TODA A PÁGINA
+            document.querySelectorAll('input, select, textarea').forEach(element => {
+                element.setAttribute('autocomplete', 'off');
+                element.setAttribute('data-form-type', 'other');
+            });
+            
+            // Configuração do Supabase
+            const supabaseClient = supabase.createClient(
+                'https://gnehkswoqlpchtlgyjyj.supabase.co', 
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduZWhrc3dvcWxwY2h0bGd5anlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTY3NjYsImV4cCI6MjA2OTQ3Mjc2Nn0.8giA1bDvCzgvlcW_pkimGO9qHRF2I0QfhG6nx9U_tdY'
+            );
+
+            // Elementos da página
+            const form = document.getElementById('empresa-form');
+            const messageDiv = document.getElementById('message');
+            const cepInput = document.getElementById('cep');
+            const saveButton = document.querySelector('.btn-salvar');
+            
+            let isEditing = false; // Controla se está editando ou criando
+
+            // Configuração inicial
+            setupForm();
+            loadEmpresaData();
+
+            // === FUNÇÕES PRINCIPAIS ===
+
+            function setupForm() {
+                // CEP automático
+                cepInput.addEventListener('blur', handleCEPLookup);
+
+                // Validações em tempo real
+                document.getElementById('email_empresa').addEventListener('blur', validateEmail);
+                document.getElementById('nome_fantasia').addEventListener('input', validateNomeFantasia);
+
+                // Submit do formulário
+                form.addEventListener('submit', handleFormSubmit);
+
+                // Formatação de campos
+                setupFieldFormatting();
+            }
+
+            function setupLogoUpload() {
+                // Eventos do logo
+                logoPreview.addEventListener('click', () => logoInput.click());
+                uploadBtn.addEventListener('click', () => logoInput.click());
+                removeBtn.addEventListener('click', removeLogo);
+                logoInput.addEventListener('change', handleLogoUpload);
+
+                // Carrega logo do localStorage se existir
+                loadLogoFromStorage();
+            }
+
+            function setupFieldFormatting() {
+                // CNPJ
+                document.getElementById('cnpj').addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length <= 14) {
+                        value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+                    }
+                    e.target.value = value;
+                });
+
+                // Telefones
+                ['telefone_empresa', 'whatsapp_responsavel'].forEach(fieldId => {
+                    document.getElementById(fieldId).addEventListener('input', function(e) {
+                        let value = e.target.value.replace(/\D/g, '');
+                        if (value.length >= 11) {
+                            value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                        } else if (value.length >= 7) {
+                            value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+                        } else if (value.length >= 3) {
+                            value = value.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+                        }
+                        e.target.value = value;
+                    });
+                });
+
+                // CEP
+                document.getElementById('cep').addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length >= 5) {
+                        value = value.replace(/(\d{5})(\d{0,3})/, '$1-$2');
+                    }
+                    e.target.value = value.slice(0, 9);
+                });
+            }
+
+            async function handleCEPLookup(event) {
+                const cep = event.target.value.replace(/\D/g, '');
+                if (cep.length !== 8) return;
+
+                try {
+                    showMessage('Buscando CEP...', false);
+                    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                    const data = await response.json();
+                    
+                    if (data.erro) {
+                        throw new Error('CEP não encontrado.');
+                    }
+                    
+                    document.getElementById('rua').value = data.logradouro;
+                    document.getElementById('bairro').value = data.bairro;
+                    document.getElementById('cidade').value = data.localidade;
+                    showMessage('', false);
+                } catch (error) {
+                    console.error('Erro ao buscar CEP:', error);
+                    showMessage(error.message, true);
+                }
+            }
+
+            function validateEmail(event) {
+                const email = event.target.value;
+                if (!email) return true; // Email não é obrigatório
+                
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                
+                if (!emailRegex.test(email)) {
+                    showMessage('E-mail inválido', true);
+                    return false;
+                }
+                
+                showMessage('', false);
+                return true;
+            }
+
+            function validateNomeFantasia(event) {
+                const name = event.target.value.trim();
+                
+                if (name && name.length < 2) {
+                    showMessage('Nome fantasia deve ter pelo menos 2 caracteres', true);
+                    return false;
+                }
+                
+                showMessage('', false);
+                return true;
+            }
+
+            async function handleFormSubmit(event) {
+                event.preventDefault();
+                
+                // Validações
+                if (!validateForm()) {
+                    return;
+                }
+
+                // Loading state
+                saveButton.disabled = true;
+                const originalText = isEditing ? 'Alterar Dados da Empresa' : 'Salvar Dados da Empresa';
+                saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (isEditing ? 'Alterando...' : 'Salvando...');
+
+                try {
+                    const empresaData = collectFormData();
+                    await saveEmpresaData(empresaData);
+                    
+                    if (isEditing) {
+                        showMessage('Dados da empresa alterados com sucesso!', false);
+                    } else {
+                        showMessage('Dados da empresa salvos com sucesso!', false);
+                        isEditing = true; // Agora passa a ser edição
+                        updateButtonState();
+                    }
+
+                } catch (error) {
+                    console.error('Erro ao salvar dados da empresa:', error);
+                    showMessage(error.message, true);
+                } finally {
+                    saveButton.disabled = false;
+                    saveButton.innerHTML = '<i class="fas fa-save"></i> ' + originalText;
+                }
+            }
+
+            function validateForm() {
+                const nomeFantasia = document.getElementById('nome_fantasia').value.trim();
+                const whatsappResponsavel = document.getElementById('whatsapp_responsavel').value.trim();
+
+                if (!nomeFantasia || nomeFantasia.length < 2) {
+                    showMessage('Nome fantasia é obrigatório e deve ter pelo menos 2 caracteres', true);
+                    return false;
+                }
+
+                if (!whatsappResponsavel) {
+                    showMessage('WhatsApp do responsável é obrigatório', true);
+                    return false;
+                }
+
+                return true;
+            }
+
+            function collectFormData() {
+                return {
+                    id_empresa: window.currentCompanyId,
+                    auth_user_id: window.currentUser.auth_user_id,
+                    razao_social: document.getElementById('razao_social').value.trim() || null,
+                    nome_fantasia: document.getElementById('nome_fantasia').value.trim(),
+                    ramo_empresa: document.getElementById('ramo_empresa').value || null,
+                    cnpj: document.getElementById('cnpj').value.replace(/\D/g, '') || null,
+                    inscricao_estadual: document.getElementById('inscricao_estadual').value.trim() || null,
+                    inscricao_municipal: document.getElementById('inscricao_municipal').value.trim() || null,
+                    telefone_empresa: document.getElementById('telefone_empresa').value.trim() || null,
+                    email_empresa: document.getElementById('email_empresa').value.trim() || null,
+                    whatsapp_responsavel: document.getElementById('whatsapp_responsavel').value.trim(),
+                    cep: document.getElementById('cep').value.replace(/\D/g, '') || null,
+                    rua: document.getElementById('rua').value.trim() || null,
+                    numero: document.getElementById('numero').value.trim() || null,
+                    complemento: document.getElementById('complemento').value.trim() || null,
+                    bairro: document.getElementById('bairro').value.trim() || null,
+                    cidade: document.getElementById('cidade').value.trim() || null
+                };
+            }
+
+            async function saveEmpresaData(empresaData) {
+                // Verifica se já existe um registro da empresa
+                const { data: existingEmpresa, error: checkError } = await supabaseClient
+                    .from('empresas')
+                    .select('id')
+                    .eq('id_empresa', window.currentCompanyId)
+                    .single();
+
+                if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+                    throw new Error('Erro ao verificar dados da empresa: ' + checkError.message);
+                }
+
+                if (existingEmpresa) {
+                    // Remove campos que não devem ser atualizados
+                    const updateData = { ...empresaData };
+                    delete updateData.id_empresa;
+                    delete updateData.auth_user_id;
+                    
+                    // Atualiza registro existente
+                    const { error: updateError } = await supabaseClient
+                        .from('empresas')
+                        .update(updateData)
+                        .eq('id_empresa', window.currentCompanyId);
+
+                    if (updateError) {
+                        throw new Error('Erro ao atualizar dados da empresa: ' + updateError.message);
+                    }
+                } else {
+                    // Cria novo registro
+                    const { error: insertError } = await supabaseClient
+                        .from('empresas')
+                        .insert([empresaData]);
+
+                    if (insertError) {
+                        throw new Error('Erro ao salvar dados da empresa: ' + insertError.message);
+                    }
+                }
+            }
+
+            async function loadEmpresaData() {
+                try {
+                    const { data: empresaData, error } = await supabaseClient
+                        .from('empresas')
+                        .select('*')
+                        .eq('id_empresa', window.currentCompanyId)
+                        .single();
+
+                    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+                        throw error;
+                    }
+
+                    if (empresaData) {
+                        fillForm(empresaData);
+                        isEditing = true; // Define como edição se encontrou dados
+                        updateButtonState();
+                    } else {
+                        isEditing = false; // Define como criação se não encontrou dados
+                        updateButtonState();
+                    }
+
+                } catch (error) {
+                    console.error('Erro ao carregar dados da empresa:', error);
+                    isEditing = false; // Em caso de erro, assume criação
+                    updateButtonState();
+                }
+            }
+
+            function fillForm(empresaData) {
+                document.getElementById('razao_social').value = empresaData.razao_social || '';
+                document.getElementById('nome_fantasia').value = empresaData.nome_fantasia || '';
+                document.getElementById('ramo_empresa').value = empresaData.ramo_empresa || '';
+                document.getElementById('cnpj').value = formatCNPJ(empresaData.cnpj) || '';
+                document.getElementById('inscricao_estadual').value = empresaData.inscricao_estadual || '';
+                document.getElementById('inscricao_municipal').value = empresaData.inscricao_municipal || '';
+                document.getElementById('telefone_empresa').value = formatPhone(empresaData.telefone_empresa) || '';
+                document.getElementById('email_empresa').value = empresaData.email_empresa || '';
+                document.getElementById('whatsapp_responsavel').value = formatPhone(empresaData.whatsapp_responsavel) || '';
+                document.getElementById('cep').value = formatCEP(empresaData.cep) || '';
+                document.getElementById('rua').value = empresaData.rua || '';
+                document.getElementById('numero').value = empresaData.numero || '';
+                document.getElementById('complemento').value = empresaData.complemento || '';
+                document.getElementById('bairro').value = empresaData.bairro || '';
+                document.getElementById('cidade').value = empresaData.cidade || '';
+            }
+
+            function updateButtonState() {
+                if (isEditing) {
+                    saveButton.innerHTML = '<i class="fas fa-edit"></i> Alterar Dados da Empresa';
+                } else {
+                    saveButton.innerHTML = '<i class="fas fa-save"></i> Salvar Dados da Empresa';
+                }
+            }
+
+            // === FUNÇÕES AUXILIARES ===
+
+            function formatCNPJ(cnpj) {
+                if (!cnpj) return '';
+                return cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+            }
+
+            function formatPhone(phone) {
+                if (!phone) return '';
+                if (phone.length === 11) {
+                    return phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                } else if (phone.length === 10) {
+                    return phone.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+                }
+                return phone;
+            }
+
+            function formatCEP(cep) {
+                if (!cep) return '';
+                return cep.replace(/(\d{5})(\d{3})/, '$1-$2');
+            }
+
+            function showMessage(text, isError = false) {
+                messageDiv.textContent = text;
+                messageDiv.style.color = isError ? '#e74c3c' : '#27ae60';
+                
+                if (text) {
+                    setTimeout(() => {
+                        messageDiv.textContent = '';
+                    }, 5000);
+                }
+            }
+
+        });
+    </script>
+</body>
+</html>

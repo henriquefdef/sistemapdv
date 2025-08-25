@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Movimentações Financeiras</title>
+    <link rel="icon" type="image/png" href="log.png">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Header CSS -->
+    <link href="header.css" rel="stylesheet">
+    <!-- Financeiro CSS -->
+    <link href="contas-financeiro.css" rel="stylesheet">
+    <!-- Excel Export Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div id="header-container"></div>
+
+    <main class="main-container">
+        <!-- Header Financeiro -->
+        <div class="financial-header">
+            <div class="header-content">
+                <h1 class="header-title">Movimentações Financeiras</h1>
+                
+                <div class="financial-bars">
+                    <div class="financial-bar">
+                        <div class="bar-label">RECEITAS</div>
+                        <div class="bar-container">
+                            <div class="bar-fill receitas" id="bar-receitas" style="width: 0%"></div>
+                        </div>
+                        <div class="bar-value" id="valor-receitas">R$ 0,00</div>
+                    </div>
+                    
+                    <div class="financial-bar">
+                        <div class="bar-label">DESPESAS</div>
+                        <div class="bar-container">
+                            <div class="bar-fill despesas" id="bar-despesas" style="width: 0%"></div>
+                        </div>
+                        <div class="bar-value" id="valor-despesas">R$ 0,00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controles de Ano e Meses -->
+        <div class="year-month-controls">
+            <div class="year-selector">
+                <button class="year-nav-btn" id="prev-year">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span class="current-year" id="current-year">2017</span>
+                <button class="year-nav-btn" id="next-year">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <div class="months-grid">
+                <button class="month-btn" data-month="0">Jan</button>
+                <button class="month-btn" data-month="1">Fev</button>
+                <button class="month-btn" data-month="2">Mar</button>
+                <button class="month-btn" data-month="3">Abr</button>
+                <button class="month-btn" data-month="4">Mai</button>
+                <button class="month-btn" data-month="5">Jun</button>
+                <button class="month-btn" data-month="6">Jul</button>
+                <button class="month-btn" data-month="7">Ago</button>
+                <button class="month-btn" data-month="8">Set</button>
+                <button class="month-btn" data-month="9">Out</button>
+                <button class="month-btn" data-month="10">Nov</button>
+                <button class="month-btn" data-month="11">Dez</button>
+            </div>
+        </div>
+
+        <!-- Abas de Filtro com Totais -->
+        <div class="filter-tabs-section">
+            <div class="filter-tab active" data-category="tudo">
+                <div class="tab-header">
+                    <i class="fas fa-list"></i>
+                    <span class="tab-title">Tudo</span>
+                </div>
+                <div class="tab-description">Todas as movimentações do mês</div>
+                <div class="tab-total" id="total-tudo">R$ 0,00</div>
+            </div>
+            
+            <div class="filter-tab" data-category="em_atraso">
+                <div class="tab-header">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span class="tab-title">Em Atraso</span>
+                </div>
+                <div class="tab-description">Vencidas e não pagas</div>
+                <div class="tab-total" id="total-em_atraso">R$ 0,00</div>
+            </div>
+            
+            <div class="filter-tab" data-category="vence_hoje">
+                <div class="tab-header">
+                    <i class="fas fa-clock"></i>
+                    <span class="tab-title">Vence Hoje</span>
+                </div>
+                <div class="tab-description">Vencimento hoje</div>
+                <div class="tab-total" id="total-vence_hoje">R$ 0,00</div>
+            </div>
+            
+            <div class="filter-tab" data-category="receitas">
+                <div class="tab-header">
+                    <i class="fas fa-arrow-down"></i>
+                    <span class="tab-title">Receitas</span>
+                </div>
+                <div class="tab-description">Todos os recebimentos</div>
+                <div class="tab-total" id="total-receitas">R$ 0,00</div>
+            </div>
+            
+            <div class="filter-tab" data-category="despesas">
+                <div class="tab-header">
+                    <i class="fas fa-arrow-up"></i>
+                    <span class="tab-title">Despesas</span>
+                </div>
+                <div class="tab-description">Todos os gastos</div>
+                <div class="tab-total" id="total-despesas">R$ 0,00</div>
+            </div>
+            
+            <div class="filter-tab" data-category="pago">
+                <div class="tab-header">
+                    <i class="fas fa-check-circle"></i>
+                    <span class="tab-title">Quitados</span>
+                </div>
+                <div class="tab-description">Movimentações quitadas</div>
+                <div class="tab-total" id="total-pago">R$ 0,00</div>
+            </div>
+            
+            <div class="filter-tab" data-category="a_pagar">
+                <div class="tab-header">
+                    <i class="fas fa-clock"></i>
+                    <span class="tab-title">Pendentes</span>
+                </div>
+                <div class="tab-description">Pendentes e vencidas</div>
+                <div class="tab-total" id="total-a_pagar">R$ 0,00</div>
+            </div>
+        </div>
+
+        <!-- Botões de Ação Atualizados -->
+        <div class="action-buttons">
+            <button class="action-btn" id="btn-adicionar">Adicionar</button>
+            <button class="action-btn remove" id="btn-remover">Remover</button>
+            <button class="action-btn pago" id="btn-marcar-pago">Marcar Pago</button>
+            <button class="action-btn excel" id="btn-baixar-excel">Baixar Excel</button>
+        </div>
+
+        <!-- Tabela de Movimentações -->
+        <div class="movimentacoes-table">
+            <div class="table-header">
+                <div class="header-checkbox-container">
+                    <input type="checkbox" id="select-all-checkbox" class="header-checkbox" title="Selecionar todas as contas visíveis">
+                    <span>Vencimento</span>
+                </div>
+                <div>Descrição</div>
+                <div>Valor</div>
+                <div>Recebido de</div>
+                <div>Categoria</div>
+                <div>Pago</div>
+            </div>
+            
+            <div class="table-body" id="table-body">
+                <!-- Dados da tabela serão inseridos aqui -->
+            </div>
+            
+            <div class="pagination">
+                <div class="pagination-info">
+                    Mostrando 1 até 6 de 6 registros
+                </div>
+                <div class="pagination-nav">
+                    <button class="pagination-btn" id="btn-anterior">Anterior</button>
+                    <button class="pagination-btn">1</button>
+                    <button class="pagination-btn" id="btn-proximo">Próximo</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico (movido para o final) -->
+        <div class="chart-section">
+            <div class="chart-container">
+                <canvas id="financial-chart"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para Nova Movimentação - ATUALIZADO COM RECORRÊNCIA -->
+    <div id="modal-movimentacao" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">Nova Movimentação</h3>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            
+            <!-- Abas para escolher tipo -->
+            <div class="modal-tabs">
+                <button class="modal-tab active" data-tipo="receber">
+                    <i class="fas fa-arrow-down"></i>
+                    A Receber
+                </button>
+                <button class="modal-tab" data-tipo="pagar">
+                    <i class="fas fa-arrow-up"></i>
+                    A Pagar
+                </button>
+            </div>
+            
+            <form id="form-movimentacao" class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="descricao">Descrição</label>
+                        <input type="text" class="form-input" id="descricao" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="valor">Valor</label>
+                        <input type="number" class="form-input" id="valor" step="0.01" min="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="data_vencimento">Data de Vencimento</label>
+                        <input type="date" class="form-input" id="data_vencimento" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="categoria">Categoria</label>
+                        <div class="categoria-input-container">
+                            <select class="form-input" id="categoria">
+                                <option value="">Selecione uma categoria</option>
+                                <!-- Categorias serão carregadas dinamicamente -->
+                            </select>
+                            <button type="button" class="btn-add-categoria" id="btn-add-categoria" title="Criar nova categoria">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button type="button" class="btn-delete-categoria" id="btn-delete-categoria" title="Excluir categoria selecionada" style="display: none;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="pessoa_empresa">Pessoa/Empresa</label>
+                        <input type="text" class="form-input" id="pessoa_empresa">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="documento">Documento</label>
+                        <input type="text" class="form-input" id="documento">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label class="form-label" for="observacoes">Observações</label>
+                        <textarea class="form-input" id="observacoes" rows="3"></textarea>
+                    </div>
+
+                    <!-- SEÇÃO DE RECORRÊNCIA ATUALIZADA -->
+                    <div class="form-group full-width">
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="checkbox-input" id="recorrente">
+                                <span class="checkbox-custom"></span>
+                                Movimentação Recorrente (Fixa)
+                            </label>
+                        </div>
+                        
+                        <!-- Opção de frequência (oculta por padrão) -->
+                        <div id="tipo-recorrencia-simples" style="display: none; margin-top: 15px; padding-left: 32px;">
+                            <div style="display: flex; gap: 15px; align-items: end;">
+                                <div style="flex: 1;">
+                                    <label class="form-label" style="margin-bottom: 8px;">Frequência</label>
+                                    <select class="form-input" id="frequencia-recorrencia" style="max-width: 200px;">
+                                        <option value="mensal" selected>Mensal</option>
+                                        <option value="bimestral">Bimestral</option>
+                                        <option value="trimestral">Trimestral</option>
+                                        <option value="semestral">Semestral</option>
+                                        <option value="anual">Anual</option>
+                                    </select>
+                                </div>
+                                <div style="flex: 1;">
+                                    <label class="form-label" style="margin-bottom: 8px;">Quantidade de Meses</label>
+                                    <input type="number" class="form-input" id="quantidade-meses" min="1" max="24" value="12" style="max-width: 120px;">
+                                </div>
+                            </div>
+                            <div style="margin-top: 8px; font-size: 12px; color: #666;">
+                                <i class="fas fa-info-circle"></i>
+                                <span id="frequencia-info">Será criado automaticamente nos próximos 12 meses</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <div class="modal-footer">
+                <button type="button" class="modal-btn cancel" id="btn-cancelar">Cancelar</button>
+                <button type="submit" form="form-movimentacao" class="modal-btn save" id="btn-salvar">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mini modal para criar categoria -->
+    <div id="mini-modal-categoria" class="mini-modal-overlay">
+        <div class="mini-modal-content">
+            <div class="mini-modal-header">
+                <h4>Nova Categoria</h4>
+                <button class="mini-modal-close" id="mini-modal-close">&times;</button>
+            </div>
+            <div class="mini-modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="nova-categoria-nome">Nome da Categoria</label>
+                    <input type="text" class="form-input" id="nova-categoria-nome" placeholder="Ex: Aluguel, Vendas, etc...">
+                </div>
+                <!-- Campo tipo oculto - será preenchido automaticamente -->
+                <div class="form-group" style="display: none;">
+                    <select class="form-input" id="nova-categoria-tipo">
+                        <option value="RECEBER">A Receber</option>
+                        <option value="PAGAR">A Pagar</option>
+                    </select>
+                </div>
+                <div style="margin-top: 10px; font-size: 12px; color: #666; text-align: center;">
+                    <i class="fas fa-info-circle"></i>
+                    <span id="tipo-info">Será criada como categoria para <strong id="tipo-atual">A Receber</strong></span>
+                </div>
+            </div>
+            <div class="mini-modal-footer">
+                <button type="button" class="mini-modal-btn cancel" id="btn-cancelar-categoria">Cancelar</button>
+                <button type="button" class="mini-modal-btn save" id="btn-salvar-categoria">Criar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mini modal para confirmar exclusão de categoria -->
+    <div id="mini-modal-delete-categoria" class="mini-modal-overlay">
+        <div class="mini-modal-content">
+            <div class="mini-modal-header" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);">
+                <h4>Confirmar Exclusão</h4>
+                <button class="mini-modal-close" id="mini-modal-delete-close">&times;</button>
+            </div>
+            <div class="mini-modal-body">
+                <div style="text-align: center; padding: 10px 0;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ff6b6b; margin-bottom: 15px;"></i>
+                    <p style="margin-bottom: 10px; font-weight: 500;">Tem certeza que deseja excluir a categoria</p>
+                    <p style="font-size: 16px; font-weight: 600; color: #2c3e50; margin-bottom: 15px;">
+                        "<span id="categoria-nome-delete"></span>"?
+                    </p>
+                    <p style="font-size: 12px; color: #666; line-height: 1.4;">
+                        <i class="fas fa-info-circle"></i>
+                        Esta ação não pode ser desfeita. A categoria será removida permanentemente.
+                    </p>
+                </div>
+            </div>
+            <div class="mini-modal-footer">
+                <button type="button" class="mini-modal-btn cancel" id="btn-cancelar-delete-categoria">Cancelar</button>
+                <button type="button" class="mini-modal-btn delete" id="btn-confirmar-delete-categoria">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+    <script src="contas-financeiro-core.js"></script>
+    <script src="contas-financeiro-supa.js"></script>
+    <script src="contas-financeiro-modal.js"></script>
+    <script src="contas-financeiro-excel.js"></script>
+    <script src="contas-financeiro.js"></script>
+</body>
+</html>

@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Emitir Nota Fiscal</title>
+    <link rel="icon" type="image/png" href="log.png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <link href="header.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --cor-laranja: #FF9800;
+            --cor-laranja-hover: #FB8C00;
+            --cor-fundo-pagina: #f4f7f6;
+            --cor-fundo-card: #ffffff;
+            --cor-texto-principal: #2c3e50;
+            --cor-texto-secundario: #7f8c8d;
+            --cor-borda: #e0e6ed;
+            --sombra-card: 0 10px 40px -10px rgba(0, 64, 128, 0.1);
+            --cor-verde: #27ae60;
+            --cor-azul: #3498db;
+        }
+
+        body {
+            background-color: var(--cor-fundo-pagina);
+            color: var(--cor-texto-principal);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding-left: 80px;
+            transition: padding-left 0.3s ease;
+        }
+
+        .main-container {
+            padding: 30px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header-section h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--cor-texto-principal);
+            margin-bottom: 15px;
+        }
+
+        .header-section .subtitle {
+            font-size: 1.2rem;
+            color: var(--cor-texto-secundario);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Grid Principal */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: var(--cor-fundo-card);
+            border-radius: 20px;
+            box-shadow: var(--sombra-card);
+            padding: 40px;
+            height: fit-content;
+        }
+
+        /* Card do Tutorial */
+        .tutorial-card h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--cor-texto-principal);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tutorial-card h2 i {
+            color: var(--cor-laranja);
+        }
+
+        .tutorial-steps {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .tutorial-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid var(--cor-laranja);
+            transition: all 0.3s ease;
+        }
+
+        .tutorial-step:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .step-number {
+            background: var(--cor-laranja);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .step-content h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--cor-texto-principal);
+        }
+
+        .step-content p {
+            margin: 0;
+            color: var(--cor-texto-secundario);
+            line-height: 1.5;
+        }
+
+        .step-highlight {
+            background: var(--cor-verde);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Card do SEBRAE/Vídeo */
+        .video-card {
+            text-align: center;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid var(--cor-borda);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(135deg, var(--cor-laranja), var(--cor-laranja-hover));
+        }
+
+        .video-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--cor-texto-principal);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .video-title i {
+            color: #ff0000;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            margin-bottom: 25px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .btn-sebrae {
+            background: linear-gradient(135deg, var(--cor-azul), #2980b9);
+            color: white;
+            border: none;
+            padding: 18px 35px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            margin-top: 10px;
+        }
+
+        .btn-sebrae:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-sebrae i {
+            margin-right: 10px;
+        }
+
+        /* Card de Pesquisa */
+        .pesquisa-card {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border-radius: 12px;
+            border: 2px solid var(--cor-laranja);
+            text-align: left;
+        }
+
+        .pesquisa-card h3 {
+            color: var(--cor-laranja);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pesquisa-card p {
+            color: var(--cor-texto-principal);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .opcoes-pesquisa {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .opcao-radio {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+        }
+
+        .opcao-radio:hover {
+            background: rgba(255, 152, 0, 0.1);
+        }
+
+        .opcao-radio input[type="radio"] {
+            display: none;
+        }
+
+        .radio-custom {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--cor-laranja);
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .opcao-radio input[type="radio"]:checked + .radio-custom {
+            background: var(--cor-laranja);
+        }
+
+        .opcao-radio input[type="radio"]:checked + .radio-custom::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .form-group-inline {
+            margin-bottom: 15px;
+        }
+
+        .form-group-inline label {
+            display: block;
+            font-weight: 500;
+            color: var(--cor-texto-principal);
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+
+        .form-group-inline select,
+        .form-group-inline textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--cor-borda);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group-inline select:focus,
+        .form-group-inline textarea:focus {
+            outline: none;
+            border-color: var(--cor-laranja);
+        }
+
+        .form-group-inline textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+        }
+
+        .btn-feedback {
+            background: linear-gradient(135deg, var(--cor-laranja), var(--cor-laranja-hover));
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        .btn-feedback:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .btn-feedback:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .feedback-message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+        }
+
+        .feedback-message.success {
+            background: rgba(39, 174, 96, 0.1);
+            color: var(--cor-verde);
+            border: 1px solid var(--cor-verde);
+        }
+
+        .feedback-message.error {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+
+        /* Observação inline no tutorial */
+        .observacao-inline {
+            margin-top: 183px;
+            padding: 20px;
+            background: rgba(255, 152, 0, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid var(--cor-laranja);
+        }
+
+        .observacao-inline h4 {
+            color: var(--cor-laranja);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .observacao-text-small {
+            color: var(--cor-texto-secundario);
+            line-height: 1.5;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .observacao-text-small strong {
+            color: var(--cor-texto-principal);
+        }
+
+        /* Observação */
+        .observacao-section {
+            background: var(--cor-fundo-card);
+            border-radius: 16px;
+            box-shadow: var(--sombra-card);
+            padding: 30px;
+            border-left: 5px solid var(--cor-laranja);
+        }
+
+        .observacao-section h3 {
+            color: var(--cor-laranja);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .observacao-text {
+            color: var(--cor-texto-secundario);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .observacao-text strong {
+            color: var(--cor-texto-principal);
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 20px;
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .pesquisa-card {
+                margin-top: 20px;
+                padding: 20px;
+            }
+
+            .opcoes-pesquisa {
+                gap: 10px;
+            }
+
+            .observacao-inline {
+                margin-top: 20px;
+                padding: 15px;
+            }
+
+            .header-section h1 {
+                font-size: 2rem;
+            }
+
+            .card {
+                padding: 25px;
+            }
+
+            .tutorial-step {
+                padding: 15px;
+            }
+
+            .btn-sebrae {
+                padding: 15px 25px;
+                font-size: 1rem;
+            }
+        }
+
+        /* Animações */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .tutorial-card {
+            animation-delay: 0.1s;
+        }
+
+        .video-card {
+            animation-delay: 0.2s;
+        }
+
+        .observacao-section {
+            animation: fadeInUp 0.6s ease-out;
+            animation-delay: 0.3s;
+        }
+
+        /* Botão WhatsApp Flutuante */
+        .whatsapp-float {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            bottom: 40px;
+            right: 40px;
+            background-color: #25d366;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            font-size: 28px;
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            animation: pulse-whatsapp 2s infinite;
+        }
+
+        .whatsapp-float:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(37, 211, 102, 0.6);
+            color: white;
+        }
+
+        @keyframes pulse-whatsapp {
+            0% {
+                box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+            }
+            50% {
+                box-shadow: 0 6px 30px rgba(37, 211, 102, 0.7);
+            }
+            100% {
+                box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+            }
+        }
+
+        /* Responsividade para WhatsApp */
+        @media (max-width: 768px) {
+            .whatsapp-float {
+                width: 55px;
+                height: 55px;
+                bottom: 30px;
+                right: 30px;
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header-container"></div>
+
+    <main class="main-container">
+        
+        <!-- Header -->
+        <div class="header-section">
+            <h1><i class="fas fa-file-invoice"></i> Emitir Nota Fiscal</h1>
+            <p class="subtitle">
+                Emita suas notas fiscais de forma rápida e segura através da plataforma oficial do SEBRAE.
+                Siga nosso tutorial para começar agora mesmo!
+            </p>
+        </div>
+
+        <!-- Grid Principal -->
+        <div class="main-grid">
+            
+            <!-- Card Tutorial (ESQUERDA) -->
+            <div class="card tutorial-card">
+                <h2>
+                    <i class="fas fa-list-ol"></i>
+                    Tutorial Passo a Passo
+                </h2>
+                
+                <ul class="tutorial-steps">
+                    <li class="tutorial-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Adquira um Certificado Digital</h3>
+                            <p>
+                                Primeiro passo é ter um <span class="step-highlight">Certificado Digital e-CNPJ</span>. 
+                                Você pode adquirir em certificadoras como Serasa, Certisign ou outras homologadas pela ICP-Brasil.
+                            </p>
+                        </div>
+                    </li>
+
+                    <li class="tutorial-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Faça seu Cadastro no SEBRAE</h3>
+                            <p>
+                                Acesse o sistema do SEBRAE e realize seu cadastro informando seus dados empresariais e 
+                                <span class="step-highlight">instalando seu certificado digital</span>.
+                            </p>
+                        </div>
+                    </li>
+
+                    <li class="tutorial-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Configure sua Empresa</h3>
+                            <p>
+                                Complete o cadastro da sua empresa com todas as informações fiscais necessárias, 
+                                incluindo <span class="step-highlight">regime tributário</span> e dados de endereço.
+                            </p>
+                        </div>
+                    </li>
+
+                    <li class="tutorial-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>Emita suas Notas Fiscais</h3>
+                            <p>
+                                Com tudo configurado, você já pode emitir suas notas fiscais diretamente no sistema, 
+                                de forma <span class="step-highlight">gratuita e oficial</span>.
+                            </p>
+                        </div>
+                    </li>
+                </ul>
+
+                <!-- Observação movida para embaixo do tutorial -->
+                <div class="observacao-inline">
+                    <h4>
+                        <i class="fas fa-info-circle"></i>
+                        Sobre esta Funcionalidade
+                    </h4>
+                    <p class="observacao-text-small">
+                        <strong>O Lume foca em MEI e Simples Nacional</strong> com o <strong>melhor custo-benefício</strong>. 
+                        Para manter preços baixos, direcionamos para a <strong>plataforma gratuita do SEBRAE</strong>. 
+                        Assim você tem gestão completa por R$ 27/mês + NFe gratuita no SEBRAE!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Card Vídeo + SEBRAE (DIREITA) -->
+            <div class="card video-card">
+                <h2 class="video-title">
+                    <i class="fab fa-youtube"></i>
+                    Vídeo Tutorial
+                </h2>
+                
+                <div class="video-container">
+                    <iframe 
+                        src="https://www.youtube.com/embed/S_SVai_l8MQ" 
+                        title="Tutorial Emitir Nota Fiscal SEBRAE"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen>
+                    </iframe>
+                </div>
+
+                <p style="color: var(--cor-texto-secundario); margin-bottom: 25px; line-height: 1.6;">
+                    Assista ao vídeo tutorial completo e depois acesse o sistema oficial do SEBRAE para emitir suas notas fiscais.
+                </p>
+
+                <a href="https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=f2ae5408-53a6-4fed-b4e1-69dede37359a&response_mode=fragment&response_type=code&scope=openid&nonce=76bf975d-7830-4c8b-93b6-fe249a820315" 
+                   target="_blank" 
+                   class="btn-sebrae">
+                    <i class="fas fa-rocket"></i>
+                    Acessar Sistema SEBRAE
+                </a>
+
+                <!-- Card de Pesquisa -->
+                <div class="pesquisa-card">
+                    <h3><i class="fas fa-poll"></i> Sua Opinião é Importante!</h3>
+                    <p>Você gostaria que o Lume tivesse <strong>emissão de NFe integrada</strong>, mesmo aumentando o preço da mensalidade?</p>
+                    
+                    <form id="feedback-form">
+                        <div class="opcoes-pesquisa">
+                            <label class="opcao-radio">
+                                <input type="radio" name="deseja_nfe" value="sim" required>
+                                <span class="radio-custom"></span>
+                                <strong>Sim</strong>, eu pagaria mais por isso
+                            </label>
+                            <label class="opcao-radio">
+                                <input type="radio" name="deseja_nfe" value="nao" required>
+                                <span class="radio-custom"></span>
+                                <strong>Não</strong>, prefiro usar o SEBRAE
+                            </label>
+                        </div>
+
+                        <div class="form-group-inline">
+                            <label for="quantidade_nfe">Quantas NFe você emite por mês?</label>
+                            <select id="quantidade_nfe" name="quantidade_nfe" required>
+                                <option value="">Selecione</option>
+                                <option value="1-10">1 a 10 notas</option>
+                                <option value="11-50">11 a 50 notas</option>
+                                <option value="51-100">51 a 100 notas</option>
+                                <option value="100+">Mais de 100 notas</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group-inline">
+                            <label for="observacoes">Comentários (opcional):</label>
+                            <textarea id="observacoes" name="observacoes" placeholder="Conte-nos sua opinião..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-feedback">
+                            <i class="fas fa-paper-plane"></i>
+                            Enviar Feedback
+                        </button>
+                    </form>
+
+                    <div id="feedback-message" class="feedback-message"></div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Botão WhatsApp Flutuante -->
+    <a href="https://wa.me/5534996612499?text=Olá! Vim do sistema Lume e gostaria de mais informações." 
+       target="_blank" 
+       class="whatsapp-float"
+       title="Fale conosco no WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+    
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+
+    <script>
+        document.addEventListener('userDataReady', () => {
+            console.log('Header carregado com sucesso na página de emitir nota fiscal');
+            
+            // Configuração do Supabase
+            const supabaseClient = supabase.createClient(
+                'https://gnehkswoqlpchtlgyjyj.supabase.co', 
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduZWhrc3dvcWxwY2h0bGd5anlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTY3NjYsImV4cCI6MjA2OTQ3Mjc2Nn0.8giA1bDvCzgvlcW_pkimGO9qHRF2I0QfhG6nx9U_tdY'
+            );
+
+            // Elementos do formulário
+            const feedbackForm = document.getElementById('feedback-form');
+            const feedbackMessage = document.getElementById('feedback-message');
+            const btnFeedback = document.querySelector('.btn-feedback');
+
+            // Setup do formulário de feedback
+            feedbackForm.addEventListener('submit', handleFeedbackSubmit);
+
+            async function handleFeedbackSubmit(event) {
+                event.preventDefault();
+                
+                if (!window.currentCompanyId || !window.currentUser) {
+                    showFeedbackMessage('Erro: dados do usuário não encontrados', false);
+                    return;
+                }
+
+                // Loading state
+                btnFeedback.disabled = true;
+                btnFeedback.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+
+                try {
+                    const formData = new FormData(feedbackForm);
+                    
+                    const feedbackData = {
+                        id_empresa: window.currentCompanyId,
+                        auth_user_id: window.currentUser.auth_user_id,
+                        deseja_nfe_integrada: formData.get('deseja_nfe') === 'sim',
+                        quantidade_nfe_mensal: formData.get('quantidade_nfe'),
+                        observacoes: formData.get('observacoes') || null
+                    };
+
+                    // Verifica se já existe feedback desta empresa
+                    const { data: existingFeedback } = await supabaseClient
+                        .from('feedback_nfe')
+                        .select('id')
+                        .eq('id_empresa', window.currentCompanyId)
+                        .single();
+
+                    if (existingFeedback) {
+                        // Atualiza feedback existente
+                        const { error } = await supabaseClient
+                            .from('feedback_nfe')
+                            .update(feedbackData)
+                            .eq('id_empresa', window.currentCompanyId);
+
+                        if (error) throw error;
+                        showFeedbackMessage('✅ Feedback atualizado com sucesso! Obrigado pela sua opinião.', true);
+                    } else {
+                        // Cria novo feedback
+                        const { error } = await supabaseClient
+                            .from('feedback_nfe')
+                            .insert([feedbackData]);
+
+                        if (error) throw error;
+                        showFeedbackMessage('✅ Feedback enviado com sucesso! Obrigado pela sua opinião.', true);
+                    }
+
+                    // Reset form após sucesso
+                    feedbackForm.reset();
+
+                } catch (error) {
+                    console.error('Erro ao enviar feedback:', error);
+                    
+                    if (error.code === '42P01') {
+                        showFeedbackMessage('❌ Tabela de feedback não foi criada ainda. Entre em contato com o suporte.', false);
+                    } else {
+                        showFeedbackMessage('❌ Erro ao enviar feedback. Tente novamente.', false);
+                    }
+                } finally {
+                    btnFeedback.disabled = false;
+                    btnFeedback.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Feedback';
+                }
+            }
+
+            function showFeedbackMessage(text, isSuccess) {
+                feedbackMessage.textContent = text;
+                feedbackMessage.className = `feedback-message ${isSuccess ? 'success' : 'error'}`;
+                feedbackMessage.style.display = 'block';
+
+                setTimeout(() => {
+                    feedbackMessage.style.display = 'none';
+                }, 5000);
+            }
+
+            // Carrega feedback existente se houver
+            loadExistingFeedback();
+
+            async function loadExistingFeedback() {
+                try {
+                    const { data: feedback, error } = await supabaseClient
+                        .from('feedback_nfe')
+                        .select('*')
+                        .eq('id_empresa', window.currentCompanyId)
+                        .single();
+
+                    if (!error && feedback) {
+                        // Preenche o formulário com dados existentes
+                        const desejaRadio = document.querySelector(`input[name="deseja_nfe"][value="${feedback.deseja_nfe_integrada ? 'sim' : 'nao'}"]`);
+                        if (desejaRadio) desejaRadio.checked = true;
+
+                        const quantidadeSelect = document.getElementById('quantidade_nfe');
+                        if (quantidadeSelect && feedback.quantidade_nfe_mensal) {
+                            quantidadeSelect.value = feedback.quantidade_nfe_mensal;
+                        }
+
+                        const observacoesTextarea = document.getElementById('observacoes');
+                        if (observacoesTextarea && feedback.observacoes) {
+                            observacoesTextarea.value = feedback.observacoes;
+                        }
+
+                        showFeedbackMessage('ℹ️ Você já enviou feedback anteriormente. Pode alterar suas respostas se desejar.', true);
+                    }
+                } catch (error) {
+                    console.log('Nenhum feedback anterior encontrado (normal)');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

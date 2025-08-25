@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Relatório de Produtos</title>
+    <link rel="icon" type="image/png" href="log.png">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <!-- Header CSS -->
+    <link href="header.css" rel="stylesheet">
+    <!-- Relatório CSS -->
+    <link href="relatorio-produtos.css" rel="stylesheet">
+</head>
+<body>
+    <div id="header-container"></div>
+
+    <main class="main-container">
+        <!-- Header do Relatório -->
+        <div class="relatorio-header">
+            <div class="header-content">
+                <div class="header-main">
+                    <h1 class="header-title">Relatório de Produtos</h1>
+                    <p class="header-subtitle">Dashboard completo de análise de estoque e produtos</p>
+                </div>
+                
+                <div class="header-stats">
+                    <div class="stat-card-mini">
+                        <div class="stat-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total de Produtos</div>
+                            <div class="stat-value" id="total-produtos">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card-mini">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Valor do Estoque</div>
+                            <div class="stat-value" id="valor-estoque">R$ 0,00</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card-mini">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Estoque Baixo</div>
+                            <div class="stat-value" id="estoque-baixo">0</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-mini">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Margem Média</div>
+                            <div class="stat-value" id="margem-media">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controles -->
+        <div class="controls-section">
+            <div class="filters-group">
+                <div class="filter-item">
+                    <label for="filter-categoria">Categoria:</label>
+                    <select id="filter-categoria">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label for="filter-marca">Marca:</label>
+                    <select id="filter-marca">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label for="filter-status">Status:</label>
+                    <select id="filter-status">
+                        <option value="">Todos</option>
+                        <option value="ativo">Ativos</option>
+                        <option value="inativo">Inativos</option>
+                        <option value="estoque-baixo">Estoque Baixo</option>
+                        <option value="sem-estoque">Sem Estoque</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="actions-group">
+                <button class="refresh-btn" id="refresh-data">
+                    <i class="fas fa-sync-alt"></i>
+                    Atualizar
+                </button>
+                <button class="export-btn" id="export-report">
+                    <i class="fas fa-download"></i>
+                    Exportar
+                </button>
+            </div>
+        </div>
+
+        <!-- Cards de Estatísticas Detalhadas -->
+        <div class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon produtos-ativos">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="produtos-ativos">0</div>
+                            <div class="stat-label">Produtos Ativos</div>
+                            <div class="stat-detail" id="produtos-ativos-percent">0% do total</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon valor-total">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="valor-total-estoque">R$ 0,00</div>
+                            <div class="stat-label">Valor Total do Estoque</div>
+                            <div class="stat-detail" id="valor-medio-produto">Média: R$ 0,00/produto</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon categorias">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="total-categorias">0</div>
+                            <div class="stat-label">Categorias</div>
+                            <div class="stat-detail" id="categoria-mais-produtos">Maior: N/A</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon alertas">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="total-alertas">0</div>
+                            <div class="stat-label">Alertas de Estoque</div>
+                            <div class="stat-detail" id="produtos-sem-estoque">0 sem estoque</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid de Gráficos -->
+        <div class="charts-section">
+            <div class="charts-grid">
+                <!-- Distribuição por Categoria -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Distribuição por Categoria</h3>
+                        <div class="chart-controls">
+                            <select id="categoria-metric">
+                                <option value="quantidade">Por Quantidade</option>
+                                <option value="valor">Por Valor</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-medium">
+                        <canvas id="categoria-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Top 10 Produtos por Valor -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Top 10 Produtos por Valor</h3>
+                        <div class="chart-info">
+                            <i class="fas fa-info-circle" title="Produtos com maior valor em estoque"></i>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-medium">
+                        <canvas id="top-produtos-valor-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Análise de Margem -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Análise de Margem de Lucro</h3>
+                        <div class="chart-controls">
+                            <select id="margem-view">
+                                <option value="distribuicao">Distribuição</option>
+                                <option value="categoria">Por Categoria</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-medium">
+                        <canvas id="margem-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Status do Estoque -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Status do Estoque</h3>
+                        <div class="chart-info">
+                            <i class="fas fa-info-circle" title="Situação dos produtos baseada no estoque mínimo"></i>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-medium">
+                        <canvas id="estoque-status-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Produtos por Marca -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Top 10 Marcas</h3>
+                        <div class="chart-controls">
+                            <select id="marca-metric">
+                                <option value="quantidade">Por Quantidade</option>
+                                <option value="valor">Por Valor</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-medium">
+                        <canvas id="marcas-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Faixa de Preços -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Distribuição por Faixa de Preço</h3>
+                        <div class="chart-info">
+                            <i class="fas fa-info-circle" title="Quantidade de produtos por faixa de preço de venda"></i>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-medium">
+                        <canvas id="faixa-preco-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de Alertas -->
+        <div class="alerts-section">
+            <div class="alerts-card">
+                <div class="alerts-header">
+                    <h3>Alertas de Estoque</h3>
+                    <div class="alerts-controls">
+                        <button class="toggle-alerts" id="toggle-alerts">
+                            <i class="fas fa-eye"></i>
+                            <span>Mostrar Todos</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="alerts-content">
+                    <div class="alerts-summary">
+                        <div class="alert-item critical">
+                            <div class="alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+                            <div class="alert-info">
+                                <span class="alert-count" id="sem-estoque-count">0</span>
+                                <span class="alert-label">Sem Estoque</span>
+                            </div>
+                        </div>
+                        <div class="alert-item warning">
+                            <div class="alert-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                            <div class="alert-info">
+                                <span class="alert-count" id="estoque-baixo-count">0</span>
+                                <span class="alert-label">Estoque Baixo</span>
+                            </div>
+                        </div>
+                        <div class="alert-item info">
+                            <div class="alert-icon"><i class="fas fa-info-circle"></i></div>
+                            <div class="alert-info">
+                                <span class="alert-count" id="sem-limite-count">0</span>
+                                <span class="alert-label">Sem Limite Definido</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alerts-table-container" id="alerts-table-container" style="display: none;">
+                        <table class="alerts-table">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Categoria</th>
+                                    <th>Estoque Atual</th>
+                                    <th>Estoque Mínimo</th>
+                                    <th>Status</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alerts-table-body">
+                                <!-- Conteúdo será preenchido via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading-overlay" id="loading-overlay" style="display: none;">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p>Carregando dados dos produtos...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+    <script src="relatorio-produtos.js"></script>
+    <script src="relatorio-produtos-data.js"></script>
+    <script src="relatorio-produtos-charts.js"></script>
+</body>
+</html>

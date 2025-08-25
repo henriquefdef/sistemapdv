@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Gestão de Crediário</title>
+    <link rel="icon" type="image/png" href="log.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="header.css"> 
+    <link rel="stylesheet" href="crediario.css">
+</head>
+<body>
+
+    <header id="header-container"></header>
+
+    <div class="main-container">
+        <!-- Header Financeiro Style -->
+        <div class="financial-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <h1>Gestão de Crediário</h1>
+                    <span class="subtitle">Controle profissional de recebimentos parcelados</span>
+                </div>
+                <div class="header-actions">
+                    <button id="refresh-btn" class="action-btn refresh">
+                        <i class="fas fa-sync-alt"></i>
+                        Atualizar
+                    </button>
+                    <button id="export-btn" class="action-btn export">
+                        <i class="fas fa-file-export"></i>
+                        Exportar
+                    </button>
+                    <button id="bulk-charge-btn" class="action-btn whatsapp">
+                        <i class="fab fa-whatsapp"></i>
+                        Cobrança em Lote
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPIs Dashboard Style Financeiro -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span class="kpi-title">Total em Aberto</span>
+                </div>
+                <div class="kpi-value" id="kpi-total-aberto">R$ 0,00</div>
+                <div class="kpi-subtitle" id="kpi-total-parcelas">0 parcelas pendentes</div>
+            </div>
+
+            <div class="kpi-card alert">
+                <div class="kpi-header">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span class="kpi-title">Vencidas</span>
+                </div>
+                <div class="kpi-value" id="kpi-vencidas">R$ 0,00</div>
+                <div class="kpi-subtitle" id="kpi-vencidas-count">0 parcelas em atraso</div>
+            </div>
+
+            <div class="kpi-card warning">
+                <div class="kpi-header">
+                    <i class="fas fa-clock"></i>
+                    <span class="kpi-title">Vencem Hoje</span>
+                </div>
+                <div class="kpi-value" id="kpi-hoje">R$ 0,00</div>
+                <div class="kpi-subtitle" id="kpi-hoje-count">0 parcelas vencendo</div>
+            </div>
+
+            <div class="kpi-card success">
+                <div class="kpi-header">
+                    <i class="fas fa-check-circle"></i>
+                    <span class="kpi-title">Recebido</span>
+                </div>
+                <div class="kpi-value" id="kpi-recebido">R$ 0,00</div>
+                <div class="kpi-subtitle" id="kpi-recebido-count">0 parcelas quitadas</div>
+            </div>
+        </div>
+
+        <!-- Filtros Style Financeiro -->
+        <div class="filter-section">
+            <div class="filter-header">
+                <h3>Filtros</h3>
+                <button id="clear-filters" class="clear-filters-btn">
+                    <i class="fas fa-times"></i>
+                    Limpar Filtros
+                </button>
+            </div>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label class="filter-label">Status</label>
+                    <select id="filter-status" class="filter-input">
+                        <option value="">Todos os Status</option>
+                        <option value="pendente">Pendente</option>
+                        <option value="pago">Pago</option>
+                        <option value="vencido">Vencido</option>
+                        <option value="parcial">Pagamento Parcial</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Cliente</label>
+                    <input type="text" id="filter-cliente" class="filter-input" placeholder="Buscar cliente...">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Período</label>
+                    <div class="date-range">
+                        <input type="date" id="filter-data-inicio" class="filter-input">
+                        <span class="date-separator">até</span>
+                        <input type="date" id="filter-data-fim" class="filter-input">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">&nbsp;</label>
+                    <button id="apply-filters" class="action-btn">
+                        <i class="fas fa-search"></i>
+                        Aplicar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela Style Financeiro -->
+        <div class="table-section">
+            <div class="table-header-section">
+                <div class="table-title">
+                    <h3>Listagem de Crediários</h3>
+                    <span class="record-count" id="record-count">0 registros</span>
+                </div>
+                <div class="table-actions">
+                    <button id="toggle-view" class="table-btn" title="Alternar visualização">
+                        <i class="fas fa-th-list"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container" style="position: relative;">
+                <div id="loading-overlay" class="loading-overlay hidden">
+                    <div class="loading-spinner"></div>
+                    <span>Carregando dados...</span>
+                </div>
+
+                <div id="empty-state" class="empty-state hidden">
+                    <i class="fas fa-file-invoice"></i>
+                    <h3>Nenhum registro encontrado</h3>
+                    <p>Não há crediários cadastrados ou que atendam aos filtros aplicados.</p>
+                </div>
+
+                <div id="crediario-table">
+                    <!-- Tabela será renderizada aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Pagamento Style Financeiro -->
+    <div id="payment-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Registrar Pagamento</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-summary">
+                    <div class="summary-row">
+                        <span>Cliente:</span>
+                        <strong id="payment-cliente"></strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Venda:</span>
+                        <strong id="payment-venda"></strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Parcela:</span>
+                        <strong id="payment-parcela"></strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Valor da Parcela:</span>
+                        <strong id="payment-valor-parcela"></strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Já Pago:</span>
+                        <strong id="payment-valor-pago" style="color: #1dd1a1;"></strong>
+                    </div>
+                    <div class="summary-row highlight">
+                        <span>Saldo Restante:</span>
+                        <strong id="payment-saldo-restante"></strong>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Valor do Pagamento *</label>
+                        <div class="input-group">
+                            <span class="input-prefix">R$</span>
+                            <input type="number" id="payment-valor" class="form-input" step="0.01" min="0.01" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Data do Pagamento *</label>
+                        <input type="date" id="payment-data" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Forma de Pagamento</label>
+                        <select id="payment-forma" class="form-input">
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="PIX">PIX</option>
+                            <option value="Cartão Débito">Cartão Débito</option>
+                            <option value="Cartão Crédito">Cartão Crédito</option>
+                            <option value="Transferência">Transferência</option>
+                            <option value="Cheque">Cheque</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label class="form-label">Observações</label>
+                        <textarea id="payment-observacoes" class="form-input" rows="3" placeholder="Informações adicionais sobre o pagamento..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-payment" class="modal-btn cancel">Cancelar</button>
+                <button id="confirm-payment" class="modal-btn primary">
+                    <i class="fas fa-check"></i>
+                    Confirmar Pagamento
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Cobrança WhatsApp Style Financeiro -->
+    <div id="whatsapp-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Enviar Cobrança via WhatsApp</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="client-info">
+                    <div class="info-row">
+                        <span>Cliente:</span>
+                        <strong id="whatsapp-cliente"></strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Telefone:</span>
+                        <strong id="whatsapp-telefone"></strong>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Modelo de Mensagem</label>
+                    <select id="whatsapp-template" class="form-input">
+                        <option value="profissional">Profissional</option>
+                        <option value="cordial">Cordial</option>
+                        <option value="urgente">Urgente</option>
+                        <option value="personalizada">Personalizada</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Mensagem</label>
+                    <textarea id="whatsapp-mensagem" class="form-input" rows="10" placeholder="A mensagem será gerada automaticamente..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-whatsapp" class="modal-btn cancel">Cancelar</button>
+                <button id="send-whatsapp" class="modal-btn success">
+                    <i class="fab fa-whatsapp"></i>
+                    Enviar WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Histórico Style Financeiro -->
+    <div id="history-modal" class="modal-overlay hidden">
+        <div class="modal large">
+            <div class="modal-header">
+                <h2>Histórico de Pagamentos</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="client-info">
+                    <div class="info-row">
+                        <span>Cliente:</span>
+                        <strong id="history-cliente"></strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Venda:</span>
+                        <strong id="history-venda"></strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Parcela:</span>
+                        <strong id="history-parcela"></strong>
+                    </div>
+                </div>
+                <div id="history-content" class="history-timeline">
+                    <!-- Conteúdo será carregado dinamicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="close-history" class="modal-btn cancel">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="header.js"></script>
+    <script src="crediario.js"></script>
+    <script src="crediario-modal.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,183 @@
+/* Fontes locais para substituir CDNs externos */
+
+/* Substituição da fonte Inter por fontes do sistema */
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 300;
+    src: local('Segoe UI Light'), local('Arial'), local('Helvetica Neue'), local('sans-serif');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Segoe UI'), local('Arial'), local('Helvetica Neue'), local('sans-serif');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 500;
+    src: local('Segoe UI Semibold'), local('Arial'), local('Helvetica Neue'), local('sans-serif');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 600;
+    src: local('Segoe UI Semibold'), local('Arial Bold'), local('Helvetica Neue Bold'), local('sans-serif');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Segoe UI Bold'), local('Arial Bold'), local('Helvetica Neue Bold'), local('sans-serif');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 800;
+    src: local('Segoe UI Bold'), local('Arial Black'), local('Helvetica Neue Bold'), local('sans-serif');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 900;
+    src: local('Segoe UI Black'), local('Arial Black'), local('Helvetica Neue Bold'), local('sans-serif');
+}
+
+/* Ícones básicos usando Unicode para substituir Font Awesome */
+.fa, .fas, .far, .fab {
+    font-family: 'Segoe UI Symbol', 'Segoe UI Emoji', 'Arial Unicode MS', sans-serif;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    line-height: 1;
+}
+
+/* Mapeamento de ícones Font Awesome mais comuns para Unicode */
+.fa-search:before, .fas.fa-search:before { content: '🔍'; }
+.fa-plus:before, .fas.fa-plus:before { content: '+'; }
+.fa-edit:before, .fas.fa-edit:before { content: '✏️'; }
+.fa-trash:before, .fas.fa-trash:before { content: '🗑️'; }
+.fa-eye:before, .fas.fa-eye:before { content: '👁️'; }
+.fa-download:before, .fas.fa-download:before { content: '⬇️'; }
+.fa-upload:before, .fas.fa-upload:before { content: '⬆️'; }
+.fa-save:before, .fas.fa-save:before { content: '💾'; }
+.fa-print:before, .fas.fa-print:before { content: '🖨️'; }
+.fa-home:before, .fas.fa-home:before { content: '🏠'; }
+.fa-user:before, .fas.fa-user:before { content: '👤'; }
+.fa-users:before, .fas.fa-users:before { content: '👥'; }
+.fa-cog:before, .fas.fa-cog:before { content: '⚙️'; }
+.fa-check:before, .fas.fa-check:before { content: '✓'; }
+.fa-times:before, .fas.fa-times:before { content: '✕'; }
+.fa-arrow-left:before, .fas.fa-arrow-left:before { content: '←'; }
+.fa-arrow-right:before, .fas.fa-arrow-right:before { content: '→'; }
+.fa-arrow-up:before, .fas.fa-arrow-up:before { content: '↑'; }
+.fa-arrow-down:before, .fas.fa-arrow-down:before { content: '↓'; }
+.fa-bars:before, .fas.fa-bars:before { content: '☰'; }
+.fa-shopping-cart:before, .fas.fa-shopping-cart:before { content: '🛒'; }
+.fa-money-bill:before, .fas.fa-money-bill:before { content: '💵'; }
+.fa-chart-bar:before, .fas.fa-chart-bar:before { content: '📊'; }
+.fa-file:before, .fas.fa-file:before { content: '📄'; }
+.fa-folder:before, .fas.fa-folder:before { content: '📁'; }
+.fa-calendar:before, .fas.fa-calendar:before { content: '📅'; }
+.fa-clock:before, .fas.fa-clock:before { content: '🕐'; }
+.fa-bell:before, .fas.fa-bell:before { content: '🔔'; }
+.fa-envelope:before, .fas.fa-envelope:before { content: '✉️'; }
+.fa-phone:before, .fas.fa-phone:before { content: '📞'; }
+.fa-info:before, .fas.fa-info:before { content: 'ℹ️'; }
+.fa-warning:before, .fas.fa-warning:before { content: '⚠️'; }
+.fa-exclamation:before, .fas.fa-exclamation:before { content: '❗'; }
+.fa-question:before, .fas.fa-question:before { content: '❓'; }
+.fa-star:before, .fas.fa-star:before { content: '⭐'; }
+.fa-heart:before, .fas.fa-heart:before { content: '❤️'; }
+.fa-thumbs-up:before, .fas.fa-thumbs-up:before { content: '👍'; }
+.fa-thumbs-down:before, .fas.fa-thumbs-down:before { content: '👎'; }
+.fa-lock:before, .fas.fa-lock:before { content: '🔒'; }
+.fa-unlock:before, .fas.fa-unlock:before { content: '🔓'; }
+.fa-key:before, .fas.fa-key:before { content: '🔑'; }
+.fa-shield:before, .fas.fa-shield:before { content: '🛡️'; }
+.fa-globe:before, .fas.fa-globe:before { content: '🌐'; }
+.fa-wifi:before, .fas.fa-wifi:before { content: '📶'; }
+.fa-signal:before, .fas.fa-signal:before { content: '📶'; }
+.fa-battery-full:before, .fas.fa-battery-full:before { content: '🔋'; }
+.fa-power-off:before, .fas.fa-power-off:before { content: '⏻'; }
+.fa-refresh:before, .fas.fa-refresh:before { content: '🔄'; }
+.fa-sync:before, .fas.fa-sync:before { content: '🔄'; }
+.fa-spinner:before, .fas.fa-spinner:before { content: '⟳'; }
+.fa-loading:before, .fas.fa-loading:before { content: '⟳'; }
+
+/* Ícones específicos do sistema */
+.fa-box:before, .fas.fa-box:before { content: '📦'; }
+.fa-boxes:before, .fas.fa-boxes:before { content: '📦'; }
+.fa-truck:before, .fas.fa-truck:before { content: '🚚'; }
+.fa-warehouse:before, .fas.fa-warehouse:before { content: '🏭'; }
+.fa-barcode:before, .fas.fa-barcode:before { content: '▌▌▌'; }
+.fa-qrcode:before, .fas.fa-qrcode:before { content: '▣'; }
+.fa-tag:before, .fas.fa-tag:before { content: '🏷️'; }
+.fa-tags:before, .fas.fa-tags:before { content: '🏷️'; }
+.fa-receipt:before, .fas.fa-receipt:before { content: '🧾'; }
+.fa-cash-register:before, .fas.fa-cash-register:before { content: '💰'; }
+.fa-credit-card:before, .fas.fa-credit-card:before { content: '💳'; }
+.fa-coins:before, .fas.fa-coins:before { content: '🪙'; }
+.fa-dollar-sign:before, .fas.fa-dollar-sign:before { content: '$'; }
+.fa-euro-sign:before, .fas.fa-euro-sign:before { content: '€'; }
+.fa-pound-sign:before, .fas.fa-pound-sign:before { content: '£'; }
+.fa-yen-sign:before, .fas.fa-yen-sign:before { content: '¥'; }
+.fa-percent:before, .fas.fa-percent:before { content: '%'; }
+.fa-calculator:before, .fas.fa-calculator:before { content: '🧮'; }
+.fa-chart-line:before, .fas.fa-chart-line:before { content: '📈'; }
+.fa-chart-pie:before, .fas.fa-chart-pie:before { content: '📊'; }
+.fa-table:before, .fas.fa-table:before { content: '📋'; }
+.fa-list:before, .fas.fa-list:before { content: '📝'; }
+.fa-list-ul:before, .fas.fa-list-ul:before { content: '• • •'; }
+.fa-list-ol:before, .fas.fa-list-ol:before { content: '1. 2. 3.'; }
+.fa-sort:before, .fas.fa-sort:before { content: '⇅'; }
+.fa-sort-up:before, .fas.fa-sort-up:before { content: '⇈'; }
+.fa-sort-down:before, .fas.fa-sort-down:before { content: '⇊'; }
+.fa-filter:before, .fas.fa-filter:before { content: '🔽'; }
+.fa-history:before, .fas.fa-history:before { content: '🕐'; }
+.fa-undo:before, .fas.fa-undo:before { content: '↶'; }
+.fa-redo:before, .fas.fa-redo:before { content: '↷'; }
+.fa-copy:before, .fas.fa-copy:before { content: '📋'; }
+.fa-paste:before, .fas.fa-paste:before { content: '📄'; }
+.fa-cut:before, .fas.fa-cut:before { content: '✂️'; }
+.fa-link:before, .fas.fa-link:before { content: '🔗'; }
+.fa-unlink:before, .fas.fa-unlink:before { content: '⛓️‍💥'; }
+.fa-paperclip:before, .fas.fa-paperclip:before { content: '📎'; }
+.fa-image:before, .fas.fa-image:before { content: '🖼️'; }
+.fa-images:before, .fas.fa-images:before { content: '🖼️'; }
+.fa-camera:before, .fas.fa-camera:before { content: '📷'; }
+.fa-video:before, .fas.fa-video:before { content: '📹'; }
+.fa-play:before, .fas.fa-play:before { content: '▶️'; }
+.fa-pause:before, .fas.fa-pause:before { content: '⏸️'; }
+.fa-stop:before, .fas.fa-stop:before { content: '⏹️'; }
+.fa-volume-up:before, .fas.fa-volume-up:before { content: '🔊'; }
+.fa-volume-down:before, .fas.fa-volume-down:before { content: '🔉'; }
+.fa-volume-mute:before, .fas.fa-volume-mute:before { content: '🔇'; }
+
+/* Ícones de status */
+.fa-check-circle:before, .fas.fa-check-circle:before { content: '✅'; }
+.fa-times-circle:before, .fas.fa-times-circle:before { content: '❌'; }
+.fa-exclamation-circle:before, .fas.fa-exclamation-circle:before { content: '⚠️'; }
+.fa-info-circle:before, .fas.fa-info-circle:before { content: 'ℹ️'; }
+.fa-question-circle:before, .fas.fa-question-circle:before { content: '❓'; }
+
+/* Animações para spinners */
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.fa-spin {
+    animation: fa-spin 2s infinite linear;
+}
+
+.fa-pulse {
+    animation: fa-spin 1s infinite steps(8);
+}

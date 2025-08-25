@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFCe - Teste Real</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .btn:hover {
+            background: #218838;
+        }
+        
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .resultado {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .sucesso {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .erro {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧾 NFCe - Teste</h1>
+        
+        <div class="form-group">
+            <label>Descrição do Produto</label>
+            <input type="text" id="descricao" value="Produto Teste" />
+        </div>
+        
+        <div class="form-group">
+            <label>Quantidade</label>
+            <input type="number" id="quantidade" value="1" min="1" />
+        </div>
+        
+        <div class="form-group">
+            <label>Valor Unitário (R$)</label>
+            <input type="number" id="valor" value="10.00" step="0.01" min="0.01" />
+        </div>
+        
+        <button class="btn" onclick="emitirNFCe()" id="btnEmitir">
+            🚀 Emitir NFCe
+        </button>
+        
+        <div id="resultado" class="resultado"></div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            apiUrl: 'https://api.sandbox.nuvemfiscal.com.br/v1',
+            tokenUrl: 'https://auth.nuvemfiscal.com.br/oauth/token',
+            clientId: 'oDX7mCYmoB4ycfxHfHNX',
+            clientSecret: '8r75ssitNQM6MsGX9weqNp3DrL9AEYhyjH4ibpAH'
+        };
+
+        async function obterToken() {
+            const response = await fetch(CONFIG.tokenUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `grant_type=client_credentials&client_id=${CONFIG.clientId}&client_secret=${CONFIG.clientSecret}&scope=nfce`
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(`Erro ${response.status}: ${error}`);
+            }
+
+            const data = await response.json();
+            return data.access_token;
+        }
+
+        async function emitirNFCe() {
+            const btn = document.getElementById('btnEmitir');
+            const resultado = document.getElementById('resultado');
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Processando...';
+            resultado.style.display = 'none';
+
+            try {
+                const descricao = document.getElementById('descricao').value;
+                const quantidade = parseFloat(document.getElementById('quantidade').value);
+                const valor = parseFloat(document.getElementById('valor').value);
+                const total = quantidade * valor;
+
+                // Obter token
+                const token = await obterToken();
+
+                // Dados mínimos da NFCe
+                const nfce = {
+                    natureza_operacao: "Venda",
+                    serie: 1,
+                    numero: Math.floor(Math.random() * 999) + 1,
+                    data_emissao: new Date().toISOString(),
+                    tipo_documento: 1,
+                    finalidade_emissao: 1,
+                    consumidor_final: 1,
+                    presenca_comprador: 1,
+                    
+                    emitente: {
+                        cnpj: "11222333000181",
+                        inscricao_estadual: "123456789", 
+                        nome: "EMPRESA TESTE LTDA",
+                        logradouro: "RUA TESTE",
+                        numero: "123",
+                        bairro: "CENTRO",
+                        codigo_municipio: 3550308,
+                        municipio: "SAO PAULO",
+                        uf: "SP",
+                        cep: "01000000"
+                    },
+
+                    itens: [{
+                        numero_item: 1,
+                        codigo_produto: "001",
+                        descricao: descricao,
+                        cfop: "5102",
+                        unidade_comercial: "UN",
+                        quantidade_comercial: quantidade,
+                        valor_unitario_comercial: valor,
+                        valor_total_bruto: total,
+                        unidade_tributavel: "UN", 
+                        quantidade_tributavel: quantidade,
+                        valor_unitario_tributavel: valor,
+                        origem: 0,
+                        
+                        icms: {
+                            situacao_tributaria: "102",
+                            origem: 0
+                        },
+                        
+                        pis: {
+                            situacao_tributaria: "07"
+                        },
+                        
+                        cofins: {
+                            situacao_tributaria: "07"
+                        }
+                    }],
+                    
+                    total: {
+                        icms: {
+                            base_calculo: 0,
+                            valor_total: 0
+                        },
+                        produtos_servicos: total,
+                        nota_fiscal: total
+                    },
+                    
+                    transporte: {
+                        modalidade_frete: 9
+                    },
+                    
+                    pagamentos: [{
+                        meio_pagamento: "01",
+                        valor: total
+                    }]
+                };
+
+                // Emitir NFCe
+                const response = await fetch(`${CONFIG.apiUrl}/nfce`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(nfce)
+                });
+
+                const result = await response.json();
+                
+                resultado.style.display = 'block';
+                
+                if (response.ok) {
+                    resultado.className = 'resultado sucesso';
+                    resultado.innerHTML = `
+                        <h3>✅ NFCe Emitida com Sucesso!</h3>
+                        <p><strong>Chave:</strong> ${result.chave || 'N/A'}</p>
+                        <p><strong>Número:</strong> ${result.numero || 'N/A'}</p>
+                        <p><strong>Protocolo:</strong> ${result.protocolo || 'N/A'}</p>
+                        <p><strong>Status:</strong> ${result.status || 'N/A'}</p>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(result.message || JSON.stringify(result));
+                }
+
+            } catch (error) {
+                resultado.style.display = 'block';
+                resultado.className = 'resultado erro';
+                resultado.innerHTML = `
+                    <h3>❌ Erro na Emissão</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '🚀 Emitir NFCe';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Gerar Etiquetas</title>
+    
+    <link rel="icon" type="image/png" href="log.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="etiquetas-modal.css">
+    <link rel="stylesheet" href="gerar-etiquetas.css">
+</head>
+<body>
+    <header id="header-container"></header>
+
+    <div class="page-container">
+        <!-- Cabeçalho da página -->
+        <div class="page-header">
+            <h1>Relatórios > <strong>Gerar Etiquetas</strong></h1>
+            <div class="header-buttons">
+                <button class="btn-clear-all" onclick="clearAllSelections()" id="btn-clear-all" disabled>
+                    <i class="fas fa-times-circle"></i> Limpar Seleção
+                </button>
+                <button class="btn-generate" onclick="openEtiquetasModalBatch()" id="btn-generate" disabled>
+                    <i class="fas fa-print"></i> Gerar Etiquetas (<span id="selected-count">0</span>)
+                </button>
+                <a href="javascript:history.back()" class="back-button">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+
+        <hr class="full-width-divider">
+
+        <!-- Filtros de busca -->
+        <div class="filters-section">
+            <div class="filters-header">
+                <h3><i class="fas fa-filter"></i> Filtros de Busca</h3>
+                <button class="btn-advanced-filters" onclick="toggleAdvancedFilters()" id="btn-advanced-filters">
+                    <i class="fas fa-cog"></i> Filtros Avançados
+                </button>
+            </div>
+            
+            <!-- Filtros principais sempre visíveis -->
+            <div class="main-filters">
+                <div class="date-filters">
+                    <div class="date-inputs">
+                        <div class="form-group">
+                            <label for="search-data-inicio">Data</label>
+                            <input type="date" id="search-data-inicio" class="input-field">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="search-data-fim">Até</label>
+                            <input type="date" id="search-data-fim" class="input-field">
+                        </div>
+                    </div>
+                    
+                    <div class="date-quick-buttons">
+                        <button class="btn-date-quick" onclick="setDateToday()">Hoje</button>
+                        <button class="btn-date-quick" onclick="setDateThisWeek()">Esta Semana</button>
+                        <button class="btn-date-quick" onclick="setDateThisMonth()">Este Mês</button>
+                        <button class="btn-date-quick btn-clear-dates" onclick="clearDates()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros avançados (ocultos por padrão) -->
+            <div class="advanced-filters" id="advanced-filters" style="display: none;">
+                <div class="filters-grid">
+                    <div class="form-group">
+                        <label for="search-nome">Nome do produto</label>
+                        <input type="text" id="search-nome" class="input-field" placeholder="Digite o nome...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="search-categoria">Categoria</label>
+                        <select id="search-categoria" class="select-field">
+                            <option value="">Todas as categorias</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="search-marca">Marca</label>
+                        <select id="search-marca" class="select-field">
+                            <option value="">Todas as marcas</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="search-ativo">Status</label>
+                        <select id="search-ativo" class="select-field">
+                            <option value="">Todos</option>
+                            <option value="true">Ativo</option>
+                            <option value="false">Inativo</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="search-preco-min">Preço mínimo</label>
+                        <input type="number" id="search-preco-min" class="input-field" placeholder="R$ 0,00" step="0.01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="search-preco-max">Preço máximo</label>
+                        <input type="number" id="search-preco-max" class="input-field" placeholder="R$ 999,99" step="0.01">
+                    </div>
+                </div>
+                
+                <div class="filters-actions">
+                    <button class="btn-clear-filters" onclick="clearAllFilters()">
+                        <i class="fas fa-eraser"></i> Limpar Todos
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de produtos -->
+        <div class="products-section">
+            <div class="products-header">
+                <div class="products-info">
+                    <h3>Produtos Disponíveis</h3>
+                    <span class="products-count" id="products-count">0 produtos encontrados</span>
+                </div>
+                <div class="products-controls">
+                    <div class="items-per-page">
+                        <label for="items-per-page">Itens por página:</label>
+                        <select id="items-per-page" onchange="changeItemsPerPage()">
+                            <option value="25">25</option>
+                            <option value="50" selected>50</option>
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading state -->
+            <div class="loading-state" id="loading-state">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+                <p>Carregando produtos...</p>
+            </div>
+
+            <!-- Tabela -->
+            <div class="table-container" id="table-container" style="display: none;">
+                <table class="products-table" id="products-table">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-column">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll()">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </th>
+                            <th class="sortable" onclick="sortBy('nome')">
+                                Nome do Produto
+                                <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th class="sortable" onclick="sortBy('categoria')">
+                                Categoria
+                                <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th class="sortable" onclick="sortBy('codigo_sku')">
+                                SKU
+                                <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th class="sortable" onclick="sortBy('preco_venda')">
+                                Preço
+                                <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th class="sortable" onclick="sortBy('quantidade_estoque')">
+                                Estoque
+                                <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-tbody">
+                        <!-- Produtos inseridos aqui -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Estado vazio -->
+            <div class="empty-state" id="empty-state" style="display: none;">
+                <div class="empty-icon">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <h3>Nenhum produto encontrado</h3>
+                <p>Tente ajustar os filtros de busca ou adicione produtos ao seu estoque.</p>
+                <button class="btn-add-product" onclick="window.location.href='adicionar-produtos.html'">
+                    <i class="fas fa-plus"></i> Adicionar Produto
+                </button>
+            </div>
+
+            <!-- Paginação -->
+            <div class="pagination-container" id="pagination-container" style="display: none;">
+                <div class="pagination-info">
+                    <span id="pagination-info">Mostrando 1-50 de 100 produtos</span>
+                </div>
+                <div class="pagination" id="pagination">
+                    <!-- Botões de paginação inseridos aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de seleção por categoria -->
+    <div id="category-modal" class="modal">
+        <div class="modal-content small-modal">
+            <div class="modal-header">
+                <h3>Selecionar por Categoria</h3>
+                <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="category-select">Escolha a categoria:</label>
+                    <select id="category-select" class="select-field">
+                        <option value="">Selecione uma categoria</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeCategoryModal()">Cancelar</button>
+                <button type="button" class="btn-save" onclick="selectProductsByCategory()">Selecionar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de seleção por faixa de preço -->
+    <div id="price-range-modal" class="modal">
+        <div class="modal-content small-modal">
+            <div class="modal-header">
+                <h3>Selecionar por Faixa de Preço</h3>
+                <button class="modal-close" onclick="closePriceRangeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="price-range-grid">
+                    <div class="form-group">
+                        <label for="price-range-min">Preço mínimo:</label>
+                        <input type="number" id="price-range-min" class="input-field" placeholder="R$ 0,00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="price-range-max">Preço máximo:</label>
+                        <input type="number" id="price-range-max" class="input-field" placeholder="R$ 999,99" step="0.01">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closePriceRangeModal()">Cancelar</button>
+                <button type="button" class="btn-save" onclick="selectProductsByPriceRange()">Selecionar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+    <script src="etiquetas-modal.js"></script>
+    <script src="etiquetas-gerar.js"></script>
+    <script src="gerar-etiquetas.js"></script>
+</body>
+</html>

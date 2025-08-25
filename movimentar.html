@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Movimentar Estoque</title>
+    
+    <link rel="icon" type="image/png" href="log.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="movimentar.css">
+</head>
+<body>
+
+    <header id="header-container"></header>
+
+    <div class="page-container">
+        
+        <div class="page-header">
+            <h1>Estoque > <strong>Movimentar Estoque</strong></h1>
+            <div class="header-buttons">
+                <a href="javascript:history.back()" class="back-button">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+                <a href="adicionar-produtos.html" class="add-button">
+                    <i class="fas fa-plus"></i> Novo Produto
+                </a>
+            </div>
+        </div>
+
+        <hr class="full-width-divider">
+
+        <!-- Tipos de Movimentação -->
+        <div class="movement-types">
+            <button class="movement-type-btn active" data-type="entrada">
+                <i class="fas fa-arrow-down"></i>
+                <span>Entrada</span>
+            </button>
+            <button class="movement-type-btn" data-type="saida">
+                <i class="fas fa-arrow-up"></i>
+                <span>Saída</span>
+            </button>
+            <button class="movement-type-btn" data-type="ajuste">
+                <i class="fas fa-edit"></i>
+                <span>Ajuste</span>
+            </button>
+        </div>
+
+        <!-- Formulário de Movimentação -->
+        <form id="movement-form" class="movement-form">
+            
+            <!-- Busca de Produto -->
+            <div class="product-search-section">
+                <h3>Produto</h3>
+                <div class="search-container">
+                    <div class="search-input-group">
+                        <input type="text" id="product-search" class="search-input" 
+                               placeholder="Digite o código de barras, SKU ou nome do produto">
+                        <button type="button" class="search-button" id="search-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Produto Selecionado -->
+                <div id="selected-product" class="selected-product hidden">
+                    <div class="product-info">
+                        <div class="product-details">
+                            <h4 id="product-name">Nome do Produto</h4>
+                            <p id="product-sku">SKU: </p>
+                            <p id="product-stock">Estoque Atual: <span>0 unidades</span></p>
+                        </div>
+                    </div>
+                    <button type="button" class="change-product-btn" onclick="clearProduct()">
+                        <i class="fas fa-times"></i> Alterar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dados da Movimentação -->
+            <div id="movement-data" class="movement-data hidden">
+                
+                <!-- Entrada -->
+                <div id="entrada-fields" class="movement-fields">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="quantidade" class="required">Quantidade</label>
+                            <input type="number" id="quantidade" class="input-field" placeholder="0" min="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="valor-unitario">Valor Unitário (Custo)</label>
+                            <div class="input-with-icon">
+                                <span class="input-icon">R$</span>
+                                <input type="number" id="valor-unitario" class="input-field with-icon" placeholder="0,00" step="0.01">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="documento">Documento</label>
+                            <input type="text" id="documento" class="input-field" placeholder="Ex: NF-12345, Recibo #123">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fornecedor">Fornecedor</label>
+                            <input type="text" id="fornecedor" class="input-field" placeholder="Nome do fornecedor">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="observacao">Observações</label>
+                        <textarea id="observacao" class="input-field" rows="3" placeholder="Observações sobre esta entrada de estoque"></textarea>
+                    </div>
+                </div>
+
+                <!-- Saída -->
+                <div id="saida-fields" class="movement-fields hidden">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="quantidade-saida" class="required">Quantidade</label>
+                            <input type="number" id="quantidade-saida" class="input-field" placeholder="0" min="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="motivo-saida">Motivo da Saída</label>
+                            <select id="motivo-saida" class="select-field">
+                                <option value="">Selecione</option>
+                                <option value="devolucao">Devolução para Fornecedor</option>
+                                <option value="perda">Perda/Quebra</option>
+                                <option value="vencimento">Vencimento</option>
+                                <option value="furto">Furto</option>
+                                <option value="amostra">Amostra Grátis</option>
+                                <option value="uso_interno">Uso Interno</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="documento-saida">Documento</label>
+                            <input type="text" id="documento-saida" class="input-field" placeholder="Ex: Devolução #123">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="observacao-saida">Observações</label>
+                        <textarea id="observacao-saida" class="input-field" rows="3" placeholder="Descreva o motivo da saída"></textarea>
+                    </div>
+                </div>
+
+                <!-- Ajuste -->
+                <div id="ajuste-fields" class="movement-fields hidden">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="estoque-sistema" class="readonly-label">Estoque no Sistema</label>
+                            <input type="number" id="estoque-sistema" class="input-field readonly" readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="estoque-fisico" class="required">Estoque Físico (Contado)</label>
+                            <input type="number" id="estoque-fisico" class="input-field" placeholder="0" min="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="diferenca" class="readonly-label">Diferença</label>
+                            <input type="number" id="diferenca" class="input-field readonly" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="observacao-ajuste">Motivo do Ajuste</label>
+                        <textarea id="observacao-ajuste" class="input-field" rows="3" placeholder="Explique o motivo da diferença encontrada"></textarea>
+                    </div>
+                </div>
+
+                <!-- Resumo -->
+                <div class="movement-summary">
+                    <div class="summary-item">
+                        <strong>Tipo:</strong> <span id="summary-type">Entrada</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Quantidade:</strong> <span id="summary-quantity">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Novo Estoque:</strong> <span id="summary-new-stock">-</span>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="button" class="btn-cancel" onclick="resetForm()">Limpar</button>
+                    <button type="submit" class="btn-save">
+                        <span id="btn-text">Registrar Movimentação</span>
+                        <i id="btn-spinner" class="fas fa-spinner fa-spin hidden"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div class="recent-movements">
+            <h3>Movimentações Recentes</h3>
+            <div id="movements-list" class="movements-list">
+                <div class="loading">Carregando...</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+    <script src="movimentar-supa.js"></script>
+    <script src="movimentar.js"></script>
+
+</body>
+</html>

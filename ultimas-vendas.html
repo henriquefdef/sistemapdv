@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Últimas Vendas</title>
+    <link rel="icon" type="image/png" href="log.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="ultimas-vendas.css">
+</head>
+<body>
+    <header id="header-container"></header>
+
+    <main class="main-content">
+        <!-- CABEÇALHO DA PÁGINA -->
+        <div class="page-header">
+            <h1>Últimas Vendas</h1>
+            <div class="header-actions">
+                <a href="nova-venda.html" class="btn btn-primary"><i class="fas fa-plus"></i> Nova Venda</a>
+            </div>
+        </div>
+
+        <!-- CONTROLES DA TABELA -->
+        <div class="table-controls">
+            <div class="main-actions">
+                <button class="btn btn-secondary" id="open-filter-panel-btn"><i class="fas fa-filter"></i> Filtro</button>
+                <button class="btn btn-secondary" id="export-excel-btn"><i class="fas fa-file-excel"></i> Baixar Excel</button>
+                <div class="dropdown-container">
+                    <button class="btn btn-secondary" id="more-actions-btn" disabled>
+                        Mais ações <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu" id="more-actions-menu">
+                        <a href="#" class="dropdown-item" id="export-selected-btn">Exportar selecionadas</a>
+                        <a href="#" class="dropdown-item danger" id="cancel-selected-btn">Cancelar selecionadas</a>
+                    </div>
+                </div>
+            </div>
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="search-input" placeholder="Pesquisar por número da venda ou cliente...">
+            </div>
+        </div>
+        
+        <div id="active-filters-container" class="active-filters-container"></div>
+
+        <!-- CONTAINER DA TABELA -->
+        <div class="table-container">
+            <table class="sales-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="select-all-checkbox"></th>
+                        <th class="sortable" data-sort="id_venda"><span>Número da Venda</span><i class="fas fa-sort"></i></th>
+                        <th class="sortable" data-sort="hora_venda"><span>Data/Hora</span><i class="fas fa-sort"></i></th>
+                        <th class="sortable" data-sort="total_venda"><span>Total</span><i class="fas fa-sort"></i></th>
+                        <th class="sortable" data-sort="forma_pagamento"><span>Pagamento</span><i class="fas fa-sort"></i></th>
+                        <th><span>Vendedor</span></th>
+                        <th class="sortable" data-sort="cliente_nome"><span>Cliente</span><i class="fas fa-sort"></i></th>
+                        <th class="actions-col"><span>Ações</span></th>
+                    </tr>
+                </thead>
+                <tbody id="sales-table-body"></tbody>
+            </table>
+        </div>
+        
+        <!-- PAGINAÇÃO -->
+        <div class="pagination-container">
+            <button id="prev-page" class="btn-pagination" disabled><i class="fas fa-chevron-left"></i></button>
+            <span id="page-info">Página 1 de 1</span>
+            <button id="next-page" class="btn-pagination" disabled><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </main>
+
+    <!-- MODAL DE DETALHES DA VENDA -->
+    <div id="sale-details-modal" class="modal-overlay">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Detalhes da Venda</h3>
+                <button class="close-btn" id="close-sale-details-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="sale-info-header" class="sale-info-header">
+                    <!-- Informações da venda serão inseridas aqui -->
+                </div>
+                <div class="items-section">
+                    <h4>Produtos da Venda</h4>
+                    <div class="items-table-container">
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>SKU</th>
+                                    <th>Quantidade</th>
+                                    <th>Preço Unitário</th>
+                                    <th>Desconto Unit.</th>
+                                    <th>Subtotal</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sale-items-tbody">
+                                <!-- Itens da venda serão inseridos aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DETALHES DO ITEM -->
+    <div id="item-details-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Detalhes do Item</h3>
+                <button class="close-btn" id="close-item-details-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="item-details-content">
+                    <!-- Detalhes do item serão inseridos aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DEVOLUÇÃO DE ITEM -->
+    <div id="item-return-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Devolução de Item</h3>
+                <button class="close-btn" id="close-item-return-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="return-info">
+                    <p><strong>Produto:</strong> <span id="return-item-name"></span></p>
+                    <p><strong>SKU:</strong> <span id="return-item-sku"></span></p>
+                    <p><strong>Quantidade Vendida:</strong> <span id="return-item-quantity"></span></p>
+                    <p><strong>Valor Unitário:</strong> <span id="return-item-price"></span></p>
+                </div>
+                <div class="form-group">
+                    <label for="return-item-qty">Quantidade a Devolver:</label>
+                    <input type="number" id="return-item-qty" class="form-control" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label for="return-item-reason">Motivo da Devolução:</label>
+                    <select id="return-item-reason" class="form-control">
+                        <option value="">Selecione o motivo</option>
+                        <option value="defeito">Produto com defeito</option>
+                        <option value="arrependimento">Arrependimento do cliente</option>
+                        <option value="troca">Troca por outro produto</option>
+                        <option value="erro_venda">Erro na venda</option>
+                        <option value="outros">Outros</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="return-item-notes">Observações:</label>
+                    <textarea id="return-item-notes" class="form-control" rows="3" placeholder="Observações sobre a devolução..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-item-return-btn">Cancelar</button>
+                <button class="btn btn-danger" id="confirm-item-return-btn"><i class="fas fa-undo"></i> Confirmar Devolução</button>
+            </div>
+        </div>
+    </div>
+    <div id="receipt-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Comprovante da Venda</h3>
+                <button class="close-btn" id="close-receipt-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="receipt-content">
+                <!-- Conteúdo do comprovante será inserido aqui -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="print-receipt-btn"><i class="fas fa-print"></i> Imprimir</button>
+                <button class="btn btn-primary" id="whatsapp-receipt-btn"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DEVOLUÇÃO -->
+    <div id="return-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Devolução de Venda</h3>
+                <button class="close-btn" id="close-return-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="return-info">
+                    <p><strong>Número da Venda:</strong> <span id="return-sale-number"></span></p>
+                    <p><strong>Cliente:</strong> <span id="return-customer-name"></span></p>
+                    <p><strong>Total da Venda:</strong> <span id="return-sale-total"></span></p>
+                </div>
+                <div class="form-group">
+                    <label for="return-reason">Motivo da Devolução:</label>
+                    <select id="return-reason" class="form-control">
+                        <option value="">Selecione o motivo</option>
+                        <option value="defeito">Produto com defeito</option>
+                        <option value="arrependimento">Arrependimento do cliente</option>
+                        <option value="troca">Troca por outro produto</option>
+                        <option value="erro_venda">Erro na venda</option>
+                        <option value="outros">Outros</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="return-notes">Observações:</label>
+                    <textarea id="return-notes" class="form-control" rows="3" placeholder="Observações sobre a devolução..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-return-btn">Cancelar</button>
+                <button class="btn btn-danger" id="confirm-return-btn"><i class="fas fa-undo"></i> Confirmar Devolução</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE MOVIMENTAÇÃO -->
+    <div id="movement-modal" class="modal-overlay">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Histórico de Movimentação</h3>
+                <button class="close-btn" id="close-movement-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="movement-content">
+                    <!-- Conteúdo do histórico será inserido aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTAINER PARA MODAIS E PAINÉIS (SERÃO INJETADOS AQUI PELO JS ) -->
+    <div id="dynamic-container"></div>
+
+    <!-- SCRIPTS -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+    <script src="nova-venda-supa.js"></script>
+    <script src="ultimas-vendas-cupom.js"></script>
+    <script src="ultimas-vendas.js"></script>
+    <script src="ultimas-vendas-modal.js"></script>
+    <script src="ultimas-vendas-movimentacao.js"></script>
+    <script src="ultimas-vendas-devolucao.js"></script>
+    <script src="ultimas-vendas-cancelar.js"></script>
+    <script src="ultimas-vendas-excel.js"></script>
+
+</body>
+</html>

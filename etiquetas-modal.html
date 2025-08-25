@@ -1,0 +1,118 @@
+<!-- Modal de Etiquetas Simples -->
+<div id="etiquetas-modal" class="modal">
+    <div class="modal-content etiquetas-modal-content">
+        <div class="modal-header">
+            <h3 id="etiquetas-modal-title">Gerar Etiquetas</h3>
+            <button class="modal-close" onclick="closeEtiquetasModal()">&times;</button>
+        </div>
+        
+        <div class="etiquetas-modal-body">
+            <!-- Informações dos produtos -->
+            <div class="products-info">
+                <div class="info-header">
+                    <i class="fas fa-cube"></i>
+                    <span id="products-count">1 produto selecionado</span>
+                </div>
+                <div id="products-list" class="products-list">
+                    <!-- Produtos inseridos aqui -->
+                </div>
+            </div>
+
+            <!-- Configurações básicas -->
+            <div class="etiqueta-config">
+                <h4 class="config-section-title">
+                    <i class="fas fa-cog"></i>
+                    Configurações da Etiqueta
+                </h4>
+
+                <div class="config-grid">
+                    <div class="form-group">
+                        <label for="modelo-etiqueta">Modelo de etiqueta</label>
+                        <select id="modelo-etiqueta" class="select-field">
+                            <option value="">Selecione o modelo</option>
+                            <option value="90x30">90mm x 30mm</option>
+                            <option value="50x20">50mm x 20mm</option>
+                            <option value="40x20">40mm x 20mm</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tipo-codigo">Tipo de código</label>
+                        <div class="toggle-buttons">
+                            <button type="button" class="toggle-btn active" data-value="barcode" onclick="selectTipoCodigo('barcode')">
+                                <i class="fas fa-barcode"></i>
+                                Código de Barras
+                            </button>
+                            <button type="button" class="toggle-btn" data-value="qrcode" onclick="selectTipoCodigo('qrcode')">
+                                <i class="fas fa-qrcode"></i>
+                                QR Code
+                            </button>
+                        </div>
+                        <input type="hidden" id="tipo-codigo" value="barcode">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mostrar-nome">Mostrar nome do produto</label>
+                        <select id="mostrar-nome" class="select-field">
+                            <option value="sim">Sim</option>
+                            <option value="nao">Não</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="exibicao-preco">Exibição do preço</label>
+                        <select id="exibicao-preco" class="select-field">
+                            <option value="valor-total">Valor total</option>
+                            <option value="parcelado">Parcelado</option>
+                            <option value="ambos">Ambos (total + parcelado)</option>
+                            <option value="nenhum">Sem preço</option>
+                        </select>
+                    </div>
+
+                    <!-- Configuração de parcelamento (aparece quando necessário) -->
+                    <div class="form-group hidden" id="parcelamento-config">
+                        <label for="parcelas">Número de parcelas</label>
+                        <div class="parcelas-grid">
+                            <select id="parcelas" class="select-field">
+                                <option value="2">2x</option>
+                                <option value="3">3x</option>
+                                <option value="4">4x</option>
+                                <option value="5">5x</option>
+                                <option value="6">6x</option>
+                                <option value="8">8x</option>
+                                <option value="10" selected>10x</option>
+                                <option value="12">12x</option>
+                            </select>
+                            <div class="juros-config">
+                                <label for="percentual-juros">Juros (%)</label>
+                                <input type="number" id="percentual-juros" class="input-field" 
+                                       placeholder="0,00" step="0.01" min="0" max="50">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="informacoes-adicionais">Informações adicionais</label>
+                        <select id="informacoes-adicionais" class="select-field">
+                            <option value="empresa">Exibir nome da empresa</option>
+                            <option value="logo-empresa">Logo da empresa</option>
+                            <option value="empresa-logo">Nome e logo da empresa</option>
+                            <option value="nenhum">Nenhum</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ações do modal -->
+        <div class="modal-actions">
+            <button type="button" class="btn-cancel" onclick="closeEtiquetasModal()">
+                Cancelar
+            </button>
+            <button type="button" class="btn-save" id="btn-gerar-etiquetas" onclick="gerarEtiquetas()">
+                <i class="fas fa-print"></i>
+                <span>Gerar Etiquetas</span>
+            </button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Movimentações Financeiras</title>
+    <link rel="icon" type="image/png" href="log.png">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Header CSS -->
+    <link href="header.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #FF9800;
+            --primary-hover: #e68a00;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+            --border-color: #e5e7eb;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --background-light: #f9fafb;
+            --sombra-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: var(--text-primary);
+        }
+
+        .main-container {
+            padding: 30px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 152, 0, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #229954);
+            color: white;
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 8px 20px rgba(39, 174, 96, 0.3);
+        }
+
+        /* Cards de Resumo */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--sombra-card);
+            border-left: 4px solid;
+        }
+
+        .summary-card.saldo {
+            border-left-color: var(--info-color);
+        }
+
+        .summary-card.receber {
+            border-left-color: var(--success-color);
+        }
+
+        .summary-card.pagar {
+            border-left-color: var(--danger-color);
+        }
+
+        .summary-card h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 0 0 0.5rem 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .summary-card.saldo .value {
+            color: var(--info-color);
+        }
+
+        .summary-card.receber .value {
+            color: var(--success-color);
+        }
+
+        .summary-card.pagar .value {
+            color: var(--danger-color);
+        }
+
+        /* Gráfico e Controles */
+        .chart-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--sombra-card);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .year-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .year-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .year-btn:hover {
+            background: var(--background-light);
+        }
+
+        .current-year {
+            font-weight: 600;
+            font-size: 1.125rem;
+            color: var(--text-primary);
+            margin: 0 1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1rem;
+        }
+
+        /* Meses */
+        .months-navigation {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .month-btn {
+            background: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.75rem 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .month-btn:hover {
+            background: var(--background-light);
+            border-color: var(--primary-color);
+        }
+
+        .month-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Lista de Movimentações */
+        .movimentacoes-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--sombra-card);
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .tabs-container {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            background: var(--background-light);
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: white;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .tab-content {
+            padding: 1.5rem;
+        }
+
+        .movimentacao-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #f0f2f5;
+            transition: background 0.2s;
+        }
+
+        .movimentacao-item:last-child {
+            border-bottom: none;
+        }
+
+        .movimentacao-item:hover {
+            background: var(--background-light);
+        }
+
+        .movimentacao-info {
+            flex: 1;
+        }
+
+        .movimentacao-descricao {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .movimentacao-detalhes {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .movimentacao-valor {
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+
+        .movimentacao-valor.receber {
+            color: var(--success-color);
+        }
+
+        .movimentacao-valor.pagar {
+            color: var(--danger-color);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 1rem;
+        }
+
+        .status-badge.pendente {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge.pago {
+            background: #d1fae5;
+            color: #047857;
+        }
+
+        .status-badge.vencido {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn-secondary {
+            background: var(--background-light);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem;
+            }
+
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .months-navigation {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-container"></div>
+
+    <main class="main-container">
+        <!-- Cabeçalho da Página -->
+        <div class="page-header">
+            <h1>Movimentações Financeiras</h1>
+            <div class="header-actions">
+                <button class="btn-primary" id="btn-nova-conta-pagar">
+                    <i class="fas fa-plus"></i> Nova Conta a Pagar
+                </button>
+                <button class="btn-primary btn-success" id="btn-nova-conta-receber">
+                    <i class="fas fa-plus"></i> Nova Conta a Receber
+                </button>
+            </div>
+        </div>
+
+        <!-- Cards de Resumo -->
+        <div class="summary-cards">
+            <div class="summary-card saldo">
+                <h3>Saldo Atual</h3>
+                <p class="value" id="saldo-atual">R$ 0,00</p>
+            </div>
+            <div class="summary-card receber">
+                <h3>A Receber</h3>
+                <p class="value" id="total-receber">R$ 0,00</p>
+            </div>
+            <div class="summary-card pagar">
+                <h3>A Pagar</h3>
+                <p class="value" id="total-pagar">R$ 0,00</p>
+            </div>
+        </div>
+
+        <!-- Seção do Gráfico -->
+        <div class="chart-section">
+            <div class="chart-header">
+                <h2>Movimentações Financeiras</h2>
+                <div class="year-selector">
+                    <button class="year-btn" id="prev-year">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="current-year" id="current-year">2025</span>
+                    <button class="year-btn" id="next-year">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="financial-chart"></canvas>
+            </div>
+
+            <!-- Navegação dos Meses -->
+            <div class="months-navigation">
+                <button class="month-btn" data-month="0">Jan</button>
+                <button class="month-btn" data-month="1">Fev</button>
+                <button class="month-btn" data-month="2">Mar</button>
+                <button class="month-btn" data-month="3">Abr</button>
+                <button class="month-btn" data-month="4">Mai</button>
+                <button class="month-btn" data-month="5">Jun</button>
+                <button class="month-btn" data-month="6">Jul</button>
+                <button class="month-btn" data-month="7">Ago</button>
+                <button class="month-btn" data-month="8">Set</button>
+                <button class="month-btn" data-month="9">Out</button>
+                <button class="month-btn" data-month="10">Nov</button>
+                <button class="month-btn" data-month="11">Dez</button>
+            </div>
+        </div>
+
+        <!-- Lista de Movimentações -->
+        <div class="movimentacoes-section">
+            <div class="section-header">
+                <h3 id="section-title">Movimentações de Janeiro/2025</h3>
+            </div>
+
+            <div class="tabs-container">
+                <button class="tab active" data-tab="receber">
+                    <i class="fas fa-arrow-down"></i> A Receber
+                </button>
+                <button class="tab" data-tab="pagar">
+                    <i class="fas fa-arrow-up"></i> A Pagar
+                </button>
+            </div>
+
+            <div class="tab-content">
+                <div id="movimentacoes-list">
+                    <!-- Movimentações serão carregadas aqui -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para Nova Movimentação -->
+    <div id="modal-movimentacao" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Nova Conta a Pagar</h3>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            
+            <form id="form-movimentacao" class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="descricao">Descrição *</label>
+                        <input type="text" id="descricao" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="valor">Valor *</label>
+                        <input type="number" id="valor" step="0.01" min="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="data_vencimento">Data de Vencimento *</label>
+                        <input type="date" id="data_vencimento" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="categoria">Categoria</label>
+                        <select id="categoria">
+                            <option value="">Selecione uma categoria</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pessoa_empresa">Pessoa/Empresa</label>
+                        <input type="text" id="pessoa_empresa">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="documento">Documento</label>
+                        <input type="text" id="documento">
+                    </div>
+
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="observacoes">Observações</label>
+                        <textarea id="observacoes" rows="3"></textarea>
+                    </div>
+                </div>
+            </form>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="btn-cancelar">Cancelar</button>
+                <button type="submit" form="form-movimentacao" class="btn-primary" id="btn-salvar">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+    <script src="contas-pagar.js"></script>
+</body>
+</html>
