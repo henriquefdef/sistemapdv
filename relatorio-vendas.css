@@ -796,3 +796,415 @@ body.sidebar-expanded {
         gap: 10px;
     }
 }
+/* ===== BOTÃO DE FREQUÊNCIA ===== */
+.frequency-btn {
+    padding: 10px 16px;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    color: var(--text-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+
+.frequency-btn:hover {
+    border-color: var(--primary-orange);
+    color: var(--primary-orange);
+    transform: translateY(-1px);
+}
+
+.frequency-notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--error-color);
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* ===== MODAL DE FREQUÊNCIA ===== */
+.frequency-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(44, 62, 80, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.frequency-modal .modal-content {
+    background: var(--surface-color);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: var(--shadow-medium);
+}
+
+.frequency-modal .modal-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-orange-dark) 100%);
+    color: white;
+}
+
+.frequency-modal .modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.frequency-modal .modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.frequency-modal .modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ===== FILTROS DO MODAL ===== */
+.modal-filters {
+    padding: 20px 25px;
+    border-bottom: 1px solid var(--border-color);
+    background: #f8f9fa;
+}
+
+.status-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px;
+    background: var(--surface-color);
+    padding: 5px;
+    border-radius: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.status-tab {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.status-tab:hover {
+    background: rgba(255, 152, 0, 0.1);
+    color: var(--primary-orange);
+}
+
+.status-tab.active {
+    background: var(--primary-orange);
+    color: white;
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+}
+
+.filter-inputs {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.filter-inputs input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--surface-color);
+    transition: var(--transition);
+}
+
+.filter-inputs input:focus {
+    outline: none;
+    border-color: var(--primary-orange);
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+}
+
+.clear-filter-btn {
+    padding: 8px 12px;
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+
+.clear-filter-btn:hover {
+    border-color: var(--primary-orange);
+    color: var(--primary-orange);
+}
+
+/* ===== CORPO DO MODAL ===== */
+.frequency-modal .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 25px;
+    min-height: 200px;
+}
+
+#frequency-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+#frequency-loading .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-orange);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+/* ===== ITENS DE FREQUÊNCIA ===== */
+.frequency-item {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 15px;
+    padding: 20px;
+    transition: var(--transition);
+}
+
+.frequency-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-light);
+}
+
+.frequency-item.ready-to-buy {
+    border-left: 4px solid var(--success-color);
+    background: rgba(76, 175, 80, 0.03);
+}
+
+.frequency-item.pending {
+    border-left: 4px solid var(--warning-color);
+    background: rgba(255, 193, 7, 0.03);
+}
+
+.frequency-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.frequency-item-client {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.frequency-item-product {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.frequency-item-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.frequency-item-status.ready {
+    background: rgba(76, 175, 80, 0.1);
+    color: var(--success-color);
+}
+
+.frequency-item-status.pending {
+    background: rgba(255, 193, 7, 0.1);
+    color: var(--warning-color);
+}
+
+/* ===== DETALHES DO ITEM ===== */
+.frequency-item-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 6px;
+}
+
+.frequency-detail {
+    text-align: center;
+}
+
+.frequency-detail-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.frequency-detail-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* ===== AÇÕES DOS ITENS ===== */
+.frequency-item-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.btn-whatsapp {
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition);
+}
+
+.btn-whatsapp:hover {
+    background: #1fbb56;
+    transform: translateY(-1px);
+}
+
+.btn-details {
+    background: var(--surface-color);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition);
+}
+
+.btn-details:hover {
+    border-color: var(--primary-orange);
+    color: var(--primary-orange);
+}
+
+/* ===== ESTADO VAZIO ===== */
+.no-data {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+.no-data i {
+    font-size: 48px;
+    margin-bottom: 20px;
+    color: var(--border-color);
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 768px) {
+    .frequency-modal {
+        padding: 10px;
+    }
+    
+    .frequency-modal .modal-content {
+        max-width: 100%;
+        max-height: 95vh;
+    }
+    
+    .frequency-modal .modal-header,
+    .modal-filters,
+    .frequency-modal .modal-body {
+        padding: 15px 20px;
+    }
+    
+    .filter-inputs {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .filter-inputs input {
+        width: 100%;
+    }
+    
+    .frequency-item-details {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .frequency-item-actions {
+        flex-direction: column;
+    }
+    
+    .frequency-item-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .frequency-item-details {
+        grid-template-columns: 1fr;
+    }
+    
+    .status-tabs {
+        flex-wrap: wrap;
+    }
+}

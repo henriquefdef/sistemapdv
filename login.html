@@ -77,12 +77,12 @@
             display: flex;
             background: white;
             border-radius: 1.5rem;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1.5625rem 3.125rem rgba(0, 0, 0, 0.1);
             overflow: hidden;
             width: 90%;
-            max-width: 960px;
+            max-width: 60rem;
             margin: auto;
-            min-height: 450px;
+            min-height: 28.125rem;
         }
         .welcome-section {
             background: linear-gradient(135deg, #FFB74D, #FF9800);
@@ -113,18 +113,18 @@
             animation: float 6s ease-in-out infinite;
         }
         @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-8px); }
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-0.5rem); }
         }
         .loading-spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #ffffff;
-            border-top: 2px solid transparent;
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 0.125rem solid #ffffff;
+            border-top: 0.125rem solid transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             display: inline-block;
-            margin-right: 8px;
+            margin-right: 0.5rem;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -154,10 +154,10 @@
             padding: 2.5rem;
             border-radius: 1.5rem;
             text-align: center;
-            max-width: 450px;
+            max-width: 28rem;
             width: 90%;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-            transform: translateY(-20px);
+            box-shadow: 0 0.9375rem 1.875rem rgba(0, 0, 0, 0.3);
+            transform: translateY(-1.25rem);
             opacity: 0;
             transition: transform 0.3s ease-out, opacity 0.3s ease-out;
         }
@@ -165,11 +165,79 @@
             transform: translateY(0);
             opacity: 1;
         }
+        
+        /* Media query para resoluções menores como 1366x768 */
+        @media (max-height: 800px) and (min-width: 769px) {
+            .form-container {
+                width: 65%;
+                max-width: 42rem;
+                min-height: 16rem;
+            }
+            .welcome-section {
+                padding: 1.1rem;
+            }
+            .welcome-section h2 {
+                font-size: 1.75rem;
+                margin-bottom: 0.45rem;
+            }
+            .welcome-section p {
+                font-size: 0.8rem;
+                line-height: 1.2;
+            }
+            .welcome-section a {
+                margin-top: 0.9rem;
+                padding: 0.35rem 1rem;
+                font-size: 0.8rem;
+            }
+            .login-form-section {
+                padding: 1.35rem 1.75rem;
+            }
+            .login-form-section .text-center img {
+                width: 2.5rem;
+                height: 2.5rem;
+                margin-bottom: 0.45rem;
+            }
+            .login-form-section .text-center h2 {
+                font-size: 1.3rem;
+                margin-bottom: 0.2rem;
+            }
+            .login-form-section .text-center p {
+                font-size: 0.8rem;
+            }
+            .input-field {
+                padding: 0.6rem 0.85rem;
+                font-size: 0.85rem;
+                padding-left: 2.5rem;
+            }
+            .btn-premium, .btn-secondary {
+                padding: 0.6rem 1rem;
+                font-size: 0.85rem;
+            }
+            #login-btn {
+                width: 65%;
+            }
+            .mb-5 {
+                margin-bottom: 0.65rem;
+            }
+            .mb-6 {
+                margin-bottom: 0.9rem;
+            }
+            .mb-8 {
+                margin-bottom: 1.1rem;
+            }
+            .flex.items-center.justify-between label span {
+                font-size: 0.8rem;
+            }
+            .flex.items-center.justify-between button {
+                font-size: 0.8rem;
+            }
+        }
+
         @media (max-width: 768px) {
             .form-container {
                 flex-direction: column;
                 width: 95%;
-                max-width: 500px;
+                max-width: 31.25rem;
                 min-height: auto;
             }
             .welcome-section {
@@ -177,7 +245,7 @@
                 padding: 1.5rem;
                 border-bottom-left-radius: 0;
                 border-bottom-right-radius: 0;
-                height: 180px;
+                height: 11.25rem;
             }
             .login-form-section {
                 width: 100%;
@@ -486,7 +554,6 @@
                     throw error;
                 }
 
-                // Removed showPopup for reset password as it's less critical than login success.
                 showMessage('📧 Link enviado! Verifique seu email para redefinir sua senha.', 'text-green-600');
                 resetForm.reset();
 

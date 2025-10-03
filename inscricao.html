@@ -24,12 +24,12 @@
         }
         .btn-premium {
             background: linear-gradient(135deg, #FF8C00, #FFA500);
-            box-shadow: 0 7px 22px rgba(255, 140, 0, 0.3);
+            box-shadow: 0 0.4375rem 1.375rem rgba(255, 140, 0, 0.3);
             transition: all 0.3s ease;
         }
         .btn-premium:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(255, 140, 0, 0.4);
+            transform: translateY(-0.125rem);
+            box-shadow: 0 0.625rem 1.875rem rgba(255, 140, 0, 0.4);
         }
         
         .input-field {
@@ -47,15 +47,15 @@
         }
         .input-field:focus {
             border-color: #FF8C00;
-            box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.1);
+            box-shadow: 0 0 0 0.1875rem rgba(255, 140, 0, 0.1);
             outline: none;
         }
 
         .form-card-modern {
             background: white;
             border-radius: 1.3rem;
-            box-shadow: 0 22px 45px rgba(0, 0, 0, 0.15);
-            border: 1px solid #e5e7eb;
+            box-shadow: 0 1.375rem 2.8125rem rgba(0, 0, 0, 0.15);
+            border: 0.0625rem solid #e5e7eb;
             padding: 2.7rem 2.2rem;
             color: #374151;
             position: relative;
@@ -78,7 +78,7 @@
 
         .info-text-section {
             padding: 1.8rem;
-            margin-left: 20px;
+            margin-left: 1.25rem;
         }
         .info-text-section h2 {
             font-size: clamp(2.2rem, 4.5vw, 3.6rem);
@@ -138,10 +138,10 @@
             padding: 2.2rem;
             border-radius: 1.3rem;
             text-align: center;
-            max-width: 420px;
+            max-width: 26.25rem;
             width: 90%;
-            box-shadow: 0 13px 27px rgba(0, 0, 0, 0.3);
-            transform: translateY(-20px);
+            box-shadow: 0 0.8125rem 1.6875rem rgba(0, 0, 0, 0.3);
+            transform: translateY(-1.25rem);
             opacity: 0;
             transition: transform 0.3s ease-out, opacity 0.3s ease-out;
         }
@@ -161,6 +161,88 @@
             font-weight: 500;
         }
         
+        /* Media query específica para resoluções 1366x768 e similares */
+        @media (max-height: 800px) and (min-width: 1024px) {
+            main { 
+                padding: 1rem 4rem !important; 
+            }
+            .form-card-modern { 
+                padding: 1rem 1.8rem;
+                margin-left: -4%;
+                width: calc(32% + 3rem); 
+            }
+            .form-card-modern .text-center img {
+                width: 2.2rem;
+                height: 2.2rem;
+                margin-bottom: 0.3rem;
+            }
+            .form-card-modern .text-center h2 {
+                font-size: 1.3rem;
+                margin-bottom: 0.15rem;
+            }
+            .form-card-modern .text-center p {
+                font-size: 0.8rem;
+                margin-top: 0.15rem;
+            }
+            .input-field {
+                padding: 0.45rem 0.8rem;
+                font-size: 0.8rem;
+            }
+            .btn-premium {
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+            }
+            .mb-3 {
+                margin-bottom: 0.4rem;
+            }
+            .mb-5 {
+                margin-bottom: 0.6rem;
+            }
+            .mb-7 {
+                margin-bottom: 0.7rem;
+            }
+            .info-text-section {
+                padding: 1.2rem;
+                margin-left: 0.8rem;
+                width: calc(67% - 3rem);
+            }
+            .info-text-section h2 {
+                font-size: 2.4rem;
+                margin-bottom: 0.7rem;
+            }
+            .info-text-section > p {
+                font-size: 0.95rem;
+                margin-bottom: 1.3rem;
+                line-height: 1.5;
+            }
+            .info-text-item {
+                margin-bottom: 1rem;
+                padding: 0.4rem 0;
+            }
+            .info-text-item span.icon {
+                font-size: 1.4rem;
+                margin-right: 0.8rem;
+            }
+            .info-text-item h3 {
+                font-size: 1.1rem;
+                margin-bottom: 0.3rem;
+            }
+            .info-text-item p {
+                font-size: 0.85rem;
+                line-height: 1.5;
+            }
+            .password-req {
+                font-size: 0.7rem;
+            }
+            label {
+                font-size: 0.7rem !important;
+                margin-bottom: 0.15rem !important;
+            }
+            .mt-5 {
+                margin-top: 0.8rem !important;
+            }
+        }
+
         /* Responsividade */
         @media (min-width: 1024px) {
             .main-content-area {
@@ -168,34 +250,34 @@
             }
             .form-card-modern {
                 margin-left: -5%;
-                width: calc(34% + 70px); 
+                width: calc(34% + 4.375rem); 
             }
             .info-text-section {
-                width: calc(65% - 70px); 
+                width: calc(65% - 4.375rem); 
                 max-width: none;
             }
         }
         @media (max-width: 1919px) and (min-width: 1400px) {
             main { padding: 2rem 1rem !important; }
             .form-card-modern { padding: 2.2rem 1.8rem; }
-            .info-text-section { padding: 1.5rem; margin-left: 20px; }
+            .info-text-section { padding: 1.5rem; margin-left: 1.25rem; }
         }
         @media (max-width: 1399px) and (min-width: 1200px) {
             main { padding: 1.5rem 1rem !important; }
             .form-card-modern { padding: 2rem 1.6rem; }
-            .info-text-section { padding: 1.2rem; margin-left: 15px; }
+            .info-text-section { padding: 1.2rem; margin-left: 0.9375rem; }
             .info-text-item { margin-bottom: 1rem; padding: 0.5rem 0; }
         }
         @media (max-width: 1199px) and (min-width: 1024px) {
             main { padding: 1rem !important; }
             .form-card-modern { padding: 1.8rem 1.4rem; }
-            .info-text-section { padding: 1rem; margin-left: 10px; }
+            .info-text-section { padding: 1rem; margin-left: 0.625rem; }
             .info-text-item { margin-bottom: 0.8rem; padding: 0.4rem 0; }
             .info-text-section > p { margin-bottom: 1.2rem; }
         }
         @media (max-width: 1023px) {
             .main-content-area { flex-direction: column; padding: 1rem; gap: 1.8rem; }
-            .form-card-modern, .info-text-section { width: 100%; max-width: 600px; }
+            .form-card-modern, .info-text-section { width: 100%; max-width: 37.5rem; }
             .info-text-section { order: 1; text-align: center; margin-left: 0; padding: 1rem; }
             .info-text-item { flex-direction: column; align-items: center; text-align: center; }
             .info-text-item span.icon { margin-right: 0; margin-bottom: 0.5rem; }
@@ -216,24 +298,86 @@
             .form-card-modern { padding: 1.1rem; margin: 0 0.5rem; }
             .input-field { padding: 0.65rem; font-size: 0.8rem; }
             .btn-premium { padding: 0.65rem 1.1rem; font-size: 0.85rem; }
-            .info-text-section { padding: 0; margin-left: 25px; }
+            .info-text-section { padding: 0; margin-left: 1.5625rem; }
             header { padding: 0.65rem; }
             header .text-xl { font-size: 1.1rem; }
             header nav ul { gap: 0.5rem; font-size: 0.75rem; }
             header .w-9.h-9 { width: 1.8rem; height: 1.8rem; }
         }
-        @media (max-height: 800px) and (min-width: 1024px) {
-            main { padding-top: 1rem !important; padding-bottom: 1rem !important; }
-            .form-card-modern { padding: 1.5rem 2.2rem; }
-            .info-text-item { margin-bottom: 0.8rem; padding: 0.3rem 0; }
-            .info-text-section > p { margin-bottom: 1rem; }
-        }
         @media (max-height: 700px) and (min-width: 1024px) {
             main { padding: 0.5rem 4rem !important; }
-            .form-card-modern { padding: 1.2rem 2rem; }
-            .info-text-item { margin-bottom: 0.6rem; padding: 0.2rem 0; }
-            .info-text-section h2 { margin-bottom: 0.5rem; }
-            .info-text-section > p { margin-bottom: 0.8rem; }
+            .form-card-modern { 
+                padding: 1.2rem 1.6rem;
+                margin-left: -2%;
+                width: calc(30% + 2.5rem);
+            }
+            .form-card-modern .text-center img {
+                width: 2.5rem;
+                height: 2.5rem;
+                margin-bottom: 0.3rem;
+            }
+            .form-card-modern .text-center h2 {
+                font-size: 1.2rem;
+                margin-bottom: 0.2rem;
+            }
+            .form-card-modern .text-center p {
+                font-size: 0.75rem;
+                margin-top: 0.2rem;
+            }
+            .input-field {
+                padding: 0.5rem 0.7rem;
+                font-size: 0.75rem;
+            }
+            .btn-premium {
+                padding: 0.5rem 0.9rem;
+                font-size: 0.8rem;
+            }
+            .info-text-section {
+                padding: 0.8rem;
+                margin-left: 0.3rem;
+                width: calc(69% - 2.5rem);
+            }
+            .info-text-section h2 {
+                font-size: 1.8rem;
+                margin-bottom: 0.3rem;
+            }
+            .info-text-section > p {
+                font-size: 0.8rem;
+                margin-bottom: 0.8rem;
+                line-height: 1.3;
+            }
+            .info-text-item {
+                margin-bottom: 0.6rem;
+                padding: 0.2rem 0;
+            }
+            .info-text-item span.icon {
+                font-size: 1.1rem;
+                margin-right: 0.5rem;
+            }
+            .info-text-item h3 {
+                font-size: 0.9rem;
+                margin-bottom: 0.15rem;
+            }
+            .info-text-item p {
+                font-size: 0.7rem;
+                line-height: 1.3;
+            }
+            .password-req {
+                font-size: 0.65rem;
+            }
+            label {
+                font-size: 0.65rem !important;
+                margin-bottom: 0.2rem !important;
+            }
+            .mb-3 {
+                margin-bottom: 0.5rem;
+            }
+            .mb-5 {
+                margin-bottom: 0.7rem;
+            }
+            .mb-7 {
+                margin-bottom: 0.8rem;
+            }
         }
     </style>
 </head>
@@ -355,245 +499,6 @@
         </div>
     </div>
 
-    <script>
-    const SUPABASE_URL = 'https://gnehkswoqlpchtlgyjyj.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduZWhrc3dvcWxwY2h0bGd5anlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTY3NjYsImV4cCI6MjA2OTQ3Mjc2Nn0.8giA1bDvCzgvlcW_pkimGO9qHRF2I0QfhG6nx9U_tdY';
-
-    let supabaseClient;
-
-    window.addEventListener('load', () => {
-        if (typeof supabase === 'undefined') {
-            showMessage('❌ Erro de conexão. Recarregue a página ou verifique sua internet.', 'text-red-500');
-        }
-    });
-
-    try {
-        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } catch (error) {
-        console.error('Erro ao inicializar Supabase:', error);
-        showMessage('❌ Erro de inicialização. Recarregue a página.', 'text-red-500');
-    }
-
-    const signupForm = document.getElementById('signup-form');
-    const nameInput = document.getElementById('name');
-    const phoneInput = document.getElementById('phone');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const confirmPasswordInput = document.getElementById('confirm-password');
-    const messageDiv = document.getElementById('message');
-    const successOverlay = document.getElementById('success-overlay');
-    const popupTitle = document.getElementById('popup-title');
-    const popupMessage = document.getElementById('popup-message');
-    const closePopupButton = document.getElementById('close-popup');
-
-    // Elementos para os requisitos da senha
-    const lengthReq = document.getElementById('length-req');
-    const upperReq = document.getElementById('upper-req');
-    const lowerReq = document.getElementById('lower-req');
-    const numberReq = document.getElementById('number-req');
-    
-    // CÓDIGO DE VALIDAÇÃO DE SENHA (NÃO PRECISA DE ALTERAÇÃO)
-    passwordInput.addEventListener('input', validatePassword);
-
-    function validatePassword() {
-        const password = passwordInput.value;
-        let allValid = true;
-
-        // Regra 1: Mínimo de 8 caracteres
-        if (password.length >= 8) {
-            lengthReq.classList.replace('req-unmet', 'req-met');
-        } else {
-            lengthReq.classList.replace('req-met', 'req-unmet');
-            allValid = false;
-        }
-
-        // Regra 2: Pelo menos 1 letra maiúscula
-        if (/[A-Z]/.test(password)) {
-            upperReq.classList.replace('req-unmet', 'req-met');
-        } else {
-            upperReq.classList.replace('req-met', 'req-unmet');
-            allValid = false;
-        }
-
-        // Regra 3: Pelo menos 1 letra minúscula
-        if (/[a-z]/.test(password)) {
-            lowerReq.classList.replace('req-unmet', 'req-met');
-        } else {
-            lowerReq.classList.replace('req-met', 'req-unmet');
-            allValid = false;
-        }
-
-        // Regra 4: Pelo menos 1 número
-        if (/[0-9]/.test(password)) {
-            numberReq.classList.replace('req-unmet', 'req-met');
-        } else {
-            numberReq.classList.replace('req-met', 'req-unmet');
-            allValid = false;
-        }
-        
-        return allValid;
-    }
-
-    // --- RESTANTE DO CÓDIGO ORIGINAL ---
-
-    function showSuccessPopup(title, msg) {
-        popupTitle.innerHTML = title;
-        popupMessage.innerHTML = msg;
-        successOverlay.classList.add('active');
-    }
-
-    closePopupButton.addEventListener('click', () => {
-        successOverlay.classList.remove('active');
-    });
-
-    function generateCompanyId() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        let result = '';
-        for (let i = 0; i < 10; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
-    }
-
-    async function saveUserData(authUserId, userData) {
-        try {
-            const companyId = generateCompanyId();
-            
-            const { data, error } = await supabaseClient
-                .from('user')
-                .insert([
-                    {
-                        nome: userData.name,
-                        telefone: userData.phone,
-                        email: userData.email,
-                        funcao: 'empreendedor',
-                        id_empresa: companyId,
-                        auth_user_id: authUserId, 
-                        created_at: new Date().toISOString()
-                    }
-                ]);
-
-            if (error) {
-                console.error('Erro ao salvar dados do usuário:', error);
-                throw error;
-            }
-            return data;
-        } catch (error) {
-            console.error('Erro na função saveUserData:', error);
-            throw error;
-        }
-    }
-
-    signupForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        
-        showMessage('', '');
-
-        const name = nameInput.value.trim();
-        const phone = phoneInput.value.trim();
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
-        const confirmPassword = confirmPasswordInput.value;
-
-        if (!name || !phone) {
-            showMessage('Por favor, preencha seu nome e telefone.', 'text-red-500');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            showMessage('As senhas não coincidem.', 'text-red-500');
-            return;
-        }
-
-        const isPasswordValid = validatePassword();
-        if (!isPasswordValid) {
-            showMessage('A senha não atende a todos os requisitos de segurança.', 'text-red-500');
-            return;
-        }
-
-        showMessage('Criando sua conta...', 'text-orange-500');
-
-        try {
-            if (typeof supabaseClient === 'undefined' || !supabaseClient) {
-                throw new Error('Erro de conexão: Supabase não carregado. Verifique sua conexão com a internet.');
-            }
-            
-            const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-                email: email,
-                password: password,
-                options: {
-                    emailRedirectTo: window.location.origin + '/login.html',
-                    data: {
-                        full_name: name,
-                        phone: phone,
-                        created_at: new Date().toISOString()
-                    }
-                },
-            });
-
-            if (authError) {
-                throw authError;
-            }
-
-            if (authData.user) {
-                try {
-                    await saveUserData(authData.user.id, {
-                        name: name,
-                        phone: phone,
-                        email: email
-                    });
-                } catch (saveError) {
-                    console.error('Erro ao salvar dados na tabela user:', saveError);
-                }
-            }
-
-            if (authData.user && authData.session) {
-                showSuccessPopup(
-                    'Bem-vindo(a) à Lume!', 
-                    'Sua conta foi criada e você já está logado(a)! Redirecionando para o painel...'
-                );
-                signupForm.reset();
-                validatePassword();
-                setTimeout(() => {
-                    window.location.href = 'nova-venda.html'; 
-                }, 3000);
-            } else if (authData.user && !authData.session) {
-                showSuccessPopup(
-                    'Cadastro Realizado!', 
-                    'Um e-mail de confirmação foi enviado. Verifique sua caixa de entrada e <b>pasta de spam</b> para ativar sua conta.'
-                );
-                signupForm.reset();
-                validatePassword();
-            } else {
-                showSuccessPopup(
-                    'Processo Iniciado!',
-                    'Seu cadastro foi recebido. Verifique seu e-mail para os próximos passos.'
-                );
-                signupForm.reset();
-                validatePassword();
-            }
-
-        } catch (error) {
-            console.error('Erro ao cadastrar:', error.message);
-
-            if (error.message.includes('Supabase não carregado')) {
-                showMessage('❌ Erro de conexão. Verifique sua internet e tente novamente.', 'text-red-500');
-            } else if (error.message.includes('User already registered')) {
-                showMessage('❌ Este email já está cadastrado. Tente fazer login.', 'text-red-500');
-            } else if (error.message.includes('rate limit exceeded')) {
-                showMessage('❌ Muitas tentativas. Aguarde e tente novamente.', 'text-red-500');
-            } else if (error.message.includes('Network')) {
-                showMessage('❌ Erro de conexão. Verifique sua internet e tente novamente.', 'text-red-500');
-            } else {
-                showMessage(`❌ Erro: ${error.message}. Tente novamente.`, 'text-red-500');
-            }
-        }
-    });
-
-    function showMessage(text, colorClass) {
-        messageDiv.textContent = text;
-        messageDiv.className = `text-center text-sm font-medium mt-3 ${colorClass}`;
-    }
-    </script>
+    <script src="inscricao.js"></script>
 </body>
 </html>

@@ -1,6 +1,117 @@
 // ===== LÓGICA PARA CANCELAMENTO DE VENDAS =====
 
 /**
+ * Registra movimentação de estoque (entrada por cancelamento)
+ * @param {Object} dados - Dados da movimentação
+ */
+async function registrarMovimentacaoEstoque(dados) {
+    try {
+        console.log('📋 Tentando registrar movimentação de estoque:', dados);
+        console.log('👤 Usuário atual:', window.currentUser);
+        console.log('🏢 Empresa atual:', window.currentCompanyId);
+        
+        const movimentacao = {
+            produto_id: dados.produto_id,
+            tipo_movimentacao: dados.tipo_movimentacao,
+            quantidade: dados.quantidade,
+            valor_unitario: dados.valor_unitario || null,
+            valor_total: dados.valor_total || null,
+            documento: dados.documento || null,
+            fornecedor: dados.fornecedor || null,
+            observacao: dados.observacao || null,
+            auth_user_id: window.currentUser?.auth_user_id || window.currentUser?.id,
+            id_empresa: window.currentCompanyId
+        };
+        
+        console.log('📋 Dados da movimentação a ser inserida:', movimentacao);
+        
+        const { data, error } = await supabaseClient
+            .from('estoque_movimentacoes')
+            .insert([movimentacao]);
+
+        if (error) {
+            console.error('❌ Erro ao inserir movimentação:', error);
+            throw error;
+        }
+        
+        console.log('✅ Movimentação inserida com sucesso:', data);
+        return { success: true, data };
+
+    } catch (error) {
+        console.error('❌ Erro na função registrarMovimentacaoEstoque:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Registra entrada de estoque por cancelamento de venda
+ * @param {Object} itemVenda - Item da venda cancelada
+ * @param {number} vendaId - ID da venda
+ */
+async function registrarEntradaCancelamento(itemVenda, vendaId) {
+    try {
+        // Buscar o produto_id usando o SKU da venda
+        const { data: produto, error: produtoError } = await supabaseClient
+            .from('produtos')
+            .select('id')
+            .eq('codigo_sku', itemVenda.produto_sku)
+            .eq('id_empresa', window.currentCompanyId)
+            .single();
+            
+        if (produtoError || !produto) {
+            console.error('❌ Produto não encontrado para SKU:', itemVenda.produto_sku, produtoError);
+            return { success: false, error: `Produto não encontrado para SKU: ${itemVenda.produto_sku}` };
+        }
+        
+        console.log(`✅ Produto encontrado: ID ${produto.id} para SKU ${itemVenda.produto_sku}`);
+        
+        return await registrarMovimentacaoEstoque({
+            produto_id: produto.id,
+            tipo_movimentacao: 'entrada',
+            quantidade: Math.abs(itemVenda.quantidade_unit || itemVenda.quantidade), // Sempre positivo para entrada
+            valor_unitario: itemVenda.preco_unitario || itemVenda.produto_preco,
+            valor_total: (itemVenda.quantidade_unit || itemVenda.quantidade) * (itemVenda.preco_unitario || itemVenda.produto_preco),
+            documento: `Cancelamento Venda #${vendaId}`,
+            observacao: `Cancelamento - ${itemVenda.produto_nome || 'Produto'}`,
+        });
+    } catch (error) {
+        console.error('❌ Erro em registrarEntradaCancelamento:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Atualiza estoque do produto
+ * @param {number} produtoId - ID do produto
+ * @param {number} quantidadeAlterada - Quantidade a ser alterada (+ ou -)
+ */
+async function atualizarEstoqueProduto(produtoId, quantidadeAlterada) {
+    try {
+        const { data: produto, error: selectError } = await supabaseClient
+            .from('produtos')
+            .select('quantidade_estoque')
+            .eq('id', produtoId)
+            .single();
+
+        if (selectError) throw selectError;
+
+        const novoEstoque = (produto.quantidade_estoque || 0) + quantidadeAlterada;
+
+        const { error: updateError } = await supabaseClient
+            .from('produtos')
+            .update({ quantidade_estoque: novoEstoque })
+            .eq('id', produtoId);
+
+        if (updateError) throw updateError;
+
+        return { success: true, novoEstoque };
+
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+/**
  * Cancela as vendas selecionadas
  * @param {Array} saleIds - Array com os IDs das vendas a serem canceladas
  */
@@ -43,6 +154,8 @@ async function cancelSelectedSales(saleIds) {
         }
         
         console.log(`📋 ${vendasParaCancelar.length} itens de venda encontrados para cancelamento`);
+        console.log('🔍 DEBUG - Dados da primeira venda:', vendasParaCancelar[0]);
+        console.log('🔍 DEBUG - Campos disponíveis:', Object.keys(vendasParaCancelar[0] || {}));
         
         // Preparar dados para inserir na tabela canceladas
         const vendasCanceladas = vendasParaCancelar.map(venda => ({
@@ -94,6 +207,81 @@ async function cancelSelectedSales(saleIds) {
         
         console.log('✅ Vendas deletadas da tabela principal');
         
+        // Deletar registros de cashback relacionados às vendas canceladas
+        const { error: errorCashback } = await supabaseClient
+            .from('cashback')
+            .delete()
+            .in('venda_id', saleIds)
+            .eq('id_empresa', window.currentCompanyId);
+            
+        if (errorCashback) {
+            console.warn('⚠️ Erro ao deletar cashback:', errorCashback.message);
+            // Não interrompe o processo, apenas registra o aviso
+        } else {
+            console.log('✅ Registros de cashback deletados');
+        }
+        
+        // Deletar registros de crediário relacionados às vendas canceladas
+        const { error: errorCrediario } = await supabaseClient
+            .from('crediario')
+            .delete()
+            .in('venda_id', saleIds)
+            .eq('id_empresa', window.currentCompanyId);
+            
+        if (errorCrediario) {
+            console.warn('⚠️ Erro ao deletar crediário:', errorCrediario.message);
+            // Não interrompe o processo, apenas registra o aviso
+        } else {
+            console.log('✅ Registros de crediário deletados');
+        }
+        
+        // Nota: Não deletamos as movimentações de saída originais, pois elas representam o histórico.
+        // Ao invés disso, criaremos movimentações de entrada para compensar o cancelamento.
+        console.log('📋 Movimentações de saída originais mantidas para histórico');
+        
+        // Reverter estoque dos produtos (devolver ao estoque)
+        console.log(`🔄 Iniciando reversão de estoque para ${vendasParaCancelar.length} itens...`);
+        for (const venda of vendasParaCancelar) {
+            try {
+                console.log(`📦 Revertendo estoque: Produto ID ${venda.produto_id} (${venda.produto_nome}) - Quantidade: +${venda.quantidade}`);
+                
+                // 1. Primeiro registrar a movimentação de entrada no estoque
+                console.log(`🔄 Chamando registrarEntradaCancelamento para produto ${venda.produto_nome}`);
+                const movimentacao = await registrarEntradaCancelamento(venda, venda.id_venda);
+                console.log(`📊 Resultado da movimentação:`, movimentacao);
+                
+                if (!movimentacao.success) {
+                    console.error(`❌ ERRO ao registrar movimentação de estoque para ${venda.produto_nome}:`, movimentacao.error);
+                } else {
+                    console.log(`✅ Movimentação de entrada registrada com SUCESSO para ${venda.produto_nome}`);
+                }
+                
+                // 2. Depois atualizar o estoque do produto (buscar ID pelo SKU)
+                const { data: produtoEstoque, error: estoqueError } = await supabaseClient
+                    .from('produtos')
+                    .select('id')
+                    .eq('codigo_sku', venda.produto_sku)
+                    .eq('id_empresa', window.currentCompanyId)
+                    .single();
+                    
+                if (estoqueError || !produtoEstoque) {
+                    console.warn(`⚠️ Produto não encontrado para atualizar estoque. SKU: ${venda.produto_sku}`);
+                    continue;
+                }
+                
+                const resultado = await atualizarEstoqueProduto(produtoEstoque.id, venda.quantidade_unit || venda.quantidade);
+                    
+                if (!resultado.success) {
+                    console.warn(`⚠️ Erro ao reverter estoque do produto ${venda.produto_nome}:`, resultado.error);
+                } else {
+                    console.log(`✅ Estoque revertido para ${venda.produto_nome}: +${venda.quantidade} (novo estoque: ${resultado.novoEstoque})`);
+                }
+            } catch (error) {
+                console.warn(`⚠️ Erro ao reverter estoque do produto ${venda.produto_nome}:`, error.message);
+            }
+        }
+        console.log('🔄 Reversão de estoque concluída!');
+        
         // Remover loading
         document.body.removeChild(loadingModal);
         
@@ -109,6 +297,19 @@ async function cancelSelectedSales(saleIds) {
         
         // Recarregar a lista de vendas
         await fetchSales();
+        
+        // Aguardar um pouco para garantir que as atualizações do banco sejam processadas
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Recarregar lista de produtos se estiver disponível (caso esteja na página de produtos)
+        if (typeof window.fetchProducts === 'function') {
+            try {
+                await window.fetchProducts();
+                console.log('✅ Lista de produtos atualizada após cancelamento');
+            } catch (error) {
+                console.warn('⚠️ Erro ao atualizar lista de produtos:', error.message);
+            }
+        }
         
     } catch (error) {
         console.error('❌ Erro ao cancelar vendas:', error);

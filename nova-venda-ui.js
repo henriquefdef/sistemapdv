@@ -21,12 +21,12 @@ function setupSearchDropdown() {
     dropdown.id = 'search-dropdown';
     dropdown.className = 'search-dropdown hidden';
     
-    const searchBar = document.querySelector('.search-bar');
-    searchBar.style.position = 'relative';
-    searchBar.appendChild(dropdown);
+    // Anexar ao body para evitar problemas de contexto de empilhamento
+    document.body.appendChild(dropdown);
     
     document.addEventListener('click', (e) => {
-        if (!searchBar.contains(e.target)) {
+        const searchBar = document.querySelector('.search-bar');
+        if (!searchBar.contains(e.target) && !dropdown.contains(e.target)) {
             hideSearchDropdown();
         }
     });
@@ -40,6 +40,15 @@ function setupSearchDropdown() {
 
 function showSearchDropdown(products) {
     const dropdown = document.getElementById('search-dropdown');
+    const searchBar = document.querySelector('.search-bar');
+    
+    // Posicionar o dropdown em relação ao campo de busca
+    const searchBarRect = searchBar.getBoundingClientRect();
+    dropdown.style.position = 'fixed';
+    dropdown.style.top = `${searchBarRect.bottom + 4}px`;
+    dropdown.style.left = `${searchBarRect.left}px`;
+    dropdown.style.width = `${searchBarRect.width}px`;
+    dropdown.style.zIndex = '999999';
     
     if (!products || products.length === 0) {
         dropdown.innerHTML = `
@@ -196,7 +205,11 @@ function renderCustomersList() {
 function selectCustomer(customerId) {
     const selectedCustomer = filteredCustomers.find(c => c.id == customerId);
     if (selectedCustomer) {
+        // Atualizar ambas as variáveis de estado
         saleState.customer = selectedCustomer;
+        if (!window.saleState) window.saleState = {};
+        window.saleState.customer = selectedCustomer;
+        
         updateCustomerDisplay();
         closeModal(customerSelectionModal);
         showNotification(`Cliente ${selectedCustomer.nome} selecionado`, 'success');
@@ -207,10 +220,17 @@ function selectCustomer(customerId) {
             whatsappNumberField.value = selectedCustomer.telefone;
         }
         
+        // Disparar evento global de mudança de cliente
+        document.dispatchEvent(new CustomEvent('customerSelected', { detail: selectedCustomer }));
+        
         // Limpar busca e resetar lista
         customerSearchInput.value = '';
         filteredCustomers = customers;
         renderCustomersList();
+        
+        console.log('Cliente selecionado na tela principal:', selectedCustomer);
+        console.log('window.saleState.customer:', window.saleState?.customer);
+        console.log('saleState.customer:', saleState.customer);
     }
 }
 
@@ -225,8 +245,23 @@ function updateCustomerDisplay() {
 }
 
 // --- MODAIS ---
-function openModal(modal) { modal.classList.remove('hidden'); }
-function closeModal(modal) { modal.classList.add('hidden'); }
+function openModal(modal) { 
+    modal.classList.remove('hidden'); 
+    // Reduzir z-index da barra de pesquisa quando modal abre
+    const searchAndActions = document.querySelector('.search-and-actions');
+    const searchBar = document.querySelector('.search-bar');
+    if (searchAndActions) searchAndActions.style.zIndex = '1';
+    if (searchBar) searchBar.style.zIndex = '1';
+}
+
+function closeModal(modal) { 
+    modal.classList.add('hidden'); 
+    // Restaurar z-index da barra de pesquisa quando modal fecha
+    const searchAndActions = document.querySelector('.search-and-actions');
+    const searchBar = document.querySelector('.search-bar');
+    if (searchAndActions) searchAndActions.style.zIndex = '9999';
+    if (searchBar) searchBar.style.zIndex = '9999';
+}
 
 function showEditItemModal(productId) {
     const item = cart.find(i => i.id == productId);
@@ -377,25 +412,20 @@ function handleProductClick(event) {
     
     const productId = parseInt(card.dataset.productId);
     
-    if (event.target.closest('.pin-btn')) {
-        // Clique no botão de fixar
-        togglePinProduct(productId);
-    } else {
-        // Clique no produto para adicionar ao carrinho
-        let product = null;
-        
-        // Procurar o produto nos diferentes arrays disponíveis
-        if (typeof window.renderedProducts !== 'undefined' && window.renderedProducts) {
-            product = window.renderedProducts.find(p => p.id === productId);
-        }
-        
-        if (!product && typeof renderedProducts !== 'undefined' && renderedProducts) {
-            product = renderedProducts.find(p => p.id === productId);
-        }
-        
-        if (product && typeof addToCart === 'function') {
-            addToCart(product);
-        }
+    // Clique no produto para adicionar ao carrinho
+    let product = null;
+    
+    // Procurar o produto nos diferentes arrays disponíveis
+    if (typeof window.renderedProducts !== 'undefined' && window.renderedProducts) {
+        product = window.renderedProducts.find(p => p.id === productId);
+    }
+    
+    if (!product && typeof renderedProducts !== 'undefined' && renderedProducts) {
+        product = renderedProducts.find(p => p.id === productId);
+    }
+    
+    if (product && typeof addToCart === 'function') {
+        addToCart(product);
     }
 }
 
@@ -436,9 +466,21 @@ function applyGeneralDiscount() {
 }
 
 function removeSelectedCustomer() {
+    // Limpar ambas as variáveis de estado
     saleState.customer = null;
+    if (window.saleState) {
+        window.saleState.customer = null;
+    }
+    
     updateCustomerDisplay();
     showNotification('Cliente removido da venda', 'info');
+    
+    // Disparar evento global de mudança de cliente
+    document.dispatchEvent(new CustomEvent('customerSelected', { detail: null }));
+    
+    console.log('Cliente removido da tela principal');
+    console.log('window.saleState.customer:', window.saleState?.customer);
+    console.log('saleState.customer:', saleState.customer);
 }
 
 function openSettingsModal() {

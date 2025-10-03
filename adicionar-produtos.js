@@ -3,6 +3,32 @@
 document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('userDataReady', initializePage);
     
+    // Carregar funções de cache se não estiverem disponíveis
+    loadCacheFunctions();
+});
+
+// Função para carregar as funções de cache do nova-venda-data.js
+function loadCacheFunctions() {
+    if (typeof removeProductFromCache === 'undefined') {
+        // Implementação local da função de limpeza de cache
+        window.removeProductFromCache = function(productId) {
+            try {
+                const cached = localStorage.getItem('lume-pdv-image-cache');
+                if (cached) {
+                    const data = JSON.parse(cached);
+                    if (data[productId.toString()]) {
+                        delete data[productId.toString()];
+                        localStorage.setItem('lume-pdv-image-cache', JSON.stringify(data));
+                        console.log(`Imagem do produto ${productId} removida do cache`);
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao limpar cache de imagens:', error);
+            }
+        };
+    }
+}
+    
     function initializePage() {
         setupTabs();
         setupFormValidation();
@@ -279,6 +305,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const descricaoField = document.getElementById('descricao');
         if (descricaoField) descricaoField.value = product.descricao || '';
         
+        // Frequência de uso (ALTERADO)
+        const frequenciaField = document.getElementById('frequencia');
+        if (frequenciaField) frequenciaField.value = product.frequencia || '';
+        
         // Pesos e dimensões
         const pesoField = document.getElementById('peso');
         if (pesoField) pesoField.value = product.peso || '';
@@ -327,6 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     codigo_sku: productData.codigo_sku,
                     codigo_barras: productData.codigo_barras,
                     descricao: productData.descricao,
+                    frequencia: productData.frequencia, // ALTERADO de modelo para frequencia
                     peso: productData.peso,
                     altura: productData.altura,
                     largura: productData.largura,
@@ -441,6 +472,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     const result = await updateProduct(window.editingProductId, productData);
                     
                     if (result.success) {
+                        // Salvar imagens se existirem
+                        if (window.productImages && window.productImages.length > 0 && typeof saveProductImages === 'function') {
+                            try {
+                                await saveProductImages(window.editingProductId, window.productImages);
+                                console.log('Imagens atualizadas com sucesso!');
+                            } catch (imgError) {
+                                console.error('Erro ao salvar imagens:', imgError);
+                                // Não falha o processo principal por causa das imagens
+                            }
+                        }
+                        
+                        // Limpar cache de imagens para forçar atualização
+                        if (typeof removeProductFromCache === 'function') {
+                            removeProductFromCache(window.editingProductId);
+                            console.log('Cache de imagem limpo para o produto:', window.editingProductId);
+                        }
+                        
                         showSuccessMessage('Produto atualizado com sucesso!');
                         
                         // Redirecionar de volta para lista de produtos
@@ -576,7 +624,7 @@ document.addEventListener('DOMContentLoaded', () => {
             categoria: getSelectedText('categoria-produto'),
             marca: getSelectedText('marca'),
             colecao: getSelectedText('colecao'),
-            fornecedores: getSelectedText('fornecedor'),
+            fornecedor: getSelectedText('fornecedor'),
             tipo_unidade: document.getElementById('tipo-unidade').value,
             codigo_sku: document.getElementById('codigo-sku').value.trim(),
             codigo_barras: document.getElementById('codigo-barras').value.trim(),
@@ -585,7 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tamanho: document.getElementById('tamanho').value.trim() || null,
             cor: getSelectedText('cor'),
             material: getSelectedText('material'),
-            modelo: document.getElementById('modelo').value.trim() || null,
+            frequencia: document.getElementById('frequencia').value || null, // ALTERADO de modelo para frequencia
             genero: document.getElementById('genero').value || null,
             observacoes: document.getElementById('observacoes').value.trim() || null,
             
@@ -625,7 +673,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===== RESET DO FORMULÁRIO =====
     function resetForm() {
         const form = document.getElementById('product-form');
+        
+        // Salvar o valor do markup antes de resetar
+        const markupField = document.getElementById('markup');
+        const savedMarkup = markupField.value;
+        
         form.reset();
+        
+        // Restaurar o valor do markup do localStorage
+        const defaultMarkup = localStorage.getItem('defaultMarkup');
+        if (defaultMarkup) {
+            markupField.value = defaultMarkup;
+        }
         
         // Limpar erros
         const errorFields = form.querySelectorAll('.error');
@@ -634,8 +693,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const errorMessages = form.querySelectorAll('.field-error');
         errorMessages.forEach(msg => msg.remove());
         
-        // Limpar markup
-        document.getElementById('markup').style.color = '';
+        // Limpar estilo do markup
+        markupField.style.color = '';
         
         // Reabilitar campo de quantidade para criação de novo produto
         const quantidadeField = document.getElementById('quantidade-estoque');
@@ -777,7 +836,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     `;
     document.head.appendChild(style);
-});
 
 // ===== FUNÇÕES PARA MOVIMENTAÇÃO DE ESTOQUE =====
 
@@ -950,7 +1008,6 @@ window.registrarSaidaVenda = registrarSaidaVenda;
 window.processarVendaComEstoque = processarVendaComEstoque;
 
 // ===== PROMPT PARA GERAR ETIQUETA =====
-// ===== PROMPT PARA GERAR ETIQUETA (VERSÃO CORRIGIDA) =====
 function showEtiquetaPrompt(produto) {
     // Remove notificação existente se houver
     const existing = document.querySelector('.etiqueta-prompt');
@@ -958,7 +1015,7 @@ function showEtiquetaPrompt(produto) {
         existing.remove();
     }
 
-    // 🧠 PARTE INTELIGENTE: Detecta se existe mensagem de sucesso
+    // Detecta se existe mensagem de sucesso
     const successNotification = document.querySelector('.notification');
     const topPosition = successNotification ? '8rem' : '2rem';
 
@@ -1001,12 +1058,12 @@ function showEtiquetaPrompt(produto) {
 
     document.body.appendChild(prompt);
 
-    // Remove automaticamente após 20 segundos
+    // Remove automaticamente após 12 segundos
     setTimeout(() => {
         if (prompt.parentNode) {
             prompt.remove();
         }
-    }, 20000);
+    }, 12000);
 }
 
 // Funções auxiliares para o prompt

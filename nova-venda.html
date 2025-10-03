@@ -9,7 +9,9 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="header.css"> 
     <link rel="stylesheet" href="nova-venda.css">
+    <link rel="stylesheet" href="nova-venda-barra.css">
     <link rel="stylesheet" href="nova-venda-pag.css">
+
 </head>
 <body>
 
@@ -35,9 +37,9 @@
                     </div>
                 </div>
                  <div id="search-placeholder" class="search-placeholder">
-                    <i class="fa-solid fa-cash-register"></i>
-                    <h2>Ponto de Venda Lume</h2>
-                    <p>Use a barra de busca acima para encontrar produtos ou adicione itens da sua barra de acesso rápido abaixo.</p>
+                    <img src="log.png" alt="Lume Logo" style="width: 120px; height: 120px; opacity: 0.3; border-radius: 20px; object-fit: cover;">
+                  <!--   <h2 style="color: #64748b;">Seu Ponto de Venda</h2> -->
+                    <p>Selecione produtos para começar uma nova venda</p>
                 </div>
             </main>
 
@@ -46,28 +48,19 @@
                 <div class="bottom-bar-header">
                     <div class="header-left">
                         
-                       <!-- <h3 class="quick-access-title">
-                            <i class="fa-solid fa-star"></i>
-                            Acesso Rápido
-                        </h3>  -->
+                        <!-- Botão de configuração estilo Apple -->
+                        <button class="apple-settings-btn" id="manage-categories-btn" title="Gerenciar Abas">
+                            <i class="fa-solid fa-gear"></i>
+                        </button>
                         
                         <!-- Tabs das Categorias na mesma linha -->
                         <div class="category-tabs" id="category-tabs">
-                            <div class="category-tab active" data-category="mais-vendidos">
-                                <i class="fa-solid fa-fire"></i>
-                                <span>Mais Vendidos</span>
-                            </div>
-                            <div class="category-tab" data-category="ultimos-cadastrados">
+                            <div class="category-tab active" data-category="ultimos-cadastrados">
                                 <i class="fa-solid fa-clock"></i>
-                                <span>Últimos</span>
+                                <span>Últimos Cadastrados</span>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Botão de configuração estilo Apple -->
-                    <button class="apple-settings-btn" id="manage-categories-btn" title="Gerenciar Abas">
-                        <i class="fa-solid fa-gear"></i>
-                    </button>
                 </div>
 
                 <!-- Grid de Produtos -->
@@ -80,7 +73,7 @@
         <aside class="pdv-cart">
             <div class="cart-header">
                 <div class="cart-title-row">
-                    <h2><i class="fa-solid fa-cart-shopping"></i> Carrinho (<span id="cart-item-count">0</span> itens)</h2>
+                    <h2><i class="fa-solid fa-cart-shopping" style="color: #ff9800;"></i> Carrinho (<span id="cart-item-count">0</span> itens)</h2>
                     <button id="cancel-sale-btn" class="cancel-sale-btn" title="Cancelar Venda">
                         <i class="fa-solid fa-times"></i>
                     </button>
@@ -93,7 +86,7 @@
             </div>
             <div id="cart-items-container" class="cart-items">
                 <div class="empty-cart-message">
-                    <i class="fa-solid fa-basket-shopping"></i>
+                    <i class="fa-solid fa-basket-shopping" style="color: #ff9800;"></i>
                     <p>Seu carrinho está vazio.</p>
                     <span>Adicione produtos para iniciar uma venda.</span>
                 </div>
@@ -217,7 +210,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE GERENCIAMENTO DE CATEGORIAS - Estilo Apple -->
+    <!-- MODAL DE GERENCIAMENTO DE CATEGORIAS - Estilo Apple (SEM MAIS VENDIDOS) -->
     <div id="manage-categories-modal" class="modal-overlay hidden">
         <div class="modal-content modal-content-apple">
             <div class="modal-header-apple">
@@ -247,9 +240,6 @@
                                 <label for="category-icon">Ícone</label>
                                 <select id="category-icon" required>
                                     <option value="">Selecione um ícone</option>
-                                    <option value="fa-fire">🔥 Mais Vendidos</option>
-                                    <option value="fa-clock">⏰ Últimos</option>
-                                    
                                     <option value="fa-shirt">👕 Roupas</option>
                                     <option value="fa-spray-can">🌸 Perfumes</option>
                                     <option value="fa-gem">💎 Joias</option>
@@ -260,9 +250,27 @@
                                     <option value="fa-car">🚗 Automotivo</option>
                                     <option value="fa-dumbbell">💪 Fitness</option>
                                     <option value="fa-baby">👶 Infantil</option>
-                                    <option value="fa-utensils">🍴 Alimentação</option>
                                     <option value="fa-paw">🐾 Pet Shop</option>
                                     <option value="fa-tags">🏷️ Promoções</option>
+                                    <option value="fa-tools">🔧 Ferramentas</option>
+                                    <option value="fa-music">🎵 Música</option>
+                                    <option value="fa-camera">📷 Foto</option>
+                                    <option value="fa-leaf">🌱 Natureza</option>
+                                    <option value="fa-graduation-cap">🎓 Educação</option>
+                                    <option value="fa-briefcase">💼 Negócios</option>
+                                    <option value="fa-couch">🛋️ Móveis</option>
+                                    <option value="fa-snowflake">❄️ Refrigeração</option>
+                                    <option value="fa-fire">🔥 Quentes</option>
+                                    <option value="fa-star">⭐ Favoritos</option>
+                                    <option value="fa-heart">❤️ Preferidos</option>
+                                    <option value="fa-bolt">⚡ Energia</option>
+                                    <option value="fa-utensils">🍴 Alimentação</option>
+                                    <option value="fa-wine-glass">🍷 Bebidas</option>
+                                    <option value="fa-glass-water">🥤 Copo</option>
+                                    <option value="fa-pizza-slice">🍕 Lanches</option>
+                                    <option value="fa-birthday-cake">🎂 Doces</option>
+                                    <option value="fa-wrench">🔩 Manutenção</option>
+
                                 </select>
                             </div>
                         </div>
@@ -273,7 +281,7 @@
                                 <option value="">Selecione o tipo</option>
                                 <option value="manual">Manual (Produtos Selecionados)</option>
                                 <option value="categoria">Por Categoria de Produto</option>
-                                <option value="mais-vendidos">Mais Vendidos</option>
+
                                 <option value="ultimos">Últimos Cadastrados</option>
                                 <option value="promocao">Em Promoção</option>
                                 <option value="estoque-baixo">Estoque Baixo</option>
@@ -370,7 +378,8 @@
     <script src="nova-venda-data.js"></script>
     <script src="nova-venda-ui.js"></script>
     <script src="nova-venda-formas-pag.js"></script>
-    <!-- NOVO SCRIPT PARA CATEGORIAS -->
     <script src="nova-venda-abas.js"></script>
+    <script src="nova-venda-resize.js"></script>
+    
 </body>
 </html>

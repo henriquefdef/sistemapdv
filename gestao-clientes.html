@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Gestão de Clientes</title>
+    <link rel="icon" type="image/png" href="log.png">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <link href="header.css" rel="stylesheet">
+    <link href="gestao-clientes.css" rel="stylesheet">
+    <link href="whatsapp-modal.css" rel="stylesheet">
+</head>
+<body>
+    <div id="header-container"></div>
+
+    <main class="main-container">
+        <!-- Header da Gestão -->
+        <div class="gestao-header">
+            <div class="header-content">
+                <div class="header-main">
+                    <h1 class="header-title">Gestão de Clientes</h1>
+                    <p class="header-subtitle">Dashboard completo para relacionamento e pós-vendas</p>
+                </div>
+                
+                <div class="header-today-stats">
+                    <div class="today-card">
+                        <div class="today-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="today-info">
+                            <div class="today-label">Total Clientes</div>
+                            <div class="today-value" id="total-clientes">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="today-card">
+                        <div class="today-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="today-info">
+                            <div class="today-label">Clientes Ativos</div>
+                            <div class="today-value" id="clientes-ativos">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="today-card">
+                        <div class="today-icon">
+                            <i class="fas fa-birthday-cake"></i>
+                        </div>
+                        <div class="today-info">
+                            <div class="today-label">Aniversários Hoje</div>
+                            <div class="today-value" id="aniversarios-hoje">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="today-card">
+                        <div class="today-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="today-info">
+                            <div class="today-label">Alertas Recompra</div>
+                            <div class="today-value" id="alertas-recompra">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controles de Período -->
+        <div class="period-controls">
+            <div class="period-selector">
+                <div class="period-buttons">
+                    <button class="period-btn active" data-period="30">30 dias</button>
+                    <button class="period-btn" data-period="90">90 dias</button>
+                    <button class="period-btn" data-period="180">6 meses</button>
+                    <button class="period-btn" data-period="365">1 ano</button>
+                    <button class="period-btn" data-period="custom">Personalizado</button>
+                </div>
+            </div>
+            
+            <div class="date-inputs" id="custom-dates" style="display: none;">
+                <div class="date-group">
+                    <label for="start-date">Data Inicial:</label>
+                    <input type="date" id="start-date">
+                </div>
+                <div class="date-group">
+                    <label for="end-date">Data Final:</label>
+                    <input type="date" id="end-date">
+                </div>
+                <button class="apply-btn" id="apply-custom-period">Aplicar</button>
+            </div>
+
+            <div class="refresh-controls">
+                <button class="export-btn" id="export-report">
+                    <i class="fas fa-download"></i>
+                    Exportar
+                </button>
+            </div>
+        </div>
+
+        <!-- Grid de Gráficos -->
+        <div class="charts-section">
+            <div class="charts-grid">
+                <!-- Distribuição Geográfica -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Distribuição Geográfica</h3>
+                        <div class="chart-controls">
+                            <select id="location-filter" class="chart-select">
+                                <option value="cidade">Por Cidade</option>
+                                <option value="bairro" selected>Por Bairro</option>
+                            </select>
+                        </div>
+                        <div class="chart-info">
+                            <i class="fas fa-info-circle" title="Clientes por localização"></i>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-medium">
+                        <canvas id="cidades-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Aniversários dos Próximos 30 Dias -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Aniversários - Próximos 30 Dias</h3>
+                        <div class="chart-info">
+                            <i class="fas fa-info-circle" title="Aniversariantes para enviar parabéns"></i>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-medium">
+                        <div class="birthday-list" id="birthday-list">
+                            <!-- Lista de aniversariantes será inserida aqui -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clientes Inativos -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Inatividade de Clientes</h3>
+                        <div class="chart-info">
+                            <i class="fas fa-info-circle" title="Clientes sem comprar há tempo"></i>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-medium">
+                        <canvas id="inatividade-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Padrão de Compras -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Padrão de Compras</h3>
+                        <div class="chart-info">
+                            <i class="fas fa-info-circle" title="Classificação por comportamento"></i>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-small">
+                        <canvas id="padrao-compras-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top 20 Clientes -->
+        <div class="top-clientes-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>Top 20 Clientes por Valor</h3>
+                    <div class="section-actions">
+                        <select id="ranking-type">
+                            <option value="valor">Por Valor Total</option>
+                            <option value="quantidade">Por Quantidade de Compras</option>
+                            <option value="frequencia">Por Frequência</option>
+                        </select>
+                        <button class="btn-export-whatsapp" id="export-whatsapp-top">
+                            <i class="fab fa-whatsapp"></i>
+                            Enviar para Todos
+                        </button>
+                    </div>
+                </div>
+                <div class="top-clientes-container">
+                    <div class="clientes-table-wrapper">
+                        <table class="clientes-table" id="top-clientes-table">
+                            <thead>
+                                <tr>
+                                    <th>Posição</th>
+                                    <th>Cliente</th>
+                                    <th>Cidade</th>
+                                    <th>Total Gasto</th>
+                                    <th>Compras</th>
+                                    <th>Última Compra</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-clientes-body">
+                                <!-- Será preenchido pelo JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Análise de Frequência de Recompra -->
+        <div class="frequency-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>Análise de Frequência de Recompra</h3>
+                    <div class="frequency-filters">
+                        <select id="frequency-status-filter">
+                            <option value="all">Todos os Status</option>
+                            <option value="atrasado">Atrasados</option>
+                            <option value="breve">Em Breve</option>
+                            <option value="normal">Normal</option>
+                        </select>
+                        <input type="text" id="frequency-search" placeholder="Buscar cliente...">
+                    </div>
+                </div>
+                <div class="frequency-container">
+                    <div class="frequency-table-wrapper">
+                        <table class="frequency-table" id="frequency-table">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Produto</th>
+                                    <th>Frequência</th>
+                                    <th>Última Compra</th>
+                                    <th>Próxima Esperada</th>
+                                    <th>Status</th>
+                                    <th>Dias Atraso</th>
+                                    <th>Valor Última</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="frequency-table-body">
+                                <!-- Será preenchido pelo JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading-overlay" id="loading-overlay" style="display: none;">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p>Carregando dados dos clientes...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Detalhes do Cliente -->
+    <div class="client-detail-modal" id="client-detail-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="client-detail-title">Detalhes do Cliente</h3>
+                <button class="modal-close" onclick="closeClientDetailModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="client-info-grid">
+                    <div class="client-basic-info">
+                        <h4>Informações Básicas</h4>
+                        <div class="info-item">
+                            <span class="info-label">Nome:</span>
+                            <span class="info-value" id="detail-nome">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Telefone:</span>
+                            <span class="info-value" id="detail-telefone">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Email:</span>
+                            <span class="info-value" id="detail-email">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Cidade:</span>
+                            <span class="info-value" id="detail-cidade">-</span>
+                        </div>
+                    </div>
+
+                    <div class="client-stats">
+                        <h4>Estatísticas de Compras</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value" id="detail-total-gasto">R$ 0,00</div>
+                                <div class="stat-label">Total Gasto</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="detail-total-compras">0</div>
+                                <div class="stat-label">Total Compras</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="detail-ticket-medio">R$ 0,00</div>
+                                <div class="stat-label">Ticket Médio</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="detail-ultima-compra">-</div>
+                                <div class="stat-label">Última Compra</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="client-history">
+                    <h4>Histórico de Compras</h4>
+                    <div class="history-table-wrapper">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Produtos</th>
+                                    <th>Quantidade</th>
+                                    <th>Valor</th>
+                                    <th>Forma Pagamento</th>
+                                </tr>
+                            </thead>
+                            <tbody id="client-history-body">
+                                <!-- Será preenchido pelo JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="client-actions">
+                    <button class="btn-whatsapp" onclick="sendClientWhatsApp()">
+                        <i class="fab fa-whatsapp"></i>
+                        Enviar WhatsApp
+                    </button>
+                    <button class="btn-details" onclick="generateClientReport()">
+                        <i class="fas fa-file-pdf"></i>
+                        Gerar Relatório
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Clientes Inativos -->
+    <div class="inactivity-modal" id="inactivity-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="inactivity-modal-title">Clientes Inativos</h3>
+                <button class="modal-close" onclick="closeInactivityModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="inactivity-info">
+                    <p id="inactivity-period-info">Período de inatividade selecionado</p>
+                    <p id="inactivity-count-info">Total de clientes: 0</p>
+                </div>
+                
+                <div class="inactivity-clients-list">
+                    <div class="clients-table-wrapper">
+                        <table class="clients-table">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Telefone</th>
+                                    <th>Cidade</th>
+                                    <th>Última Compra</th>
+                                    <th>Dias Inativo</th>
+                                    <th>Total Gasto</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inactivity-clients-body">
+                                <!-- Será preenchido pelo JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="btn-whatsapp-all" onclick="sendWhatsAppToAllInactive()">
+                        <i class="fab fa-whatsapp"></i>
+                        Enviar WhatsApp para Todos
+                    </button>
+                    <button class="btn-export" onclick="exportInactiveClients()">
+                        <i class="fas fa-download"></i>
+                        Exportar Lista
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="header.js"></script>
+    <script src="whatsapp-supa.js"></script>
+    <script src="whatsapp-modal-unified.js"></script>
+    <script src="gestao-clientes-core.js"></script>
+
+</body>
+</html>

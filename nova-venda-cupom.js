@@ -2,35 +2,112 @@
 // ================================================================
 
 /**
- * Gera e imprime cupom fiscal profissional
+ * Abre a tela unificada de comprovante usando modal JavaScript
  * @param {Object} saleData - Dados completos da venda
  * @param {String} saleId - ID da venda
  */
-async function printProfessionalCupom(saleData, saleId) {
+async function openComprovanteUnificado(saleData, saleId) {
     try {
-        console.log('🖨️ Gerando cupom profissional para impressão...');
+        console.log('🧾 Abrindo modal de comprovante...');
+        
+        // Carregar o módulo de comprovante se não estiver carregado
+        if (!window.comprovanteModal) {
+            await loadComprovanteModule();
+        }
         
         // Buscar dados da empresa
         const companyData = await getCompanyData();
         
-        // Gerar HTML do cupom
-        const cupomHTML = generateCupomHTML(saleData, saleId, companyData);
+        // Buscar dados do cliente se disponível
+        let customerData = null;
+        if (saleData.customer && saleData.customer.id) {
+            customerData = { ...saleData.customer };
+            
+            // Buscar saldo de cashback do cliente se cashback estiver habilitado
+            if (companyData.cashback_enabled) {
+                try {
+                    const { data: cashbackData, error } = await supabaseClient
+                        .from('cashback')
+                        .select('saldo_atual')
+                        .eq('cliente_id', saleData.customer.id)
+                        .eq('id_empresa', window.currentCompanyId)
+                        .order('created_at', { ascending: false })
+                        .limit(1);
+                    
+                    if (!error && cashbackData && cashbackData.length > 0) {
+                        customerData.cashback_balance = cashbackData[0].saldo_atual || 0;
+                        console.log('💰 Saldo de cashback carregado para o comprovante:', customerData.cashback_balance);
+                    } else {
+                        customerData.cashback_balance = 0;
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Erro ao buscar saldo de cashback:', error);
+                    customerData.cashback_balance = 0;
+                }
+            }
+        }
         
-        // Abrir janela de impressão
-        openPrintWindow(cupomHTML);
+        // Verificar se o módulo está carregado
+        if (!window.comprovanteModal) {
+            console.log('⏳ Aguardando carregamento do módulo comprovante-modal...');
+            // Aguardar até 3 segundos pelo carregamento do módulo
+            let attempts = 0;
+            while (!window.comprovanteModal && attempts < 30) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (!window.comprovanteModal) {
+                throw new Error('Módulo comprovante-modal não foi carregado');
+            }
+        }
+        
+        console.log('✅ Módulo comprovante-modal encontrado, abrindo modal...');
+        
+        // Abrir modal com os dados
+        window.comprovanteModal.openComprovante({
+            saleData: saleData,
+            saleId: saleId,
+            companyData: companyData,
+            customerData: customerData
+        });
         
         return {
             success: true,
-            message: 'Cupom gerado com sucesso!'
+            message: 'Modal de comprovante aberto com sucesso!'
         };
         
     } catch (error) {
-        console.error('❌ Erro ao gerar cupom:', error);
+        console.error('❌ Erro ao abrir modal de comprovante:', error);
         return {
             success: false,
             error: error.message
         };
     }
+}
+
+/**
+ * Carrega o módulo de comprovante dinamicamente
+ */
+async function loadComprovanteModule() {
+    return new Promise((resolve, reject) => {
+        if (window.comprovanteModal) {
+            resolve();
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'comprovante-modal.js';
+        script.onload = () => {
+            console.log('✅ Módulo de comprovante carregado');
+            resolve();
+        };
+        script.onerror = () => {
+            console.error('❌ Erro ao carregar módulo de comprovante');
+            reject(new Error('Falha ao carregar módulo de comprovante'));
+        };
+        document.head.appendChild(script);
+    });
 }
 
 /**
@@ -41,27 +118,58 @@ async function getCompanyData() {
         const { data, error } = await supabaseClient
             .from('empresas')
             .select('*')
-            .eq('id', window.currentCompanyId)
+            .eq('id_empresa', window.currentCompanyId)
             .single();
 
         if (error) throw error;
 
-        return data || {
+        // Carregar configurações de cashback do localStorage
+        const savedConfig = JSON.parse(localStorage.getItem('pdv-payment-config'));
+        const cashbackEnabled = savedConfig ? savedConfig.enableCashback || false : false;
+
+        if (data) {
+            // Montar endereço completo
+            let endereco = '';
+            if (data.rua) endereco += data.rua;
+            if (data.numero) endereco += `, ${data.numero}`;
+            if (data.complemento) endereco += `, ${data.complemento}`;
+            if (data.bairro) endereco += ` - ${data.bairro}`;
+            if (data.cidade) endereco += ` - ${data.cidade}`;
+            if (data.cep) endereco += ` - CEP: ${data.cep}`;
+            
+            return {
+                nome: data.nome_fantasia || data.razao_social || 'Lume Sistemas',
+                endereco: endereco || 'Endereço não cadastrado',
+                telefone: data.telefone_empresa || 'Telefone não cadastrado',
+                cnpj: data.cnpj || 'CNPJ não cadastrado',
+                email: data.email_empresa || 'email@empresa.com',
+                cashback_enabled: cashbackEnabled
+            };
+        }
+
+        return {
             nome: 'Lume Sistemas',
             endereco: 'Endereço não cadastrado',
             telefone: 'Telefone não cadastrado',
             cnpj: 'CNPJ não cadastrado',
-            email: 'email@empresa.com'
+            email: 'email@empresa.com',
+            cashback_enabled: cashbackEnabled
         };
 
     } catch (error) {
         console.warn('⚠️ Erro ao buscar dados da empresa:', error);
+        
+        // Carregar configurações de cashback do localStorage mesmo em caso de erro
+        const savedConfig = JSON.parse(localStorage.getItem('pdv-payment-config'));
+        const cashbackEnabled = savedConfig ? savedConfig.enableCashback || false : false;
+        
         return {
             nome: 'Lume Sistemas',
             endereco: 'Endereço não cadastrado',
             telefone: 'Telefone não cadastrado', 
             cnpj: 'CNPJ não cadastrado',
-            email: 'email@empresa.com'
+            email: 'email@empresa.com',
+            cashback_enabled: cashbackEnabled
         };
     }
 }
@@ -528,19 +636,38 @@ function openPrintWindow(htmlContent) {
 }
 
 /**
- * Função principal chamada pelo sistema de vendas
+ * Função principal para impressão - agora abre a tela unificada
  */
 window.imprimirCupomVenda = async function(saleData, saleId) {
-    console.log('🖨️ Iniciando impressão de cupom...');
+    console.log('🖨️ Iniciando processo de comprovante...');
     console.log('Dados da venda:', saleData);
     console.log('ID da venda:', saleId);
     
-    const result = await printProfessionalCupom(saleData, saleId);
+    const result = await openComprovanteUnificado(saleData, saleId);
     
     if (result.success) {
-        showNotification('Cupom gerado! Janela de impressão aberta.', 'success');
+        showNotification('Tela de comprovante aberta! Escolha como deseja processar.', 'success');
     } else {
-        showNotification('Erro ao gerar cupom: ' + result.error, 'error');
+        showNotification('Erro ao abrir comprovante: ' + result.error, 'error');
+    }
+    
+    return result;
+};
+
+/**
+ * Função para WhatsApp - também usa a tela unificada
+ */
+window.enviarComprovanteWhatsApp = async function(saleData, saleId) {
+    console.log('💬 Iniciando envio via WhatsApp...');
+    console.log('Dados da venda:', saleData);
+    console.log('ID da venda:', saleId);
+    
+    const result = await openComprovanteUnificado(saleData, saleId);
+    
+    if (result.success) {
+        showNotification('Tela de comprovante aberta! Use a opção WhatsApp.', 'success');
+    } else {
+        showNotification('Erro ao abrir comprovante: ' + result.error, 'error');
     }
     
     return result;

@@ -200,6 +200,12 @@
 
         <div id="fornecedores-cadastrados" class="tab-pane">
             <h3 class="tab-title">Fornecedores Cadastrados</h3>
+            <div class="search-container" style="margin-bottom: 1.5rem;">
+                <div class="input-with-icon" style="max-width: 400px;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-fornecedores" class="input-field" placeholder="Buscar por razão social ou telefone..." style="padding-left: 2.75rem;">
+                </div>
+            </div>
             <div id="fornecedores-list" class="fornecedores-list"></div>
             <div class="pagination-controls hidden" id="pagination-controls"><span class="pagination-info" id="pagination-info"></span><div class="pagination-buttons"><button id="prev-page"><i class="fas fa-arrow-left"></i> Anterior</button><button id="next-page">Próxima <i class="fas fa-arrow-right"></i></button></div></div>
             <div class="empty-state hidden" id="empty-state"><i class="fas fa-dolly"></i><h3>Nenhum fornecedor cadastrado</h3><p>Vá para a aba "Novo Fornecedor" para adicionar o seu primeiro.</p></div>
@@ -219,7 +225,7 @@
         const supabaseClient = supabase.createClient('https://gnehkswoqlpchtlgyjyj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduZWhrc3dvcWxwY2h0bGd5anlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTY3NjYsImV4cCI6MjA2OTQ3Mjc2Nn0.8giA1bDvCzgvlcW_pkimGO9qHRF2I0QfhG6nx9U_tdY');
         const formFieldIds = ['razao_social', 'nome_fantasia', 'cnpj', 'site', 'telefone_principal', 'email_principal', 'nome_contato', 'telefone_contato', 'logradouro', 'numero', 'bairro', 'cep', 'cidade', 'estado', 'observacoes'];
         
-        let state = { fornecedores: [], editingFornecedorId: null, isLoading: false, currentPage: 1, itemsPerPage: 20, totalItems: 0 };
+        let state = { fornecedores: [], editingFornecedorId: null, isLoading: false, currentPage: 1, itemsPerPage: 10, totalItems: 0, searchTerm: '' };
         const elements = {
             form: document.getElementById('fornecedor-form'),
             saveBtn: document.querySelector('.btn-save'),
@@ -228,6 +234,7 @@
             listContainer: document.getElementById('fornecedores-list'),
             emptyState: document.getElementById('empty-state'),
             tabNav: document.querySelector('.tab-nav'),
+            searchInput: document.getElementById('search-fornecedores'),
             pagination: { controls: document.getElementById('pagination-controls'), info: document.getElementById('pagination-info'), prevBtn: document.getElementById('prev-page'), nextBtn: document.getElementById('next-page') }
         };
         
@@ -236,9 +243,21 @@
             const hasItems = state.totalItems > 0;
             elements.pagination.controls.classList.toggle('hidden', !hasItems);
             elements.emptyState.classList.toggle('hidden', hasItems);
-            if (!hasItems) return;
+            
+            // Atualizar mensagem do estado vazio baseado na busca
+            if (!hasItems) {
+                const emptyStateContent = state.searchTerm 
+                    ? '<i class="fas fa-search"></i><h3>Nenhum fornecedor encontrado</h3><p>Tente buscar com outros termos ou limpe o campo de busca.</p>'
+                    : '<i class="fas fa-dolly"></i><h3>Nenhum fornecedor cadastrado</h3><p>Vá para a aba "Novo Fornecedor" para adicionar o seu primeiro.</p>';
+                elements.emptyState.innerHTML = emptyStateContent;
+                return;
+            }
+            
             const totalPages = Math.ceil(state.totalItems / state.itemsPerPage);
-            elements.pagination.info.textContent = `Página ${state.currentPage} de ${totalPages}`;
+            const startRecord = ((state.currentPage - 1) * state.itemsPerPage) + 1;
+            const endRecord = Math.min(state.currentPage * state.itemsPerPage, state.totalItems);
+            
+            elements.pagination.info.textContent = `Exibindo ${startRecord}-${endRecord} de ${state.totalItems} fornecedores (Página ${state.currentPage} de ${totalPages})`;
             elements.pagination.prevBtn.disabled = state.currentPage === 1;
             elements.pagination.nextBtn.disabled = state.currentPage === totalPages;
         };
@@ -292,16 +311,60 @@
 
         const loadItems = async () => {
             try {
-                const from = (state.currentPage - 1) * state.itemsPerPage;
-                const { data, error, count } = await supabaseClient
-                    .from('fornecedores').select('*', { count: 'exact' })
-                    .eq('id_empresa', window.currentCompanyId).order('razao_social', { ascending: true }).range(from, from + state.itemsPerPage - 1);
+                console.log('🔄 Carregando fornecedores...');
+                console.log('📄 Página atual:', state.currentPage);
+                console.log('🔍 Termo de busca:', state.searchTerm);
+                
+                let query = supabaseClient
+                    .from('fornecedores')
+                    .select('*', { count: 'exact' })
+                    .eq('id_empresa', window.currentCompanyId);
+
+                // Aplicar filtro de busca se houver termo de pesquisa
+                if (state.searchTerm) {
+                    query = query.or(`razao_social.ilike.%${state.searchTerm}%,telefone_principal.ilike.%${state.searchTerm}%`);
+                    console.log('🔍 Aplicando filtro de busca em TODA a tabela');
+                } else {
+                    console.log('📊 Carregando sem filtro - aplicando paginação');
+                }
+
+                // Aplicar paginação apenas quando NÃO há busca
+                if (!state.searchTerm) {
+                    const from = (state.currentPage - 1) * state.itemsPerPage;
+                    const to = from + state.itemsPerPage - 1;
+                    query = query.range(from, to);
+                }
+
+                const { data, error, count } = await query
+                    .order('razao_social', { ascending: true });
+                    
                 if (error) throw error;
-                state.fornecedores = data || [];
-                state.totalItems = count || 0;
+
+                // Se há busca, aplicar paginação nos resultados filtrados
+                if (state.searchTerm) {
+                    state.totalItems = count || 0;
+                    state.totalPages = Math.ceil(state.totalItems / state.itemsPerPage);
+                    
+                    // Aplicar paginação manual nos resultados filtrados
+                    const from = (state.currentPage - 1) * state.itemsPerPage;
+                    const to = from + state.itemsPerPage;
+                    state.fornecedores = (data || []).slice(from, to);
+                    
+                    console.log('🔍 Paginação manual aplicada - exibindo', state.fornecedores.length, 'de', count, 'resultados filtrados');
+                } else {
+                    state.fornecedores = data || [];
+                    state.totalItems = count || 0;
+                    state.totalPages = Math.ceil(state.totalItems / state.itemsPerPage);
+                }
+                
+                console.log(`✅ Carregados ${state.fornecedores.length} fornecedores de ${state.totalItems} total`);
+                
                 renderList();
                 renderPagination();
-            } catch (error) { showNotification('Erro ao carregar fornecedores.', 'error'); }
+            } catch (error) {
+                console.error('❌ Erro ao carregar fornecedores:', error);
+                showNotification('Erro ao carregar fornecedores.', 'error');
+            }
         };
 
         const handleFormSubmit = async (e) => {
@@ -382,6 +445,15 @@
             await loadItems();
         };
 
+        const handleSearch = () => {
+            clearTimeout(window.searchTimeout);
+            window.searchTimeout = setTimeout(() => {
+                state.searchTerm = elements.searchInput.value.trim();
+                state.currentPage = 1; // Reset para primeira página
+                loadItems();
+            }, 300); // Debounce de 300ms
+        };
+
         const init = () => {
             setupTabs();
             elements.form.addEventListener('submit', handleFormSubmit);
@@ -389,6 +461,7 @@
             elements.listContainer.addEventListener('click', handleListClick);
             elements.pagination.prevBtn.addEventListener('click', () => handlePagination('prev'));
             elements.pagination.nextBtn.addEventListener('click', () => handlePagination('next'));
+            elements.searchInput.addEventListener('input', handleSearch);
             loadItems();
         };
         

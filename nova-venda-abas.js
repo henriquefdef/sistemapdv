@@ -1,20 +1,18 @@
-// nova-venda-categorias.js - Sistema de Categorias Estilo Apple (CORRIGIDO)
+// nova-venda-categorias.js - Sistema de Categorias (SEM FUNCIONALIDADE DE PIN E SEM MAIS VENDIDOS)
 // ====================================================================
 
 const CATEGORIES_STORAGE_KEY = 'lume-pdv-categories';
 const CATEGORY_PRODUCTS_KEY = 'lume-pdv-category-products';
 const DEFAULT_CATEGORIES = [
-    { id: 'mais-vendidos', name: 'Mais Vendidos', icon: 'fa-fire', type: 'mais-vendidos', active: true },
     { id: 'ultimos-cadastrados', name: 'Últimos', icon: 'fa-clock', type: 'ultimos', active: true }
 ];
 
 let categories = [];
-let currentCategory = 'mais-vendidos';
+let currentCategory = 'ultimos-cadastrados';
 let isLoadingProducts = false;
 let categoryProducts = {};
 let currentManagingCategory = null;
 let lastRecentProducts = []; 
-let lastMostSoldProducts = [];
 
 function initCategoriesSystem() {
     loadCategories();
@@ -106,9 +104,6 @@ async function loadCategoryProductsDisplay() {
         let products = [];
         
         switch (category.type) {
-            case 'mais-vendidos':
-                products = await getMostSoldProducts();
-                break;
             case 'ultimos':
                 products = await getRecentProducts();
                 break;
@@ -164,69 +159,6 @@ async function getManualCategoryProducts(categoryId) {
     }
 }
 
-async function getMostSoldProducts() {
-    try {
-        if (!window.currentCompanyId) return [];
-        
-        const { data: vendas, error } = await supabaseClient
-            .from('vendas')
-            .select('produto_nome, quantidade_unit')
-            .eq('id_empresa', window.currentCompanyId)
-            .eq('status', 'ATIVO')
-            .gte('hora_venda', getDateDaysAgo(90));
-        
-        if (error) throw error;
-        
-        const vendasPorProduto = {};
-        vendas.forEach(venda => {
-            const nome = venda.produto_nome;
-            if (nome) {
-                vendasPorProduto[nome] = (vendasPorProduto[nome] || 0) + (venda.quantidade_unit || 0);
-            }
-        });
-        
-        const produtosMaisVendidos = Object.entries(vendasPorProduto)
-            .sort(([,a], [,b]) => b - a)
-            .slice(0, 20)
-            .map(([nome]) => nome);
-        
-        if (produtosMaisVendidos.length === 0) {
-            return await getRecentProducts();
-        }
-        
-        const { data: produtos, error: produtoError } = await supabaseClient
-            .from('produtos')
-            .select('*')
-            .eq('id_empresa', window.currentCompanyId)
-            .eq('ativo', true)
-            .in('nome', produtosMaisVendidos);
-        
-        if (produtoError) throw produtoError;
-        
-        const produtosOrdenados = produtosMaisVendidos
-            .map(nome => produtos.find(p => p.nome === nome))
-            .filter(Boolean);
-        
-        if (lastMostSoldProducts.length > 0) {
-            const newProductIds = new Set(produtosOrdenados.map(p => p.id));
-            const removedProducts = lastMostSoldProducts.filter(p => !newProductIds.has(p.id));
-            
-            if (removedProducts.length > 0 && typeof removeProductsFromCache === 'function') {
-                const removedIds = removedProducts.map(p => p.id);
-                removeProductsFromCache(removedIds);
-                console.log(`Produtos removidos da lista de mais vendidos: ${removedIds.join(', ')}`);
-            }
-        }
-        
-        lastMostSoldProducts = [...produtosOrdenados];
-        
-        return produtosOrdenados;
-        
-    } catch (error) {
-        return await getRecentProducts();
-    }
-}
-
 async function getRecentProducts() {
     try {
         if (!window.currentCompanyId) return [];
@@ -257,27 +189,6 @@ async function getRecentProducts() {
         lastRecentProducts = [...newProducts];
         
         return newProducts;
-        
-    } catch (error) {
-        return [];
-    }
-}
-
-async function getPinnedProducts() {
-    try {
-        const pinnedIds = getPinnedProductIds();
-        if (pinnedIds.length === 0) return [];
-        if (!window.currentCompanyId) return [];
-        
-        const { data, error } = await supabaseClient
-            .from('produtos')
-            .select('*')
-            .eq('id_empresa', window.currentCompanyId)
-            .eq('ativo', true)
-            .in('id', pinnedIds);
-        
-        if (error) throw error;
-        return data || [];
         
     } catch (error) {
         return [];
@@ -376,19 +287,11 @@ function renderProducts(products) {
         return;
     }
     
-    const pinnedIds = getPinnedProductIds();
-    
     grid.innerHTML = products.map(product => {
-        const isPinned = pinnedIds.includes(product.id);
         const imageUrl = getImageUrl(product);
         
         return `
             <div class="product-card" data-product-id="${product.id}">
-                <div class="product-actions">
-                    <button class="pin-btn ${isPinned ? 'pinned' : ''}" title="Fixar produto">
-                        <i class="fa-solid fa-thumbtack"></i>
-                    </button>
-                </div>
                 <img src="${imageUrl}" 
                      alt="${product.nome}" 
                      class="product-card-img"
@@ -401,11 +304,10 @@ function renderProducts(products) {
         `;
     }).join('');
     
-    // ======= CORREÇÃO: Atualizar variável global =======
+    // Atualizar variável global
     if (typeof window !== 'undefined') {
         window.renderedProducts = products;
     }
-    // Também atualizar a variável local para compatibilidade
     if (typeof renderedProducts !== 'undefined') {
         renderedProducts = products;
     }
@@ -438,14 +340,14 @@ function showErrorState() {
 }
 
 function bindCategoryEvents() {
-    // ======= CORREÇÃO: Usar delegação de eventos para categorias =======
+    // Event listener para categorias usando delegação
     const tabsContainer = document.getElementById('category-tabs');
     if (tabsContainer) {
-        // Remover listeners antigos clonando o elemento
+        // Remover listeners antigos
         const newTabsContainer = tabsContainer.cloneNode(true);
         tabsContainer.parentNode.replaceChild(newTabsContainer, tabsContainer);
         
-        // Adicionar um único listener usando delegação
+        // Adicionar listener usando delegação
         newTabsContainer.addEventListener('click', function(e) {
             const tab = e.target.closest('.category-tab');
             if (tab) {
@@ -645,7 +547,6 @@ function removeProductFromCategory(productId) {
             categoryProducts[currentManagingCategory].filter(id => id !== productId);
         saveCategoryProducts();
         
-        // Limpar cache da imagem se a função estiver disponível
         if (typeof removeProductFromCache === 'function') {
             removeProductFromCache(productId);
         }
@@ -716,7 +617,6 @@ function isDefaultCategory(categoryId) {
 function getCategoryTypeLabel(type) {
     const labels = {
         'categoria': 'Por Categoria',
-        'mais-vendidos': 'Mais Vendidos',
         'ultimos': 'Últimos Cadastrados',
         'promocao': 'Em Promoção',
         'estoque-baixo': 'Estoque Baixo'
@@ -945,7 +845,7 @@ function deleteCategory(categoryId) {
     renderCategoriesList();
     
     if (categoryId === currentCategory) {
-        currentCategory = categories[0]?.id || 'mais-vendidos';
+        currentCategory = categories[0]?.id || 'ultimos-cadastrados';
         renderCategoryTabs();
         loadCategoryProductsDisplay();
     }
@@ -953,19 +853,14 @@ function deleteCategory(categoryId) {
     showNotification(`Categoria "${category.name}" excluída com sucesso!`, 'info');
 }
 
-// ======= CORREÇÃO: Nova função de integração sem conflitos =======
+// Integração com sistema principal SEM funcionalidade de pin
 function integrateCategoriesSystem() {
-    // Substituir função de busca de produtos recentes sem conflitos
     if (typeof window.fetchRecentProducts === 'function') {
         window.fetchRecentProductsOriginal = window.fetchRecentProducts;
         window.fetchRecentProducts = loadCategoryProductsDisplay;
     }
     
-    // ======= REMOVER EVENT LISTENER ANTIGO QUE ESTAVA CAUSANDO DUPLICAÇÃO =======
-    // Este bloco estava sendo executado junto com o do nova-venda-ui.js
-    // causando a duplicação dos cliques
-    
-    console.log('✅ Sistema de categorias integrado sem conflitos de eventos');
+    console.log('Sistema de categorias integrado (sem funcionalidade de pin e sem mais vendidos)');
 }
 
 // Inicialização

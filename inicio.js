@@ -145,42 +145,59 @@ async function loadDashboardData() {
     }
 }
 
-// Busca vendas de hoje
+// Busca vendas de hoje - VERSÃO SIMPLIFICADA
 async function fetchTodaySales(supabaseClient, companyId) {
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    console.log('Buscando vendas para empresa:', companyId);
 
+    // Buscar TODAS as vendas primeiro para debug
     const { data, error } = await supabaseClient
         .from('vendas')
-        .select('*')
+        .select('id_venda, total_venda, hora_venda, status')
         .eq('id_empresa', companyId)
-        .gte('hora_venda', todayStr)
-        .lte('hora_venda', todayStr + 'T23:59:59')
-        .eq('status', 'ATIVO');
+        .eq('status', 'ATIVO')
+        .order('hora_venda', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+        console.error('Erro ao buscar vendas:', error);
+        throw error;
+    }
 
-    const todayVendas = data || [];
+    console.log('TODAS as vendas encontradas:', data?.length || 0);
+    console.log('Primeiras 5 vendas:', data?.slice(0, 5));
+
+    // Filtrar manualmente por data de hoje (data atual)
+    const hoje = new Date().toLocaleDateString('pt-BR');
+    console.log('Buscando vendas para a data de hoje:', hoje);
+    const vendasHoje = data?.filter(venda => {
+        if (!venda.hora_venda) return false;
+        
+        // Extrair data da hora_venda (independente do formato)
+        const dataVenda = new Date(venda.hora_venda);
+        const dataVendaStr = dataVenda.toLocaleDateString('pt-BR');
+        
+        console.log(`Venda ${venda.id_venda}: ${dataVendaStr} (${venda.hora_venda})`);
+        return dataVendaStr === hoje;
+    }) || [];
+
+    console.log('Vendas de hoje filtradas:', vendasHoje.length);
     
-    // Calcular estatísticas do dia - mesma lógica do relatorio-vendas-data.js
-    const vendasUnicas = {};
-    todayVendas.forEach(venda => {
-        if (!vendasUnicas[venda.id_venda]) {
-            vendasUnicas[venda.id_venda] = {
-                total: parseFloat(venda.total_venda) || 0,
-                produtos: 0
-            };
+    // Agrupar por id_venda único
+    const vendasUnicas = new Set();
+    let totalValue = 0;
+    
+    vendasHoje.forEach(venda => {
+        if (!vendasUnicas.has(venda.id_venda)) {
+            vendasUnicas.add(venda.id_venda);
+            totalValue += parseFloat(venda.total_venda) || 0;
+            console.log(`Venda única ${venda.id_venda}: R$ ${venda.total_venda}`);
         }
     });
-
-    todayVendas.forEach(venda => {
-        if (vendasUnicas[venda.id_venda]) {
-            vendasUnicas[venda.id_venda].produtos += parseInt(venda.quantidade_unit) || 0;
-        }
-    });
-
-    const totalValue = Object.values(vendasUnicas).reduce((sum, v) => sum + v.total, 0);
-    const count = Object.keys(vendasUnicas).length;
+    
+    const count = vendasUnicas.size;
+    
+    console.log('RESULTADO FINAL:');
+    console.log('- Quantidade de vendas:', count);
+    console.log('- Valor total:', totalValue.toFixed(2));
 
     return { totalValue, count };
 }

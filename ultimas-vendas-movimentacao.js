@@ -390,12 +390,12 @@ function injectMovementStyles() {
 }
 
 /**
- * Mostra o modal de movimentação completa de um produto pelo SKU
+ * Mostra o modal de movimentação de um produto pelo SKU (compatível com lista-produtos)
  * @param {string} sku - Código SKU do produto
  * @param {string} productName - Nome do produto (opcional)
  */
 async function showMovementModal(sku, productName = null) {
-    console.log('📦 Mostrando histórico completo de movimentação para SKU:', sku);
+    console.log('📦 Mostrando histórico de movimentação para SKU:', sku);
     
     // Validar SKU antes de prosseguir
     if (!sku || sku === 'undefined' || sku === 'N/A' || sku.trim() === '') {
@@ -404,55 +404,97 @@ async function showMovementModal(sku, productName = null) {
         return;
     }
     
-    const modal = document.getElementById('movement-modal');
-    const content = document.getElementById('movement-content');
-    
-    if (!modal || !content) {
-        console.error('❌ Modal de movimentação não encontrado no DOM');
-        alert('Erro: Modal de movimentação não encontrado.');
-        return;
-    }
-    
-    // Mostrar loading
-    content.innerHTML = `
-        <div class="loading-state">
-            <i class="fas fa-spinner fa-spin"></i>
-            <p>Carregando histórico completo de movimentação para SKU: ${sku}...</p>
-        </div>
-    `;
-    
-    modal.classList.add('show');
-    
     try {
-        // Buscar dados completos do produto e suas movimentações
-        const productData = await fetchCompleteProductMovements(sku);
-        
-        if (!productData || productData.movements.length === 0) {
-            content.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-box-open"></i>
-                    <h3>Nenhuma movimentação encontrada</h3>
-                    <p>Não foi encontrado histórico de movimentação para o SKU: <strong>${sku}</strong></p>
-                    <small>Verifique se o produto foi cadastrado ou se houve vendas registradas.</small>
-                </div>
-            `;
+        // Primeiro buscar o produto pelo SKU
+        const { data: productData, error: productError } = await supabaseClient
+            .from('produtos')
+            .select('id, nome, codigo_sku, quantidade_estoque')
+            .eq('codigo_sku', sku)
+            .eq('id_empresa', window.currentCompanyId)
+            .single();
+            
+        if (productError || !productData) {
+            alert('Produto não encontrado para o SKU: ' + sku);
             return;
         }
         
-        // Renderizar timeline completa
-        const timelineHtml = renderMovementTimeline(productData, sku);
-        content.innerHTML = timelineHtml;
+        // Buscar movimentações usando a mesma lógica do lista-produtos
+        const { data, error } = await supabaseClient
+            .from('estoque_movimentacoes')
+            .select('*')
+            .eq('id_empresa', window.currentCompanyId)
+            .eq('produto_id', productData.id)
+            .order('created_at', { ascending: true }); // Ordem cronológica para calcular saldo
+            
+        if (error) throw error;
         
-    } catch (error) {
-        console.error('❌ Erro ao buscar movimentação completa:', error);
-        content.innerHTML = `
-            <div class="error-state">
-                <i class="fas fa-exclamation-triangle"></i>
-                <h3>Erro ao carregar movimentação</h3>
-                <p>Não foi possível carregar o histórico de movimentação do produto.</p>
-                <small>SKU: ${sku} | Erro: ${error.message}</small>
+        const movimentacoes = data || [];
+        
+        // Calcular saldo progressivo
+        let saldoAtual = 0;
+        movimentacoes.forEach((mov, index) => {
+            if (mov.tipo_movimentacao === 'ENTRADA') {
+                saldoAtual += mov.quantidade;
+            } else if (mov.tipo_movimentacao === 'SAIDA') {
+                saldoAtual -= mov.quantidade;
+            }
+            mov.saldo_calculado = saldoAtual;
+            mov.numero_movimentacao = index + 1; // Adicionar numeração sequencial
+        });
+        
+        // Inverter ordem para mostrar mais recentes primeiro
+        movimentacoes.reverse();
+        
+        const modalContent = `
+            <div class="movimentacoes-header">
+                <h4>${productData.nome}</h4>
+                <p><strong>SKU:</strong> ${productData.codigo_sku || 'N/A'}</p>
+                <p><strong>Saldo Atual:</strong> ${productData.quantidade_estoque || 0} unidades</p>
+            </div>
+            <div class="movimentacoes-timeline">
+                ${movimentacoes.length === 0 ? 
+                    '<p class="no-movements">Nenhuma movimentação encontrada para este produto.</p>' :
+                    movimentacoes.map((mov, index) => `
+                        <div class="timeline-item">
+                            <div class="timeline-date">
+                                <span class="movement-number">#${movimentacoes.length - index}</span>
+                                ${formatDateMovement(mov.created_at)}
+                                <span class="timeline-time">${formatTimeMovement(mov.created_at)}</span>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="movement-type ${mov.tipo_movimentacao.toLowerCase()}">
+                                    <i class="fas ${
+                                        mov.tipo_movimentacao === 'ENTRADA' ? 'fa-arrow-down' :
+                                        mov.tipo_movimentacao === 'SAIDA' ? 'fa-arrow-up' : 'fa-edit'
+                                    }"></i>
+                                    ${mov.tipo_movimentacao}
+                                </div>
+                                <div class="movement-details">
+                                    <p><strong>Qtd:</strong> ${mov.quantidade > 0 ? '+' : ''}${mov.quantidade} ${mov.observacoes ? `| ${mov.observacoes}` : ''} ${mov.documento_referencia ? `| Doc: ${mov.documento_referencia}` : ''}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')
+                }
             </div>
         `;
+        
+        // Usar a mesma função createModal do lista-produtos
+        if (typeof createModal === 'function') {
+            createModal('movimentacoes-modal', 'Movimentações do Produto', modalContent);
+        } else {
+            // Fallback para o modal existente
+            const modal = document.getElementById('movement-modal');
+            const content = document.getElementById('movement-content');
+            if (modal && content) {
+                content.innerHTML = modalContent;
+                modal.classList.add('show');
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro ao buscar movimentações:', error);
+        alert('Erro ao carregar movimentações do produto.');
     }
 }
 
@@ -567,13 +609,21 @@ async function fetchCompleteProductMovements(sku) {
         // 5. Calcular saldo progressivo
         let saldoAtual = 0;
         movements.forEach((movement, index) => {
+            // Garantir que quantidade seja um número
+            const quantidade = parseInt(movement.quantidade) || 0;
+            
             if (movement.tipo === 'entrada') {
-                saldoAtual += movement.quantidade;
+                saldoAtual += quantidade;
             } else if (movement.tipo === 'saida') {
-                saldoAtual -= movement.quantidade;
+                saldoAtual -= quantidade;
             }
             movement.saldoApos = saldoAtual;
             movement.numeroSequencial = index + 1;
+            
+            // Garantir que todos os campos sejam strings ou números válidos
+            movement.descricao = String(movement.descricao || 'Movimentação');
+            movement.cliente = movement.cliente ? String(movement.cliente) : null;
+            movement.detalhes = movement.detalhes ? String(movement.detalhes) : null;
         });
         
         console.log(`📊 Timeline completa: ${movements.length} movimentações`);
@@ -638,7 +688,7 @@ function renderMovementTimeline(productData, sku) {
                             ${movement.tipo === 'entrada' ? '+' : '-'}${movement.quantidade} unidades
                         </span>
                         <span class="movement-balance">
-                            Saldo após: <strong>${movement.saldoApos}</strong>
+                            Saldo após: <strong>${movement.saldoApos || 0}</strong>
                         </span>
                     </div>
                     ${movement.cliente ? `<div class="movement-client">${movement.cliente}</div>` : ''}
@@ -678,6 +728,17 @@ function formatDateMovement(dateString) {
         console.error('❌ Erro ao formatar data:', dateString, error);
         return 'Data inválida';
     }
+}
+
+/**
+ * Formatar hora para exibição
+ * @param {string} dateString - String da data
+ * @returns {string} Hora formatada
+ */
+function formatTimeMovement(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
 /**

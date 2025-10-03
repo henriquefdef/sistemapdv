@@ -14,6 +14,8 @@
     <link href="header.css" rel="stylesheet">
     <!-- Cashback CSS -->
     <link href="cashback.css" rel="stylesheet">
+    <!-- Modal WhatsApp CSS -->
+    <link href="whatsapp-modal.css" rel="stylesheet">
 </head>
 <body>
     <div id="header-container"></div>
@@ -231,82 +233,11 @@
         </div>
     </div>
 
-    <!-- Modal de Lembrete WhatsApp -->
-    <div id="lembrete-modal" class="modal-overlay">
-        <div class="modal-content modal-small">
-            <div class="modal-header">
-                <h3 class="modal-title">Lembrete de Cashback</h3>
-                <button class="modal-close" id="lembrete-modal-close">&times;</button>
-            </div>
-            
-            <div class="modal-body">
-                <div class="lembrete-tipo">
-                    <h4>Tipo de Lembrete</h4>
-                    <div class="tipo-opcoes">
-                        <label class="tipo-opcao">
-                            <input type="radio" name="tipo-lembrete" value="individual" checked>
-                            <span class="radio-custom"></span>
-                            <div class="opcao-info">
-                                <div class="opcao-titulo">Individual</div>
-                                <div class="opcao-desc">Enviar para cliente específico</div>
-                            </div>
-                        </label>
-                        <label class="tipo-opcao">
-                            <input type="radio" name="tipo-lembrete" value="campanha">
-                            <span class="radio-custom"></span>
-                            <div class="opcao-info">
-                                <div class="opcao-titulo">Campanha</div>
-                                <div class="opcao-desc">Enviar para todos com saldo</div>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group" id="whatsapp-individual">
-                    <label for="lembrete-whatsapp">WhatsApp do Cliente</label>
-                    <input type="tel" id="lembrete-whatsapp" placeholder="(11) 99999-9999">
-                </div>
-
-                <div class="form-group">
-                    <label for="lembrete-template">Template da Mensagem</label>
-                    <select id="lembrete-template">
-                        <option value="padrao">Padrão - Lembrete de cashback</option>
-                        <option value="promocional">Promocional - Volta e ganha desconto</option>
-                        <option value="urgencia">Urgência - Cashback expirando</option>
-                        <option value="personalizado">Personalizado</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="lembrete-mensagem">Mensagem</label>
-                    <textarea id="lembrete-mensagem" rows="4" placeholder="Mensagem será gerada automaticamente..."></textarea>
-                </div>
-
-                <div class="campanha-info" id="campanha-info" style="display: none;">
-                    <div class="info-item">
-                        <span class="info-label">Clientes com saldo:</span>
-                        <span class="info-valor" id="total-clientes-campanha">0</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Valor total:</span>
-                        <span class="info-valor" id="total-valor-campanha">R$ 0,00</span>
-                    </div>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" class="btn-cancel" id="btn-cancel-lembrete">Cancelar</button>
-                    <button type="button" class="btn-send" id="btn-send-lembrete">
-                        <i class="fas fa-paper-plane"></i>
-                        <span id="btn-send-text">Enviar Lembrete</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Scripts -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="header.js"></script>
+    <script src="whatsapp-supa.js"></script>
+    <script src="whatsapp-modal-unified.js"></script>
     <script src="cashback.js"></script>
 </body>
 </html>

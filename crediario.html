@@ -9,6 +9,8 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="header.css"> 
     <link rel="stylesheet" href="crediario.css">
+    <!-- Modal WhatsApp CSS -->
+    <link href="whatsapp-modal.css" rel="stylesheet">
 </head>
 <body>
 
@@ -23,17 +25,9 @@
                     <span class="subtitle">Controle profissional de recebimentos parcelados</span>
                 </div>
                 <div class="header-actions">
-                    <button id="refresh-btn" class="action-btn refresh">
-                        <i class="fas fa-sync-alt"></i>
-                        Atualizar
-                    </button>
                     <button id="export-btn" class="action-btn export">
                         <i class="fas fa-file-export"></i>
                         Exportar
-                    </button>
-                    <button id="bulk-charge-btn" class="action-btn whatsapp">
-                        <i class="fab fa-whatsapp"></i>
-                        Cobrança em Lote
                     </button>
                 </div>
             </div>
@@ -230,49 +224,7 @@
         </div>
     </div>
 
-    <!-- Modal de Cobrança WhatsApp Style Financeiro -->
-    <div id="whatsapp-modal" class="modal-overlay hidden">
-        <div class="modal">
-            <div class="modal-header">
-                <h2>Enviar Cobrança via WhatsApp</h2>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="client-info">
-                    <div class="info-row">
-                        <span>Cliente:</span>
-                        <strong id="whatsapp-cliente"></strong>
-                    </div>
-                    <div class="info-row">
-                        <span>Telefone:</span>
-                        <strong id="whatsapp-telefone"></strong>
-                    </div>
-                </div>
 
-                <div class="form-group">
-                    <label class="form-label">Modelo de Mensagem</label>
-                    <select id="whatsapp-template" class="form-input">
-                        <option value="profissional">Profissional</option>
-                        <option value="cordial">Cordial</option>
-                        <option value="urgente">Urgente</option>
-                        <option value="personalizada">Personalizada</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Mensagem</label>
-                    <textarea id="whatsapp-mensagem" class="form-input" rows="10" placeholder="A mensagem será gerada automaticamente..."></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="cancel-whatsapp" class="modal-btn cancel">Cancelar</button>
-                <button id="send-whatsapp" class="modal-btn success">
-                    <i class="fab fa-whatsapp"></i>
-                    Enviar WhatsApp
-                </button>
-            </div>
-        </div>
-    </div>
 
     <!-- Modal de Histórico Style Financeiro -->
     <div id="history-modal" class="modal-overlay hidden">
@@ -297,7 +249,6 @@
                     </div>
                 </div>
                 <div id="history-content" class="history-timeline">
-                    <!-- Conteúdo será carregado dinamicamente -->
                 </div>
             </div>
             <div class="modal-footer">
@@ -307,6 +258,8 @@
     </div>
 
     <script src="header.js"></script>
+    <script src="whatsapp-supa.js"></script>
+    <script src="whatsapp-modal-unified.js"></script>
     <script src="crediario.js"></script>
     <script src="crediario-modal.js"></script>
 

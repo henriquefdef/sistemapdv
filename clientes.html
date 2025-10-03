@@ -272,6 +272,12 @@
 
         <div id="clientes-cadastrados" class="tab-pane">
             <h3 class="tab-title">Clientes Cadastrados</h3>
+            <div class="search-container" style="margin-bottom: 1.5rem;">
+                <div class="input-with-icon" style="max-width: 400px;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-clients" class="input-field" placeholder="Buscar por nome ou telefone..." style="padding-left: 2.75rem;">
+                </div>
+            </div>
             <div id="clients-list" class="clients-list"></div>
             <div class="pagination-controls hidden" id="pagination-controls"><span class="pagination-info" id="pagination-info"></span><div class="pagination-buttons"><button id="prev-page"><i class="fas fa-arrow-left"></i> Anterior</button><button id="next-page">Próxima <i class="fas fa-arrow-right"></i></button></div></div>
             <div class="empty-state hidden" id="empty-state"><i class="fas fa-users"></i><h3>Nenhum cliente cadastrado</h3><p>Vá para a aba "Novo Cliente" para adicionar o seu primeiro.</p></div>
@@ -294,7 +300,7 @@
         const supabaseClient = supabase.createClient('https://gnehkswoqlpchtlgyjyj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduZWhrc3dvcWxwY2h0bGd5anlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4OTY3NjYsImV4cCI6MjA2OTQ3Mjc2Nn0.8giA1bDvCzgvlcW_pkimGO9qHRF2I0QfhG6nx9U_tdY');
         const formFieldIds = ['nome', 'telefone', 'email', 'cpf_cnpj', 'data_nascimento', 'cep', 'logradouro', 'numero', 'bairro', 'cidade', 'estado', 'observacoes'];
         
-        let state = { clients: [], editingClientId: null, isLoading: false, currentPage: 1, clientsPerPage: 20, totalClients: 0 };
+        let state = { clients: [], editingClientId: null, isLoading: false, currentPage: 1, clientsPerPage: 10, totalClients: 0, searchTerm: '' };
         const elements = {
             form: document.getElementById('client-form'),
             saveBtn: document.querySelector('.btn-save'),
@@ -303,6 +309,7 @@
             clientsList: document.getElementById('clients-list'),
             emptyState: document.getElementById('empty-state'),
             tabNav: document.querySelector('.tab-nav'),
+            searchInput: document.getElementById('search-clients'),
             pagination: { controls: document.getElementById('pagination-controls'), info: document.getElementById('pagination-info'), prevBtn: document.getElementById('prev-page'), nextBtn: document.getElementById('next-page') }
         };
         
@@ -311,9 +318,21 @@
             const hasClients = state.totalClients > 0;
             elements.pagination.controls.classList.toggle('hidden', !hasClients);
             elements.emptyState.classList.toggle('hidden', hasClients);
-            if (!hasClients) return;
+            
+            // Atualizar mensagem do estado vazio baseado na busca
+            if (!hasClients) {
+                const emptyStateContent = state.searchTerm 
+                    ? '<i class="fas fa-search"></i><h3>Nenhum cliente encontrado</h3><p>Tente buscar com outros termos ou limpe o campo de busca.</p>'
+                    : '<i class="fas fa-users"></i><h3>Nenhum cliente cadastrado</h3><p>Vá para a aba "Novo Cliente" para adicionar o seu primeiro.</p>';
+                elements.emptyState.innerHTML = emptyStateContent;
+                return;
+            }
+            
             const totalPages = Math.ceil(state.totalClients / state.clientsPerPage);
-            elements.pagination.info.textContent = `Página ${state.currentPage} de ${totalPages}`;
+            const startRecord = ((state.currentPage - 1) * state.clientsPerPage) + 1;
+            const endRecord = Math.min(state.currentPage * state.clientsPerPage, state.totalClients);
+            
+            elements.pagination.info.textContent = `Exibindo ${startRecord}-${endRecord} de ${state.totalClients} clientes (Página ${state.currentPage} de ${totalPages})`;
             elements.pagination.prevBtn.disabled = state.currentPage === 1;
             elements.pagination.nextBtn.disabled = state.currentPage === totalPages;
         };
@@ -373,13 +392,52 @@
 
         const loadClients = async () => {
             try {
-                const from = (state.currentPage - 1) * state.clientsPerPage;
-                const { data, error, count } = await supabaseClient
-                    .from('clientes').select('*', { count: 'exact' })
-                    .eq('id_empresa', window.currentCompanyId).order('nome', { ascending: true }).range(from, from + state.clientsPerPage - 1);
+                console.log(`🔍 Carregando página ${state.currentPage} (${state.clientsPerPage} por página)${state.searchTerm ? ` - Busca: "${state.searchTerm}"` : ''}`);
+                
+                let query = supabaseClient
+                    .from('clientes')
+                    .select('*', { count: 'exact' })
+                    .eq('id_empresa', window.currentCompanyId);
+                
+                // Aplicar filtro de busca se houver termo de pesquisa
+                if (state.searchTerm) {
+                    query = query.or(`nome.ilike.%${state.searchTerm}%,telefone.ilike.%${state.searchTerm}%`);
+                    console.log('🔍 Aplicando filtro de busca em TODA a tabela');
+                } else {
+                    console.log('📊 Carregando sem filtro - aplicando paginação');
+                }
+                
+                // Aplicar paginação apenas quando NÃO há busca
+                if (!state.searchTerm) {
+                    const from = (state.currentPage - 1) * state.clientsPerPage;
+                    const to = from + state.clientsPerPage - 1;
+                    query = query.range(from, to);
+                }
+                
+                const { data, error, count } = await query
+                    .order('nome', { ascending: true });
+                    
                 if (error) throw error;
-                state.clients = data || [];
-                state.totalClients = count || 0;
+                
+                // Se há busca, aplicar paginação nos resultados filtrados
+                if (state.searchTerm) {
+                    state.totalClients = count || 0;
+                    state.totalPages = Math.ceil(state.totalClients / state.clientsPerPage);
+                    
+                    // Aplicar paginação manual nos resultados filtrados
+                    const from = (state.currentPage - 1) * state.clientsPerPage;
+                    const to = from + state.clientsPerPage;
+                    state.clients = (data || []).slice(from, to);
+                    
+                    console.log('🔍 Paginação manual aplicada - exibindo', state.clients.length, 'de', count, 'resultados filtrados');
+                } else {
+                    state.clients = data || [];
+                    state.totalClients = count || 0;
+                    state.totalPages = Math.ceil(state.totalClients / state.clientsPerPage);
+                }
+                
+                console.log(`✅ Carregados ${state.clients.length} clientes de ${state.totalClients} total`);
+                
                 renderClients();
                 renderPagination();
             } catch (error) {
@@ -479,6 +537,12 @@
             await loadClients();
         };
 
+        const handleSearch = async () => {
+            state.searchTerm = elements.searchInput.value.trim();
+            state.currentPage = 1; // Reset para primeira página ao buscar
+            await loadClients();
+        };
+
         const init = () => {
             setupTabs();
             elements.form.addEventListener('submit', handleFormSubmit);
@@ -486,6 +550,13 @@
             elements.clientsList.addEventListener('click', handleListClick);
             elements.pagination.prevBtn.addEventListener('click', () => handlePagination('prev'));
             elements.pagination.nextBtn.addEventListener('click', () => handlePagination('next'));
+            
+            // Event listener para busca em tempo real
+            elements.searchInput.addEventListener('input', () => {
+                clearTimeout(elements.searchInput.searchTimeout);
+                elements.searchInput.searchTimeout = setTimeout(handleSearch, 300);
+            });
+            
             loadClients();
             console.log('✅ Script de clientes inicializado com sucesso!');
         };

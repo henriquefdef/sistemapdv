@@ -7,11 +7,13 @@ class PaymentModalConfig {
         this.paymentData = {};
         this.cardMachines = []; 
         this.currentMachine = null; 
+        this.customerListenerSetup = false;
         
         // CORREÇÃO: Carregar configurações do localStorage
         this.paymentConfig = this.loadPaymentConfig();
         
         this.setupModal();
+        this.setupGlobalCustomerListener();
         this.reset(); 
     }
 
@@ -155,6 +157,14 @@ class PaymentModalConfig {
                                             <span class="currency-symbol">R$</span>
                                             <input type="number" id="cashback-use-amount" placeholder="0,00" step="0.01">
                                         </div>
+                                        <div class="cashback-actions" style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+                                            <button type="button" id="auto-fill-cashback" class="btn-secondary" style="flex: 1; padding: 0.4rem; font-size: 0.85rem; border-radius: 4px; background: var(--primary-color); color: white; border: none; cursor: pointer;">
+                                                💰 Usar Cashback
+                                            </button>
+                                            <button type="button" id="clear-cashback" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 4px; background: #6b7280; color: white; border: none; cursor: pointer;">
+                                                🗑️ Limpar
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div id="multiplo-options" class="form-section hidden">
@@ -276,20 +286,27 @@ class PaymentModalConfig {
                                     <h4>Cupom</h4>
                                     <div class="form-group coupon-group"><input type="text" id="coupon-code" placeholder="Código do cupom"><button type="button" id="apply-coupon" class="btn-secondary">Aplicar</button></div>
                                 </div>
-                                <div class="form-section compact">
-                                    <h4>Cashback</h4>
-                                    <div class="form-group">
-                                        <div class="input-with-currency"><span class="currency-symbol">R$</span><input type="number" id="cashback-amount" placeholder="0,00" step="0.01" readonly></div>
-                                        <small>Calculado sobre o valor final da compra.</small>
-                                    </div>
-                                    <div class="cashback-info">
-                                        <span>Cashback gerado nesta compra: <strong id="cashback-generated">R$ 0,00</strong></span>
-                                    </div>
-                                </div>
+
                             </div>
 
                             <div id="info-tab-content" class="tab-content">
                                  <div class="form-section"><h4>Vendedor</h4><div class="form-group"><select id="seller-select"><option value="">Carregando vendedores...</option></select></div></div>
+                                 <div class="form-section">
+                                    <h4>Cliente</h4>
+                                    <div class="form-group">
+                                        <div class="customer-dropdown-container">
+                            <label for="customer-search-modal">Cliente:</label>
+                            <div class="customer-search-wrapper">
+                                <input type="text" id="customer-search-modal" placeholder="Digite para buscar cliente..." autocomplete="off">
+                                <div id="customer-dropdown-modal" class="customer-dropdown" style="display: none;">
+                                    <div class="customer-option" data-customer-id="">
+                                        <span>Nenhum cliente</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                                    </div>
+                                </div>
                                      <div class="form-section">
                                 <h4>Entregador</h4>
                                 <div class="form-group">
@@ -335,6 +352,17 @@ class PaymentModalConfig {
                                             <span class="percentage-symbol">%</span>
                                         </div>
                                     </div>
+                                    <div class="form-group">
+                                        <label for="cashback-amount">Valor do Cashback</label>
+                                        <div class="input-with-currency">
+                                            <span class="currency-symbol">R$</span>
+                                            <input type="number" id="cashback-amount" placeholder="0,00" step="0.01" readonly>
+                                        </div>
+                                        <small>Calculado automaticamente sobre o valor final da compra.</small>
+                                    </div>
+                                    <div class="cashback-info">
+                                        <span>Cashback gerado nesta compra: <strong id="cashback-generated">R$ 0,00</strong></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -369,6 +397,12 @@ class PaymentModalConfig {
     }
 
     close() {
+        // Restaurar z-index da barra de pesquisa
+        const searchAndActions = document.querySelector('.search-and-actions');
+        const searchBar = document.querySelector('.search-bar');
+        if (searchAndActions) searchAndActions.style.zIndex = '9999';
+        if (searchBar) searchBar.style.zIndex = '9999';
+        
         document.getElementById('advanced-payment-modal').classList.add('hidden');
     }
 
@@ -421,6 +455,17 @@ class PaymentModalConfig {
                 toggleBtn.dataset.type = 'currency';
                 toggleBtn.innerHTML = '<span style="font-weight: bold; font-size: 1.1em;">R$</span>/<span style="font-size: 0.9em; opacity: 0.7;">%</span>';
             }
+        
+        // Reset receipt method buttons to default ("não enviar")
+        document.querySelectorAll('.receipt-option').forEach(opt => {
+            opt.classList.toggle('active', opt.dataset.receipt === 'none');
+        });
+        
+        // Hide WhatsApp input
+        const whatsappInput = document.getElementById('whatsapp-input');
+        if (whatsappInput) {
+            whatsappInput.classList.add('hidden');
+        }
         
         const defaultDate = new Date();
         defaultDate.setDate(defaultDate.getDate() + 30);
@@ -481,6 +526,209 @@ class PaymentModalConfig {
     
     logPaymentConfig() {
         // Implementado na parte 2
+    }
+
+    // ===== MÉTODOS PARA SELEÇÃO DE CLIENTE NO MODAL =====
+    
+    setupCustomerModalEvents() {
+        const searchInput = document.getElementById('customer-search-modal');
+        const dropdown = document.getElementById('customer-dropdown-modal');
+        
+        if (searchInput && dropdown) {
+            // Carregar clientes imediatamente
+            this.loadCustomersDropdown();
+            
+            // Mostrar dropdown ao focar no input
+            searchInput.addEventListener('focus', () => {
+                dropdown.style.display = 'block';
+            });
+            
+            // Buscar clientes conforme digita
+            searchInput.addEventListener('input', (e) => {
+                this.filterCustomers(e.target.value);
+            });
+            
+            // Fechar dropdown ao clicar fora
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+    }
+    
+    async loadCustomersDropdown() {
+        console.log('🔍 Carregando clientes do dropdown...');
+        try {
+            const { data: customers, error } = await supabaseClient
+                 .from('clientes')
+                 .select('id, nome, telefone')
+                 .order('nome');
+            
+            if (error) throw error;
+            
+            this.customers = customers || [];
+            console.log('✅ Clientes carregados:', this.customers.length);
+            this.renderCustomersDropdown(this.customers);
+        } catch (error) {
+            console.error('❌ Erro ao carregar clientes:', error);
+            this.customers = [];
+        }
+    }
+    
+    renderCustomersDropdown(customers) {
+        console.log('🎨 Renderizando dropdown com', customers.length, 'clientes');
+        const dropdown = document.getElementById('customer-dropdown-modal');
+        if (!dropdown) {
+            console.error('❌ Elemento dropdown não encontrado!');
+            return;
+        }
+        
+        dropdown.innerHTML = '';
+        
+        // Opção "Nenhum cliente"
+        const noneOption = document.createElement('div');
+        noneOption.className = 'customer-option';
+        noneOption.dataset.customerId = '';
+        noneOption.innerHTML = '<span>Nenhum cliente</span>';
+        noneOption.addEventListener('click', () => this.selectCustomerFromDropdown(null));
+        dropdown.appendChild(noneOption);
+        
+        if (customers.length === 0) {
+            console.log('⚠️ Nenhum cliente para exibir');
+            return;
+        }
+        
+        // Opções de clientes
+        customers.forEach(customer => {
+            const option = document.createElement('div');
+            option.className = 'customer-option';
+            option.dataset.customerId = customer.id;
+            
+            const customerInfo = document.createElement('div');
+            customerInfo.className = 'customer-info';
+            
+            const name = document.createElement('div');
+            name.className = 'customer-name';
+            name.textContent = customer.nome;
+            
+            const phone = document.createElement('div');
+            phone.className = 'customer-phone';
+            phone.textContent = customer.telefone || '';
+            
+            customerInfo.appendChild(name);
+            if (customer.telefone) customerInfo.appendChild(phone);
+            option.appendChild(customerInfo);
+            
+            option.addEventListener('click', () => this.selectCustomerFromDropdown(customer));
+            dropdown.appendChild(option);
+        });
+        console.log('✅ Dropdown renderizado com sucesso');
+    }
+    
+    filterCustomers(searchTerm) {
+        if (!this.customers) return;
+        
+        const filtered = this.customers.filter(customer => 
+            customer.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (customer.telefone && customer.telefone.includes(searchTerm))
+        );
+        
+        this.renderCustomersDropdown(filtered);
+    }
+    
+    selectCustomerFromDropdown(customer) {
+        const searchInput = document.getElementById('customer-search-modal');
+        const dropdown = document.getElementById('customer-dropdown-modal');
+        
+        if (customer) {
+            searchInput.value = customer.nome;
+            // Atualizar ambas as variáveis de estado
+            if (window.saleState) {
+                window.saleState.customer = customer;
+            }
+            if (typeof saleState !== 'undefined') {
+                saleState.customer = customer;
+            }
+        } else {
+            searchInput.value = '';
+            // Limpar ambas as variáveis de estado
+            if (window.saleState) {
+                window.saleState.customer = null;
+            }
+            if (typeof saleState !== 'undefined') {
+                saleState.customer = null;
+            }
+        }
+        
+        dropdown.style.display = 'none';
+        
+        // Atualizar campo do WhatsApp se disponível
+        if (this.populateCustomerPhone) {
+            this.populateCustomerPhone();
+        }
+        
+        // Disparar evento de mudança de cliente
+        document.dispatchEvent(new CustomEvent('customerSelected', { detail: customer }));
+        
+        console.log('Cliente selecionado:', customer);
+        console.log('window.saleState.customer:', window.saleState?.customer);
+        console.log('saleState.customer:', typeof saleState !== 'undefined' ? saleState.customer : 'undefined');
+    }
+    
+    // Método para sincronizar cliente quando o modal é aberto
+    syncCustomerFromMain() {
+        // Sincronizar cliente selecionado do modal principal
+        const searchInput = document.getElementById('customer-search-modal');
+        
+        if (window.saleState && window.saleState.customer && searchInput) {
+            // Cliente já selecionado - campo somente leitura
+            searchInput.value = window.saleState.customer.nome;
+            searchInput.placeholder = `Cliente selecionado: ${window.saleState.customer.nome}`;
+            searchInput.readOnly = true;
+            searchInput.style.backgroundColor = '#f5f5f5';
+            searchInput.style.cursor = 'not-allowed';
+            console.log('Cliente sincronizado no modal (somente leitura):', window.saleState.customer.nome);
+        } else if (searchInput) {
+            // Nenhum cliente selecionado - campo editável
+            searchInput.value = '';
+            searchInput.placeholder = 'Digite o nome do cliente...';
+            searchInput.readOnly = false;
+            searchInput.style.backgroundColor = '';
+            searchInput.style.cursor = '';
+            console.log('Campo de cliente liberado para edição');
+        }
+    }
+    
+    // Configurar listener global para mudanças de cliente (chamado apenas uma vez)
+    setupGlobalCustomerListener() {
+        // Evitar múltiplos listeners
+        if (this.customerListenerSetup) return;
+        this.customerListenerSetup = true;
+        
+        // Escutar mudanças no cliente selecionado
+        document.addEventListener('customerSelected', (e) => {
+            const searchInput = document.getElementById('customer-search-modal');
+            if (searchInput) {
+                if (e.detail && e.detail.nome) {
+                    // Cliente selecionado - tornar somente leitura
+                    searchInput.value = e.detail.nome;
+                    searchInput.placeholder = `Cliente selecionado: ${e.detail.nome}`;
+                    searchInput.readOnly = true;
+                    searchInput.style.backgroundColor = '#f5f5f5';
+                    searchInput.style.cursor = 'not-allowed';
+                    console.log('Modal sincronizado: cliente selecionado -', e.detail.nome);
+                } else {
+                    // Cliente removido - tornar editável
+                    searchInput.value = '';
+                    searchInput.placeholder = 'Digite o nome do cliente...';
+                    searchInput.readOnly = false;
+                    searchInput.style.backgroundColor = '';
+                    searchInput.style.cursor = '';
+                    console.log('Modal sincronizado: cliente removido');
+                }
+            }
+        });
     }
 
     // Métodos vazios para implementação na classe filha

@@ -319,7 +319,7 @@ function updateKPIs() {
     
     // Atualizar KPIs
     document.getElementById('kpi-total-aberto').textContent = formatCurrency(totalAberto);
-    document.getElementById('kpi-total-parcelas').textContent = `${countAberto} parcela${countAberto !== 1 ? 's' : ''} pendente${countAberto !== 1 ? 's' : ''}`;
+    document.getElementById('kpi-total-parcelas').textContent = `${countAberto} parcela${countAberto !== 1 ? 's' : ''} pendente${countAberto !== 1 ? 's' : ''} | ${countVencidas} vencida${countVencidas !== 1 ? 's' : ''}`;
     
     document.getElementById('kpi-vencidas').textContent = formatCurrency(totalVencidas);
     document.getElementById('kpi-vencidas-count').textContent = `${countVencidas} parcela${countVencidas !== 1 ? 's' : ''} em atraso`;
@@ -387,53 +387,115 @@ function clearFilters() {
 }
 
 // ===== EXPORTAÇÃO =====
-function exportData() {
+async function exportData() {
     try {
-        // Preparar dados
+        // Carregar biblioteca XLSX se necessário
+        await loadSheetJSLibrary();
+        
+        // Mostrar loading
+        const loadingModal = document.createElement('div');
+        loadingModal.className = 'modal-overlay';
+        loadingModal.innerHTML = `
+            <div class="modal-content">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Gerando arquivo Excel...</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(loadingModal);
+        loadingModal.classList.add('show');
+        
+        // Preparar dados formatados
         const exportData = filteredData.map(item => ({
             'Cliente': item.cliente?.nome || '',
             'Telefone': item.cliente?.telefone || '',
             'Email': item.cliente?.email || '',
-            'Venda': item.venda_id,
-            'Parcela': item.numero_parcela,
-            'Valor Parcela': item.valor_parcela,
-            'Valor Pago': item.valor_pago || 0,
-            'Saldo Restante': item.saldo_restante,
+            'Venda ID': item.venda_id,
+            'Número Parcela': item.numero_parcela,
+            'Valor Parcela': parseFloat(item.valor_parcela || 0),
+            'Valor Pago': parseFloat(item.valor_pago || 0),
+            'Saldo Restante': parseFloat(item.saldo_restante || 0),
             'Data Vencimento': formatDate(item.data_vencimento),
-            'Data Pagamento': formatDate(item.data_pagamento),
+            'Data Pagamento': item.data_pagamento ? formatDate(item.data_pagamento) : '',
             'Status': getStatusLabel(item.status_calculado),
             'Situação': item.is_overdue ? 'Vencida' : 
                        item.is_due_today ? 'Vence Hoje' : 'No Prazo',
             'Observações': item.observacoes || ''
         }));
         
-        // Converter para CSV
-        const headers = Object.keys(exportData[0]);
-        const csv = [
-            headers.join(','),
-            ...exportData.map(row => 
-                headers.map(header => {
-                    const value = row[header];
-                    return typeof value === 'string' && value.includes(',') 
-                        ? `"${value}"` 
-                        : value;
-                }).join(',')
-            )
-        ].join('\n');
+        // Criar workbook Excel
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
         
-        // Download
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `crediario_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
+        // Definir larguras das colunas
+        const columnWidths = [
+            { wch: 25 }, // Cliente
+            { wch: 15 }, // Telefone
+            { wch: 30 }, // Email
+            { wch: 12 }, // Venda ID
+            { wch: 15 }, // Número Parcela
+            { wch: 15 }, // Valor Parcela
+            { wch: 15 }, // Valor Pago
+            { wch: 15 }, // Saldo Restante
+            { wch: 18 }, // Data Vencimento
+            { wch: 18 }, // Data Pagamento
+            { wch: 12 }, // Status
+            { wch: 15 }, // Situação
+            { wch: 30 }  // Observações
+        ];
+        worksheet['!cols'] = columnWidths;
         
-        showNotification('Dados exportados com sucesso!', 'success');
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Crediário');
+        
+        // Gerar nome do arquivo com data e hora
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+        const filename = `crediario_${dateStr}_${timeStr}.xlsx`;
+        
+        // Fazer download
+        XLSX.writeFile(workbook, filename);
+        
+        // Remover loading
+        document.body.removeChild(loadingModal);
+        
+        showNotification(`Arquivo Excel exportado: ${filename}`, 'success');
         
     } catch (error) {
         console.error('Erro na exportação:', error);
+        
+        // Remover loading se existir
+        const loadingModal = document.querySelector('.modal-overlay');
+        if (loadingModal) {
+            document.body.removeChild(loadingModal);
+        }
+        
         showNotification('Erro ao exportar dados', 'error');
     }
+}
+
+// Função para carregar a biblioteca SheetJS se não estiver carregada
+function loadSheetJSLibrary() {
+    return new Promise((resolve, reject) => {
+        // Verificar se já está carregada
+        if (typeof XLSX !== 'undefined') {
+            resolve();
+            return;
+        }
+        
+        // Carregar biblioteca
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        script.onload = () => {
+            console.log('✅ Biblioteca SheetJS carregada');
+            resolve();
+        };
+        script.onerror = () => {
+            reject(new Error('Erro ao carregar biblioteca SheetJS'));
+        };
+        document.head.appendChild(script);
+    });
 }
 
 // ===== EVENT LISTENERS =====
@@ -442,10 +504,11 @@ function setupEventListeners() {
     document.getElementById('apply-filters').addEventListener('click', applyFilters);
     document.getElementById('clear-filters').addEventListener('click', clearFilters);
     
-    // Ações do header
-    document.getElementById('refresh-btn').addEventListener('click', refreshData);
-    document.getElementById('export-btn').addEventListener('click', exportData);
-    document.getElementById('bulk-charge-btn').addEventListener('click', bulkCharge);
+    // Ações do header - verificar se os elementos existem antes de adicionar eventos
+    const exportBtn = document.getElementById('export-btn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', exportData);
+    }
     
     // Aplicar filtro com Enter
     document.addEventListener('keypress', (e) => {
@@ -511,7 +574,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Exportar funções globais para o arquivo de modais
-window.openPaymentModal = openPaymentModal;
-window.openWhatsAppModal = openWhatsAppModal;
-window.openHistoryModal = openHistoryModal;
+// As funções dos modais são definidas em crediario-modal.js
+// Elas são automaticamente disponibilizadas globalmente naquele arquivo

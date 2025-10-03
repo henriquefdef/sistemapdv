@@ -63,21 +63,50 @@ async function buscarDadosVenda(saleId) {
             nome: item.produto_nome,
             codigo_sku: item.codigo_sku,
             quantity: item.quantidade_unit,
-            preco_venda: item.preco_unit,
+            preco_venda: item.preco_unitario,
             desconto_unit: item.desconto_unit || 0,
-            subtotal: item.preco_unit * item.quantidade_unit
+            subtotal: item.preco_unitario * item.quantidade_unit
         }));
 
         // Dados da venda principal (pegar do primeiro item)
         const venda = vendaData[0];
+        
+        // CORREÇÃO: Buscar a forma de pagamento correta
+        console.log('💳 Forma de pagamento encontrada:', venda.forma_pagamento);
+        
+        // Buscar dados do cliente se disponível
+        let customerData = null;
+        if (venda.cliente_id) {
+            try {
+                const { data: clienteData, error: clienteError } = await supabaseClient
+                    .from('clientes')
+                    .select('*')
+                    .eq('id', venda.cliente_id)
+                    .eq('id_empresa', window.currentCompanyId)
+                    .single();
+                
+                if (!clienteError && clienteData) {
+                    customerData = {
+                        id: clienteData.id,
+                        nome: clienteData.nome,
+                        telefone: clienteData.telefone,
+                        email: clienteData.email,
+                        endereco: clienteData.endereco
+                    };
+                }
+            } catch (error) {
+                console.warn('⚠️ Erro ao buscar dados do cliente:', error);
+            }
+        }
         
         return {
             id_venda: saleId,
             cliente_nome: venda.cliente_nome,
             hora_venda: venda.hora_venda,
             total_venda: venda.total_venda,
-            forma_pagamento: venda.forma_pagamento,
+            forma_pagamento: venda.forma_pagamento || 'Não informado', // CORREÇÃO: usar valor real ou fallback
             vendedor_id: venda.vendedor_id,
+            customer: customerData,
             items: items,
             totals: {
                 subtotal: items.reduce((acc, item) => acc + item.subtotal, 0),
@@ -100,12 +129,31 @@ async function getCompanyDataCupom() {
         const { data, error } = await supabaseClient
             .from('empresas')
             .select('*')
-            .eq('id', window.currentCompanyId)
+            .eq('id_empresa', window.currentCompanyId)
             .single();
 
         if (error) throw error;
 
-        return data || {
+        if (data) {
+            // Montar endereço completo
+            let endereco = '';
+            if (data.rua) endereco += data.rua;
+            if (data.numero) endereco += `, ${data.numero}`;
+            if (data.complemento) endereco += `, ${data.complemento}`;
+            if (data.bairro) endereco += ` - ${data.bairro}`;
+            if (data.cidade) endereco += ` - ${data.cidade}`;
+            if (data.cep) endereco += ` - CEP: ${data.cep}`;
+            
+            return {
+                nome: data.nome_fantasia || data.razao_social || 'Lume Sistemas',
+                endereco: endereco || 'Endereço não cadastrado',
+                telefone: data.telefone_empresa || 'Telefone não cadastrado',
+                cnpj: data.cnpj || 'CNPJ não cadastrado',
+                email: data.email_empresa || 'email@empresa.com'
+            };
+        }
+
+        return {
             nome: 'Lume Sistemas',
             endereco: 'Endereço não cadastrado',
             telefone: 'Telefone não cadastrado',
@@ -136,6 +184,10 @@ function generateComprovanteHTML(saleData, saleId, companyData) {
     const subtotal = saleData.totals?.subtotal || saleData.items.reduce((acc, item) => acc + item.subtotal, 0);
     const totalDesconto = saleData.totals?.totalDiscount || 0;
     const total = saleData.totals?.total || saleData.total_venda;
+    
+    // CORREÇÃO: usar forma de pagamento real da venda
+    const formaPagamento = saleData.forma_pagamento || 'Não informado';
+    console.log('💳 Forma de pagamento no comprovante:', formaPagamento);
     
     // Gerar lista de itens
     const itensHTML = saleData.items.map((item, index) => {
@@ -451,7 +503,7 @@ function generateComprovanteHTML(saleData, saleId, companyData) {
         <div class="payment-info">
             <div class="total-row">
                 <span>PAGAMENTO:</span>
-                <span>${saleData.forma_pagamento || 'Não informado'}</span>
+                <span>${formaPagamento}</span>
             </div>
         </div>
         
@@ -520,6 +572,69 @@ function openPrintWindowCupom(htmlContent) {
 }
 
 /**
+ * Abre o modal unificado de comprovante para últimas vendas
+ * @param {String} saleId - ID da venda
+ * @param {Object} saleData - Dados da venda (opcional)
+ */
+async function openComprovanteUnificadoUltimasVendas(saleId, saleData = null) {
+    try {
+        console.log('🧾 Abrindo modal de comprovante unificado para venda:', saleId);
+        
+        // Verificar se o módulo de comprovante está disponível
+        if (!window.comprovanteModal || !window.openComprovanteModal) {
+            console.log('⏳ Aguardando carregamento do módulo de comprovante...');
+            // Aguardar um pouco para o script carregar
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            if (!window.comprovanteModal || !window.openComprovanteModal) {
+                throw new Error('Módulo de comprovante não disponível');
+            }
+        }
+        
+        // Buscar dados da venda se não fornecidos
+        if (!saleData) {
+            saleData = await buscarDadosVenda(saleId);
+        }
+        
+        // Buscar dados da empresa
+        const companyData = await getCompanyDataCupom();
+        
+        // Estruturar dados de pagamento corretamente para o modal
+        const paymentData = {
+            method: saleData.forma_pagamento || 'Não informado'
+        };
+        
+        // Adicionar paymentData ao saleData
+        const saleDataWithPayment = {
+            ...saleData,
+            payment: paymentData
+        };
+        
+        console.log('💳 Dados de pagamento estruturados:', paymentData);
+        
+        // Usar a função global do módulo de comprovante
+        window.openComprovanteModal({
+            saleData: saleDataWithPayment,
+            saleId: saleId,
+            companyData: companyData,
+            customerData: saleData.customer
+        });
+        
+        return {
+            success: true,
+            message: 'Modal de comprovante aberto com sucesso!'
+        };
+        
+    } catch (error) {
+        console.error('❌ Erro ao abrir modal de comprovante:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+/**
  * Função principal para gerar comprovante de venda única
  */
 window.gerarComprovanteVenda = async function(saleId, saleData = null) {
@@ -537,6 +652,11 @@ window.gerarComprovanteVenda = async function(saleId, saleData = null) {
     
     return result;
 };
+
+/**
+ * Função para abrir modal unificado de comprovante
+ */
+window.openComprovanteUnificadoUltimasVendas = openComprovanteUnificadoUltimasVendas;
 
 // Log de carregamento
 console.log('✅ Sistema de comprovantes de últimas vendas carregado');

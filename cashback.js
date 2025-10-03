@@ -1,4 +1,4 @@
-// ===== SISTEMA DE CASHBACK - JAVASCRIPT COMPLETO =====
+// ===== SISTEMA DE CASHBACK - JAVASCRIPT ATUALIZADO =====
 
 // ===== ESTADO DA APLICAÇÃO =====
 const state = {
@@ -17,17 +17,6 @@ const state = {
         geradoMesAtual: 0,
         totalUtilizado: 0
     }
-};
-
-// ===== TEMPLATES DE MENSAGENS =====
-const messageTemplates = {
-    padrao: (nome, saldo) => `Olá ${nome}! 🎉\n\nVocê tem R$ ${saldo} em cashback disponível na nossa loja! Que tal usar na sua próxima compra?\n\nVenha nos visitar! 😊`,
-    
-    promocional: (nome, saldo) => `🔥 OFERTA ESPECIAL PARA VOCÊ, ${nome}!\n\nUse seus R$ ${saldo} de cashback e GANHE MAIS 10% de desconto em qualquer compra hoje!\n\nPromoção válida até o final do dia! ⏰`,
-    
-    urgencia: (nome, saldo) => `⚠️ ATENÇÃO ${nome}!\n\nSeu cashback de R$ ${saldo} expira em breve! Não perca essa oportunidade.\n\nVenha usar antes que expire! 🏃‍♂️💨`,
-    
-    personalizado: (nome, saldo) => `Olá ${nome}!\n\nVocê tem R$ ${saldo} de cashback disponível.\n\n[Personalize sua mensagem aqui]`
 };
 
 // ===== INICIALIZAÇÃO =====
@@ -61,12 +50,6 @@ function setupEventListeners() {
 
     setupModalEvents();
 
-    document.getElementById('lembrete-template')?.addEventListener('change', updateMessageTemplate);
-    
-    document.querySelectorAll('input[name="tipo-lembrete"]').forEach(radio => {
-        radio.addEventListener('change', handleTipoLembreteChange);
-    });
-
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeAllModals();
@@ -84,16 +67,14 @@ function setupModalEvents() {
     document.getElementById('btn-cancel-comprovante')?.addEventListener('click', () => closeModal('comprovante-modal'));
     document.getElementById('btn-send-comprovante')?.addEventListener('click', enviarComprovante);
 
-    document.getElementById('lembrete-modal-close')?.addEventListener('click', () => closeModal('lembrete-modal'));
-    document.getElementById('btn-cancel-lembrete')?.addEventListener('click', () => closeModal('lembrete-modal'));
-    document.getElementById('btn-send-lembrete')?.addEventListener('click', enviarLembrete);
+    // Remover configuração dos modais de lembrete antigos - agora usa o modal unificado
 }
 
 // ===== NAVEGAÇÃO DE ANO =====
 function changeYear(direction) {
     state.currentYear += direction;
     updateYearDisplay();
-    loadCashbackData();
+    loadChartData();
 }
 
 function updateYearDisplay() {
@@ -148,15 +129,10 @@ async function loadCashbackFromDB() {
         return [];
     }
 
-    const startDate = `${state.currentYear}-01-01`;
-    const endDate = `${state.currentYear}-12-31`;
-
     const { data, error } = await state.supabaseClient
         .from('cashback')
         .select('*')
         .eq('id_empresa', window.currentCompanyId)
-        .gte('created_at', startDate)
-        .lte('created_at', endDate)
         .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -233,25 +209,12 @@ async function carregarDadosCompletos(clientesProcessados) {
 
 // ===== CÁLCULOS E ESTATÍSTICAS =====
 function calcularEstatisticas() {
-    const agora = new Date();
-    const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
-    const fimMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0);
-
     state.estatisticas = {
         totalDisponivel: state.clientes.reduce((acc, c) => acc + c.saldoAtual, 0),
         totalClientes: state.clientes.filter(c => c.saldoAtual > 0).length,
-        geradoMesAtual: 0,
+        geradoMesAtual: state.clientes.reduce((acc, c) => acc + c.totalGerado, 0),
         totalUtilizado: state.clientes.reduce((acc, c) => acc + c.totalUtilizado, 0)
     };
-
-    state.clientes.forEach(cliente => {
-        cliente.operacoes.forEach(op => {
-            const dataOp = new Date(op.created_at);
-            if (dataOp >= inicioMes && dataOp <= fimMes && op.tipo_operacao === 'credito') {
-                state.estatisticas.geradoMesAtual += parseFloat(op.valor || 0);
-            }
-        });
-    });
 }
 
 function updateEstatisticas() {
@@ -319,10 +282,6 @@ function renderClientes() {
     }
 
     container.innerHTML = state.clientesFiltrados.map(cliente => {
-        const ultimaAtividade = cliente.ultimaOperacao ? 
-            new Date(cliente.ultimaOperacao.created_at).toLocaleDateString('pt-BR') : 
-            'Nunca';
-
         return `
             <div class="cliente-card">
                 <div class="cliente-header">
@@ -359,8 +318,8 @@ function renderClientes() {
                         <button class="action-icon-btn btn-comprovante" onclick="openComprovanteModal(${cliente.id})" title="Enviar Comprovante">
                             <i class="fas fa-receipt"></i>
                         </button>
-                        <button class="action-icon-btn btn-lembrete" onclick="openLembreteModal(${cliente.id})" title="Enviar Lembrete">
-                            <i class="fas fa-bell"></i>
+                        <button class="action-icon-btn btn-lembrete" onclick="openCashbackWhatsAppModal(${cliente.id})" title="Enviar Lembrete WhatsApp">
+                            <i class="fab fa-whatsapp"></i>
                         </button>
                     ` : ''}
                 </div>
@@ -556,76 +515,50 @@ function openComprovanteModal(clienteId) {
     openModal('comprovante-modal');
 }
 
-function openLembreteModal(clienteId = null) {
-    const cliente = clienteId ? state.clientes.find(c => c.id === clienteId) : null;
-    
-    if (cliente) {
-        state.clienteAtual = cliente;
-        document.querySelector('input[value="individual"]').checked = true;
-        document.getElementById('lembrete-whatsapp').value = cliente.telefone || '';
-        document.getElementById('whatsapp-individual').style.display = 'block';
-        document.getElementById('campanha-info').style.display = 'none';
+// ===== NOVA FUNÇÃO PARA ABRIR MODAL WHATSAPP CASHBACK =====
+function openCashbackWhatsAppModal(clienteId) {
+    const cliente = state.clientes.find(c => c.id === clienteId);
+    if (!cliente) return;
+
+    // Usar o modal unificado com tipo cashback
+    if (window.whatsAppModalUnified) {
+        window.whatsAppModalUnified.open(cliente, 'cashback');
     } else {
-        state.clienteAtual = null;
-        document.querySelector('input[value="campanha"]').checked = true;
-        document.getElementById('whatsapp-individual').style.display = 'none';
-        document.getElementById('campanha-info').style.display = 'block';
-        updateCampanhaInfo();
+        showNotification('Modal WhatsApp não carregado', 'error');
     }
-    
-    updateMessageTemplate();
-    openModal('lembrete-modal');
 }
 
+// ===== FUNÇÃO PARA CAMPANHA =====
 function openCampanhaModal() {
-    openLembreteModal();
-}
-
-// ===== FUNCIONALIDADES DOS MODAIS =====
-function handleTipoLembreteChange(e) {
-    const tipo = e.target.value;
-    const individual = document.getElementById('whatsapp-individual');
-    const campanha = document.getElementById('campanha-info');
-    const sendText = document.getElementById('btn-send-text');
-    
-    if (tipo === 'individual') {
-        individual.style.display = 'block';
-        campanha.style.display = 'none';
-        sendText.textContent = 'Enviar Lembrete';
-    } else {
-        individual.style.display = 'none';
-        campanha.style.display = 'block';
-        sendText.textContent = 'Enviar Campanha';
-        updateCampanhaInfo();
-    }
-    
-    updateMessageTemplate();
-}
-
-function updateCampanhaInfo() {
     const clientesComSaldo = state.clientes.filter(c => c.saldoAtual > 0);
-    const valorTotal = clientesComSaldo.reduce((acc, c) => acc + c.saldoAtual, 0);
     
-    document.getElementById('total-clientes-campanha').textContent = clientesComSaldo.length;
-    document.getElementById('total-valor-campanha').textContent = formatCurrency(valorTotal);
-}
-
-function updateMessageTemplate() {
-    const template = document.getElementById('lembrete-template').value;
-    const messageTextarea = document.getElementById('lembrete-mensagem');
-    const tipoSelecionado = document.querySelector('input[name="tipo-lembrete"]:checked').value;
-    
-    let mensagem = '';
-    
-    if (tipoSelecionado === 'individual' && state.clienteAtual) {
-        const cliente = state.clienteAtual;
-        const saldo = formatCurrency(cliente.saldoAtual);
-        mensagem = messageTemplates[template](cliente.nome, saldo);
-    } else if (tipoSelecionado === 'campanha') {
-        mensagem = messageTemplates[template]('[NOME_CLIENTE]', '[SALDO_CLIENTE]');
+    if (clientesComSaldo.length === 0) {
+        showNotification('Nenhum cliente com saldo de cashback encontrado', 'warning');
+        return;
     }
-    
-    messageTextarea.value = mensagem;
+
+    // Para campanha, podemos usar o primeiro cliente como exemplo
+    // O modal deve ser adaptado para campanhas em massa
+    if (window.whatsAppModalUnified && clientesComSaldo.length > 0) {
+        // Criar um cliente fictício para representar a campanha
+        const clienteCampanha = {
+            nome: `${clientesComSaldo.length} clientes`,
+            telefone: '(XX) XXXXX-XXXX',
+            id: 'campanha',
+            saldoCashback: clientesComSaldo.reduce((acc, c) => acc + c.saldoAtual, 0)
+        };
+        
+        window.whatsAppModalUnified.open(clienteCampanha, 'cashback');
+        
+        // Customizar para campanha
+        setTimeout(() => {
+            document.getElementById('modal-client-name').textContent = 'Campanha para Clientes com Cashback';
+            document.getElementById('modal-client-phone').textContent = `${clientesComSaldo.length} clientes selecionados`;
+            document.getElementById('client-cashback-value').textContent = formatCurrency(clienteCampanha.saldoCashback);
+        }, 100);
+    } else {
+        showNotification('Modal WhatsApp não carregado', 'error');
+    }
 }
 
 // ===== AÇÕES DOS MODAIS =====
@@ -645,37 +578,6 @@ function enviarComprovante() {
     
     showNotification(`Comprovante enviado para ${state.clienteAtual.nome}!`, 'success');
     closeModal('comprovante-modal');
-}
-
-function enviarLembrete() {
-    const tipo = document.querySelector('input[name="tipo-lembrete"]:checked').value;
-    const mensagem = document.getElementById('lembrete-mensagem').value.trim();
-    
-    if (!mensagem) {
-        showNotification('Digite uma mensagem', 'warning');
-        return;
-    }
-    
-    if (tipo === 'individual') {
-        const whatsapp = document.getElementById('lembrete-whatsapp').value.trim();
-        
-        if (!whatsapp) {
-            showNotification('Digite o número do WhatsApp', 'warning');
-            return;
-        }
-        
-        if (!state.clienteAtual) {
-            showNotification('Cliente não selecionado', 'error');
-            return;
-        }
-        
-        showNotification(`Lembrete enviado para ${state.clienteAtual.nome}!`, 'success');
-    } else {
-        const clientesComSaldo = state.clientes.filter(c => c.saldoAtual > 0);
-        showNotification(`Campanha enviada para ${clientesComSaldo.length} clientes!`, 'success');
-    }
-    
-    closeModal('lembrete-modal');
 }
 
 function exportarRelatorio() {

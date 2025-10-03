@@ -310,6 +310,13 @@ Object.assign(PaymentModalConfig.prototype, {
         modal.querySelector('#discount-type-toggle').addEventListener('click', () => this.toggleDiscountType());
         modal.querySelector('#cashback-use-amount').addEventListener('input', () => this.updateCashbackUse());
         
+        // Event listeners para os botões de cashback
+        modal.querySelector('#auto-fill-cashback').addEventListener('click', () => this.autoFillCashback());
+        modal.querySelector('#clear-cashback').addEventListener('click', () => {
+            document.getElementById('cashback-use-amount').value = '';
+            this.updateCashbackUse();
+        });
+        
         // Event listeners para validação de cashback múltiplo
         modal.querySelector('#payment-method-1').addEventListener('change', async (e) => {
             if (e.target.value === 'Cashback') {
@@ -517,12 +524,24 @@ Object.assign(PaymentModalConfig.prototype, {
         await this.detectAndLoadCustomer();
         this.setupPaymentOptions();
         
+        // Controlar z-index da barra de pesquisa
+        const searchAndActions = document.querySelector('.search-and-actions');
+        const searchBar = document.querySelector('.search-bar');
+        if (searchAndActions) searchAndActions.style.zIndex = '1';
+        if (searchBar) searchBar.style.zIndex = '1';
+        
         document.getElementById('advanced-payment-modal').classList.remove('hidden');
         
         this.setDefaultMachine().then(() => {
             this.updateTotals();
             this.calculateCashback();
         });
+        
+        // Configurar eventos do cliente no modal
+        this.setupCustomerModalEvents();
+        
+        // Sincronizar cliente selecionado do modal principal
+        this.syncCustomerFromMain();
         
         this.populateCustomerPhone();
         setTimeout(() => document.getElementById('amount-received')?.focus(), 100);
@@ -555,11 +574,31 @@ Object.assign(PaymentModalConfig.prototype, {
             const enableCupom = document.getElementById('enable-cupom');
             const cashbackPercentage = document.getElementById('cashback-percentage');
             
-            if (enableCrediario) enableCrediario.checked = this.paymentConfig.enableCrediario;
-            if (enableCashback) enableCashback.checked = this.paymentConfig.enableCashback;
-            if (enableMultiplo) enableMultiplo.checked = this.paymentConfig.enableMultiplo;
-            if (enableCupom) enableCupom.checked = this.paymentConfig.enableCupom;
-            if (cashbackPercentage) cashbackPercentage.value = this.paymentConfig.cashbackPercentage;
+            if (enableCrediario) {
+                enableCrediario.checked = this.paymentConfig.enableCrediario;
+                console.log('✅ Crediário configurado:', this.paymentConfig.enableCrediario);
+            }
+            if (enableCashback) {
+                enableCashback.checked = this.paymentConfig.enableCashback;
+                console.log('✅ Cashback configurado:', this.paymentConfig.enableCashback);
+            }
+            if (enableMultiplo) {
+                enableMultiplo.checked = this.paymentConfig.enableMultiplo;
+                console.log('✅ Múltiplo configurado:', this.paymentConfig.enableMultiplo);
+            }
+            if (enableCupom) {
+                enableCupom.checked = this.paymentConfig.enableCupom;
+                console.log('✅ Cupom configurado:', this.paymentConfig.enableCupom);
+            }
+            if (cashbackPercentage) {
+                cashbackPercentage.value = this.paymentConfig.cashbackPercentage || 1.0;
+                console.log('✅ Porcentagem de cashback configurada:', this.paymentConfig.cashbackPercentage);
+                // Forçar salvamento se não existir
+                if (!this.paymentConfig.cashbackPercentage) {
+                    this.paymentConfig.cashbackPercentage = 1.0;
+                    this.savePaymentConfig();
+                }
+            }
         }, 100);
     },
     
@@ -692,6 +731,7 @@ Object.assign(PaymentModalConfig.prototype, {
             const method2 = this.paymentData.multiplePayment.method2;
             const amount1 = this.paymentData.multiplePayment.amount1;
             const amount2 = this.paymentData.multiplePayment.amount2;
+            const total = this.getCurrentTotal();
             const currentCustomer = this.getCurrentCustomer();
 
             if (method1 === 'Cashback') {
@@ -702,6 +742,10 @@ Object.assign(PaymentModalConfig.prototype, {
                 const saldo1 = await this.getCashbackBalance(currentCustomer.id);
                 if (amount1 > saldo1) {
                     return alert(`Saldo insuficiente no método 1!\nSaldo disponível: ${this.formatCurrency(saldo1)}\nValor solicitado: ${this.formatCurrency(amount1)}`);
+                }
+                
+                if (amount1 > total) {
+                    return alert(`Valor de cashback no método 1 não pode ser maior que o total da venda.\nTotal da venda: ${this.formatCurrency(total)}\nCashback informado: ${this.formatCurrency(amount1)}`);
                 }
             }
 
@@ -714,11 +758,24 @@ Object.assign(PaymentModalConfig.prototype, {
                 const totalCashbackUsado = (method1 === 'Cashback' ? amount1 : 0) + amount2;
                 
                 if (totalCashbackUsado > saldo2) {
-                    return alert(`Saldo total de cashback insuficiente!\nSaldo disponível: ${this.formatCurrency(saldo2)}\nTotal solicitado: ${this.formatCurrency(totalCashbackUsado)}`);
+                    return alert(`Saldo total de cashback insuficiente!\nSaldo disponível: ${this.formatCurrency(saldo2)}\nTotal solicitado: ${this.formatCurrency(totalCashbackUsado)}\n\nAjuste os valores para não exceder o saldo disponível.`);
+                }
+                
+                if (amount2 > total) {
+                    return alert(`Valor de cashback no método 2 não pode ser maior que o total da venda.\nTotal da venda: ${this.formatCurrency(total)}\nCashback informado: ${this.formatCurrency(amount2)}`);
+                }
+            }
+            
+            // Validação adicional: se ambos métodos são cashback, verificar se não excedem o saldo total
+            if (method1 === 'Cashback' && method2 === 'Cashback') {
+                const saldoTotal = await this.getCashbackBalance(currentCustomer.id);
+                const totalCashbackUsado = amount1 + amount2;
+                
+                if (totalCashbackUsado > saldoTotal) {
+                    return alert(`❌ Erro: Cashback total excede o saldo disponível!\n\nSaldo disponível: ${this.formatCurrency(saldoTotal)}\nCashback método 1: ${this.formatCurrency(amount1)}\nCashback método 2: ${this.formatCurrency(amount2)}\nTotal solicitado: ${this.formatCurrency(totalCashbackUsado)}\n\nAjuste os valores para não exceder o saldo.`);
                 }
             }
 
-            const total = this.getCurrentTotal();
             if (amount1 <= 0 || amount2 <= 0) {
                 return alert('Informe valores válidos para ambas as formas de pagamento.');
             }
@@ -743,8 +800,8 @@ Object.assign(PaymentModalConfig.prototype, {
                 if (cashbackUse > this.paymentData.cashbackAvailable) {
                     return alert('O valor de cashback utilizado não pode ser maior que o disponível.');
                 }
-                if (cashbackUse < totalVenda) {
-                    return alert('O valor de cashback utilizado deve ser igual ou maior que o total da venda para finalizar com cashback.');
+                if (cashbackUse !== totalVenda) {
+                    return alert(`Para pagamento com cashback, o valor deve ser exatamente igual ao total da venda.\nTotal da venda: ${this.formatCurrency(totalVenda)}\nCashback informado: ${this.formatCurrency(cashbackUse)}`);
                 }
                 break;
             case 'Crediario':
@@ -786,6 +843,8 @@ Object.assign(PaymentModalConfig.prototype, {
             customer: saleState.customer,
             totals: calculateTotals(),
             payment: this.paymentData,
+            cashback_generated: this.paymentData.cashback || 0, // Cashback gerado nesta venda
+            cashback_used: this.paymentData.cashbackUseAmount || 0, // Cashback usado nesta venda
             adjustments: {
                 discount: this.paymentData.discount || 0,
                 surcharge: this.paymentData.surcharge || 0,
@@ -856,7 +915,14 @@ if (window.paymentModal) {
         getCurrentCustomer: PaymentModalConfig.prototype.getCurrentCustomer,
         updateMultiplePayment: PaymentModalConfig.prototype.updateMultiplePayment,
         confirmPayment: PaymentModalConfig.prototype.confirmPayment,
-        bindEvents: PaymentModalConfig.prototype.bindEvents
+        bindEvents: PaymentModalConfig.prototype.bindEvents,
+        setupCustomerModalEvents: PaymentModalConfig.prototype.setupCustomerModalEvents,
+        loadCustomersDropdown: PaymentModalConfig.prototype.loadCustomersDropdown,
+        renderCustomersDropdown: PaymentModalConfig.prototype.renderCustomersDropdown,
+        filterCustomers: PaymentModalConfig.prototype.filterCustomers,
+        selectCustomerFromDropdown: PaymentModalConfig.prototype.selectCustomerFromDropdown,
+        syncCustomerFromMain: PaymentModalConfig.prototype.syncCustomerFromMain,
+        populateCustomerPhone: PaymentModalConfig.prototype.populateCustomerPhone
     });
     
     window.paymentModal.bindEvents();

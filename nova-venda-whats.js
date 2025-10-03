@@ -2,7 +2,7 @@
 // ================================================================
 
 /**
- * Envia cupom via WhatsApp
+ * Envia cupom via WhatsApp usando a tela unificada
  * @param {Object} saleData - Dados completos da venda
  * @param {String} saleId - ID da venda
  * @param {String} phoneNumber - Número do WhatsApp
@@ -12,23 +12,33 @@ async function sendCupomWhatsApp(saleData, saleId, phoneNumber) {
         console.log('📱 Preparando envio via WhatsApp...');
         console.log('Telefone:', phoneNumber);
         
-        // Buscar dados da empresa
-        const companyData = await getCompanyDataWhats();
-        
-        // Gerar texto do cupom
-        const cupomText = generateCupomText(saleData, saleId, companyData);
-        
-        // Copiar para área de transferência
-        await copyToClipboard(cupomText);
-        
-        // Abrir WhatsApp
-        openWhatsApp(phoneNumber);
-        
-        return {
-            success: true,
-            message: 'Cupom copiado! WhatsApp aberto.',
-            cupomText: cupomText
-        };
+        // Usar a função unificada do nova-venda-cupom.js
+        if (window.enviarComprovanteWhatsApp) {
+            return await window.enviarComprovanteWhatsApp(saleData, saleId);
+        } else {
+            // Fallback caso a função não esteja disponível
+            console.warn('Função enviarComprovanteWhatsApp não encontrada, usando método antigo');
+            
+            // Buscar dados da empresa
+            const companyData = await getCompanyDataWhats();
+            
+            // Gerar HTML do cupom (mesmo formato da impressão)
+            const cupomHTML = generateCupomHTMLForWhatsApp(saleData, saleId, companyData, phoneNumber);
+            
+            // Abrir janela com o comprovante para o usuário visualizar e enviar
+            openWhatsAppWithReceipt(cupomHTML, phoneNumber);
+            
+            return {
+                success: true,
+                message: 'Comprovante aberto! Você pode visualizar e enviar via WhatsApp.',
+                data: {
+                    saleId: saleId,
+                    companyData: companyData,
+                    phoneNumber: phoneNumber,
+                    cupomHTML: cupomHTML
+                }
+            };
+        }
         
     } catch (error) {
         console.error('❌ Erro ao enviar via WhatsApp:', error);
@@ -47,12 +57,31 @@ async function getCompanyDataWhats() {
         const { data, error } = await supabaseClient
             .from('empresas')
             .select('*')
-            .eq('id', window.currentCompanyId)
+            .eq('id_empresa', window.currentCompanyId)
             .single();
 
         if (error) throw error;
 
-        return data || {
+        if (data) {
+            // Montar endereço completo
+            let endereco = '';
+            if (data.rua) endereco += data.rua;
+            if (data.numero) endereco += `, ${data.numero}`;
+            if (data.complemento) endereco += `, ${data.complemento}`;
+            if (data.bairro) endereco += ` - ${data.bairro}`;
+            if (data.cidade) endereco += ` - ${data.cidade}`;
+            if (data.cep) endereco += ` - CEP: ${data.cep}`;
+            
+            return {
+                nome: data.nome_fantasia || data.razao_social || 'Lume Sistemas',
+                endereco: endereco || 'Endereço não cadastrado',
+                telefone: data.telefone_empresa || 'Telefone não cadastrado',
+                cnpj: data.cnpj || 'CNPJ não cadastrado',
+                email: data.email_empresa || 'email@empresa.com'
+            };
+        }
+
+        return {
             nome: 'Lume Sistemas',
             endereco: 'Endereço não cadastrado',
             telefone: 'Telefone não cadastrado',
@@ -73,7 +102,249 @@ async function getCompanyDataWhats() {
 }
 
 /**
- * Gera texto profissional do cupom para WhatsApp
+ * Gera HTML do cupom para WhatsApp (mesmo formato da impressão)
+ */
+function generateCupomHTMLForWhatsApp(saleData, saleId, companyData, phoneNumber = '') {
+    const now = new Date();
+    const dataVenda = now.toLocaleDateString('pt-BR');
+    const horaVenda = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    
+    // Calcular totais
+    const subtotal = saleData.items.reduce((acc, item) => acc + (item.preco_venda * item.quantity), 0);
+    const totalDesconto = saleData.totals?.totalDiscount || 0;
+    const total = saleData.totals?.total || subtotal;
+    
+    // Gerar lista de itens
+    const itensHTML = saleData.items.map((item, index) => {
+        const subtotalItem = item.preco_venda * item.quantity;
+        const desconto = item.discount?.value || 0;
+        const totalItem = subtotalItem - (item.discount?.type === 'fixed' ? desconto * item.quantity : 
+                         item.discount?.type === 'percent' ? subtotalItem * (desconto / 100) : 0);
+        
+        let itemHTML = `
+            <tr>
+                <td style="text-align: left; padding: 2px 0; border-bottom: 1px dotted #ccc;">
+                    ${String(index + 1).padStart(2, '0')}. ${item.nome}
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: right; padding: 2px 0; font-size: 10px; color: #666;">
+                    ${item.quantity}x ${formatCurrencyWhats(item.preco_venda)} = ${formatCurrencyWhats(totalItem)}
+                </td>
+            </tr>`;
+        
+        if (desconto > 0) {
+            const descontoTexto = item.discount.type === 'percent' ? `${desconto}%` : formatCurrencyWhats(desconto);
+            itemHTML += `
+            <tr>
+                <td style="text-align: right; padding: 2px 0; font-size: 10px; color: #e74c3c;">
+                    💰 Desconto: ${descontoTexto}
+                </td>
+            </tr>`;
+        }
+        
+        return itemHTML;
+    }).join('');
+
+    // Informações de pagamento
+    const pagamentoInfo = getPagamentoInfoWhats(saleData.payment);
+    
+    return `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprovante - ${saleId}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.2;
+            color: #000;
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .company-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+        
+        .company-info {
+            font-size: 10px;
+            line-height: 1.3;
+            margin-bottom: 2px;
+        }
+        
+        .sale-info {
+            margin: 8px 0;
+            font-size: 10px;
+        }
+        
+        .items-table {
+            width: 100%;
+            margin: 8px 0;
+        }
+        
+        .totals {
+            border-top: 1px dashed #000;
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+        
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            margin: 2px 0;
+            font-size: 11px;
+        }
+        
+        .total-final {
+            font-weight: bold;
+            font-size: 14px;
+            border-top: 1px solid #000;
+            padding-top: 4px;
+            margin-top: 4px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 8px;
+            border-top: 1px dashed #000;
+            font-size: 10px;
+        }
+        
+        .whatsapp-actions {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .btn {
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background: #128C7E;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+    </style>
+</head>
+<body>
+    <!-- Cabeçalho da Empresa -->
+    <div class="header">
+        <div class="company-name">${companyData.nome}</div>
+        <div class="company-info">${companyData.endereco}</div>
+        <div class="company-info">Tel: ${companyData.telefone}</div>
+        <div class="company-info">CNPJ: ${companyData.cnpj}</div>
+    </div>
+    
+    <!-- Informações da Venda -->
+    <div class="sale-info">
+        <div><strong>🧾 CUPOM NÃO FISCAL</strong></div>
+        <div>🔢 Número: <strong>#${saleId}</strong></div>
+        <div>📅 Data: ${dataVenda}</div>
+        <div>🕐 Hora: ${horaVenda}</div>
+        <div>👤 Vendedor: ${window.currentUser?.nome || 'Sistema'}</div>
+    </div>
+    
+    <!-- Lista de Itens -->
+    <table class="items-table">
+        <tr><td style="font-weight: bold; border-bottom: 1px solid #000; padding: 4px 0;">📋 ITENS COMPRADOS:</td></tr>
+        ${itensHTML}
+    </table>
+    
+    <!-- Totais -->
+    <div class="totals">
+        <div class="total-line">
+            <span>Subtotal:</span>
+            <span>${formatCurrencyWhats(subtotal)}</span>
+        </div>
+        ${totalDesconto > 0 ? `
+        <div class="total-line" style="color: #e74c3c;">
+            <span>Desconto:</span>
+            <span>-${formatCurrencyWhats(totalDesconto)}</span>
+        </div>` : ''}
+        <div class="total-line total-final">
+            <span>💰 TOTAL:</span>
+            <span>${formatCurrencyWhats(total)}</span>
+        </div>
+    </div>
+    
+    <!-- Informações de Pagamento -->
+    <div style="margin: 8px 0; font-size: 10px;">
+        <div><strong>💳 FORMA DE PAGAMENTO:</strong></div>
+        <div>${pagamentoInfo}</div>
+    </div>
+    
+    <!-- Rodapé -->
+    <div class="footer">
+        <div>Obrigado pela preferência!</div>
+        <div>Volte sempre! 😊</div>
+        <div style="margin-top: 8px; font-size: 8px; color: #666;">
+            Sistema: Lume PDV | ${new Date().toLocaleString('pt-BR')}
+        </div>
+    </div>
+    
+    <!-- Ações do WhatsApp -->
+    <div class="whatsapp-actions">
+        <h4 style="margin-bottom: 10px;">📱 Enviar via WhatsApp</h4>
+        <p style="margin-bottom: 15px; font-size: 12px;">Clique no botão abaixo para abrir o WhatsApp e enviar este comprovante:</p>
+        <a href="https://wa.me/${phoneNumber ? phoneNumber.replace(/\D/g, '') : ''}?text=Olá! Segue o comprovante da sua compra. Obrigado pela preferência! 😊" 
+           class="btn" target="_blank" rel="noopener" ${!phoneNumber ? 'onclick="alert(\'Número do WhatsApp não informado\'); return false;"' : ''}>
+            <i class="fab fa-whatsapp"></i> Abrir WhatsApp
+        </a>
+        <button class="btn btn-secondary" onclick="window.print()">
+            <i class="fas fa-print"></i> Imprimir
+        </button>
+    </div>
+</body>
+</html>`;
+}
+
+/**
+ * Gera texto profissional do cupom para WhatsApp (mantido para compatibilidade)
  */
 function generateCupomText(saleData, saleId, companyData) {
     const now = new Date();
@@ -275,6 +546,148 @@ function formatCurrencyWhats(value) {
         style: 'currency',
         currency: 'BRL'
     }).format(value || 0);
+}
+
+/**
+ * Abre uma nova janela com o comprovante HTML para WhatsApp
+ */
+function openWhatsAppWithReceipt(cupomHTML, phoneNumber) {
+    // Criar uma nova janela com o comprovante
+    const newWindow = window.open('', '_blank', 'width=450,height=700,scrollbars=yes,resizable=yes');
+    
+    if (newWindow) {
+        // Adicionar funcionalidades de captura e conversão
+        const enhancedHTML = cupomHTML.replace(
+            '</head>',
+            `
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script>
+            // Função para capturar como imagem
+            function captureAsImage() {
+                const element = document.querySelector('.receipt-container') || document.body;
+                html2canvas(element, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true
+                }).then(canvas => {
+                    // Criar link para download da imagem
+                    const link = document.createElement('a');
+                    link.download = 'comprovante-${new Date().getTime()}.png';
+                    link.href = canvas.toDataURL();
+                    link.click();
+                    
+                    // Também copiar para clipboard se possível
+                    canvas.toBlob(blob => {
+                        if (navigator.clipboard && window.ClipboardItem) {
+                            navigator.clipboard.write([
+                                new ClipboardItem({ 'image/png': blob })
+                            ]).then(() => {
+                                alert('Comprovante copiado como imagem! Cole no WhatsApp.');
+                            }).catch(() => {
+                                alert('Imagem salva! Envie o arquivo baixado pelo WhatsApp.');
+                            });
+                        } else {
+                            alert('Imagem salva! Envie o arquivo baixado pelo WhatsApp.');
+                        }
+                    });
+                });
+            }
+            
+            // Função para gerar PDF
+            function generatePDF() {
+                const { jsPDF } = window.jspdf;
+                const element = document.querySelector('.receipt-container') || document.body;
+                
+                html2canvas(element, {
+                    backgroundColor: '#ffffff',
+                    scale: 2
+                }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+                    
+                    const imgWidth = 190;
+                    const pageHeight = 295;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    let heightLeft = imgHeight;
+                    let position = 0;
+                    
+                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                    
+                    while (heightLeft >= 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    }
+                    
+                    pdf.save('comprovante-${new Date().getTime()}.pdf');
+                    alert('PDF gerado! Envie o arquivo pelo WhatsApp.');
+                });
+            }
+            
+            // Função para abrir WhatsApp com texto simples
+            function openWhatsAppText() {
+                const phoneNum = '${phoneNumber ? phoneNumber.replace(/\D/g, '') : ''}';
+                if (!phoneNum) {
+                    alert('Número do WhatsApp não informado');
+                    return;
+                }
+                const message = encodeURIComponent('Olá! Segue o comprovante da sua compra. Obrigado pela preferência! 😊');
+                window.open('https://wa.me/' + phoneNum + '?text=' + message, '_blank');
+            }
+        </script>
+        </head>`
+        );
+        
+        // Adicionar classe container e botões melhorados
+        const finalHTML = enhancedHTML.replace(
+            '<body>',
+            '<body><div class="receipt-container">'
+        ).replace(
+            '<!-- Ações do WhatsApp -->',
+            '</div><!-- Ações do WhatsApp -->'
+        ).replace(
+            /<div class="whatsapp-actions">[\s\S]*?<\/div>/,
+            `<div class="whatsapp-actions">
+                <h4 style="margin-bottom: 15px;">📱 Enviar Comprovante</h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+                    <button class="btn" onclick="captureAsImage()" style="background: #28a745;">
+                        🖼️ Salvar como Imagem
+                    </button>
+                    <button class="btn" onclick="generatePDF()" style="background: #dc3545;">
+                        📄 Gerar PDF
+                    </button>
+                    <button class="btn" onclick="openWhatsAppText()">
+                        💬 Abrir WhatsApp
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.print()">
+                        🖨️ Imprimir
+                    </button>
+                </div>
+                <p style="margin-top: 15px; font-size: 11px; color: #666; text-align: center;">
+                    💡 <strong>Dica:</strong> Clique em "Salvar como Imagem" e cole diretamente no WhatsApp!
+                </p>
+            </div>`
+        );
+        
+        newWindow.document.write(finalHTML);
+        newWindow.document.close();
+        newWindow.focus();
+        
+        // Adicionar evento para fechar a janela após envio
+        newWindow.addEventListener('beforeunload', () => {
+            console.log('Janela do comprovante fechada');
+        });
+    } else {
+        alert('Não foi possível abrir a janela do comprovante. Verifique se o bloqueador de pop-ups está desabilitado.');
+    }
 }
 
 /**
@@ -546,7 +959,7 @@ window.testarWhatsApp = async function() {
     return resultado;
 };
 
-// Log de carregamento
+
 console.log('✅ Sistema de WhatsApp carregado');
 console.log('Funções disponíveis:');
 console.log('- enviarWhatsAppVenda(saleData, saleId, phoneNumber)');

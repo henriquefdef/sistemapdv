@@ -2,7 +2,40 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('userDataReady', initializePage);
+    
+    // Carregar funções de cache se não estiverem disponíveis
+    loadCacheFunctions();
 });
+
+// Função para carregar as funções de cache do nova-venda-data.js
+function loadCacheFunctions() {
+    if (typeof removeProductsFromCache === 'undefined') {
+        // Implementação local da função de limpeza de cache
+        window.removeProductsFromCache = function(productIds) {
+            try {
+                const cached = localStorage.getItem('lume-pdv-image-cache');
+                if (cached) {
+                    const data = JSON.parse(cached);
+                    let removedCount = 0;
+                    
+                    productIds.forEach(productId => {
+                        if (data[productId.toString()]) {
+                            delete data[productId.toString()];
+                            removedCount++;
+                        }
+                    });
+                    
+                    if (removedCount > 0) {
+                        localStorage.setItem('lume-pdv-image-cache', JSON.stringify(data));
+                        console.log(`${removedCount} imagens removidas do cache`);
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao limpar cache de imagens:', error);
+            }
+        };
+    }
+}
 
 // Estado global da aplicação
 const state = {
@@ -71,9 +104,15 @@ async function fetchCategories() {
     try {
         const { data, error } = await supabaseClient.from('categorias').select('id, nome').eq('id_empresa', window.currentCompanyId);
         if (error) throw error;
-        state.categories = new Map(data.map(cat => [cat.id, cat.nome]));
+        
+        if (data && data.length > 0) {
+            state.categories = new Map(data.map(cat => [cat.id, cat.nome]));
+        } else {
+            state.categories = new Map();
+        }
     } catch (error) {
         console.error("Erro ao buscar categorias:", error);
+        state.categories = new Map();
     }
 }
 
@@ -118,10 +157,20 @@ async function fetchImagesForProducts(products) {
     try {
         const { data, error } = await supabaseClient.from('produto_imagens').select('produto_id, url').in('produto_id', productIds);
         if (error) throw error;
+        
+        // Limpar cache de imagens existente para forçar atualização
         state.images.clear();
+        
+        // Limpar também o cache do localStorage se a função estiver disponível
+        if (typeof removeProductsFromCache === 'function') {
+            removeProductsFromCache(productIds);
+        }
+        
         data.forEach(img => {
-            if (!state.images.has(img.produto_id)) state.images.set(img.produto_id, img.url);
+            state.images.set(img.produto_id, img.url);
         });
+        
+        console.log(`Imagens atualizadas para ${data.length} produtos`);
     } catch (error) {
         console.error("Erro ao buscar imagens:", error);
     }
@@ -152,7 +201,16 @@ function renderTable() {
 
     state.products.forEach(product => {
         const imageUrl = state.images.get(product.id) || 'log.png';
-        const categoryName = state.categories.get(product.categoria) || 'Sem categoria';
+        
+        // Melhor tratamento da categoria
+        let categoryName = 'Sem categoria';
+        if (product.categoria && state.categories.has(product.categoria)) {
+            categoryName = state.categories.get(product.categoria);
+        } else if (product.categoria) {
+            // Se tem categoria mas não encontrou no Map, mostrar apenas o ID
+            categoryName = product.categoria.toString();
+        }
+        
         const stockStatus = getStockStatus(product.quantidade_estoque);
         const isSelected = state.selectedIds.has(product.id);
 
@@ -735,11 +793,26 @@ async function showMovimentacoesModal(product) {
             .select('*')
             .eq('id_empresa', window.currentCompanyId)
             .eq('produto_id', product.id)
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: true }); // Ordem cronológica para calcular saldo
             
         if (error) throw error;
         
         const movimentacoes = data || [];
+        
+        // Calcular saldo progressivo
+        let saldoAtual = 0;
+        movimentacoes.forEach((mov, index) => {
+            if (mov.tipo_movimentacao === 'ENTRADA') {
+                saldoAtual += mov.quantidade;
+            } else if (mov.tipo_movimentacao === 'SAIDA') {
+                saldoAtual -= mov.quantidade;
+            }
+            mov.saldo_calculado = saldoAtual;
+            mov.numero_movimentacao = index + 1; // Adicionar numeração sequencial
+        });
+        
+        // Inverter ordem para mostrar mais recentes primeiro
+        movimentacoes.reverse();
         
         const modalContent = `
             <div class="movimentacoes-header">
@@ -750,9 +823,10 @@ async function showMovimentacoesModal(product) {
             <div class="movimentacoes-timeline">
                 ${movimentacoes.length === 0 ? 
                     '<p class="no-movements">Nenhuma movimentação encontrada para este produto.</p>' :
-                    movimentacoes.map(mov => `
+                    movimentacoes.map((mov, index) => `
                         <div class="timeline-item">
                             <div class="timeline-date">
+                                <span class="movement-number">#${movimentacoes.length - index}</span>
                                 ${formatDate(mov.created_at)}
                                 <span class="timeline-time">${formatTime(mov.created_at)}</span>
                             </div>
@@ -765,10 +839,7 @@ async function showMovimentacoesModal(product) {
                                     ${mov.tipo_movimentacao}
                                 </div>
                                 <div class="movement-details">
-                                    <p><strong>Quantidade:</strong> ${mov.quantidade > 0 ? '+' : ''}${mov.quantidade}</p>
-                                    <p><strong>Saldo após:</strong> ${mov.saldo_atual}</p>
-                                    ${mov.observacoes ? `<p><strong>Observações:</strong> ${mov.observacoes}</p>` : ''}
-                                    ${mov.documento_referencia ? `<p><strong>Documento:</strong> ${mov.documento_referencia}</p>` : ''}
+                                    <p><strong>Qtd:</strong> ${mov.quantidade} ${mov.observacoes ? `| ${mov.observacoes}` : ''} ${mov.documento_referencia ? `| Doc: ${mov.documento_referencia}` : ''}</p>
                                 </div>
                             </div>
                         </div>
@@ -777,9 +848,7 @@ async function showMovimentacoesModal(product) {
             </div>
         `;
         
-        createModal('movimentacoes-modal', 'Movimentações do Produto', modalContent, [
-            { text: 'Fechar', class: 'btn-secondary', action: 'close' }
-        ]);
+        createModal('movimentacoes-modal', 'Movimentações do Produto', modalContent);
         
     } catch (error) {
         console.error('Erro ao buscar movimentações:', error);
@@ -827,8 +896,21 @@ async function exportToExcel() {
                 'Estoque': parseInt(produto.quantidade_estoque || 0),
                 'Código Barras': produto.codigo_barras || '',
                 'Marca': produto.marca || '',
+                'Fornecedor': produto.fornecedor || '',
                 'Descrição': produto.descricao || '',
-                'Data Cadastro': formatDate(produto.created_at)
+                'Frequência': produto.frequencia || '',
+                'Peso': produto.peso || '',
+                'Altura': produto.altura || '',
+                'Largura': produto.largura || '',
+                'Comprimento': produto.comprimento || '',
+                'NCM': produto.ncm || '',
+                'CFOP': produto.cfop || '',
+                'ICMS': produto.icms || '',
+                'IPI': produto.ipi || '',
+                'Ativo': produto.ativo ? 'Sim' : 'Não',
+                'Data Cadastro': formatDate(produto.created_at),
+                'Data Modificação': produto.modificado ? formatDate(produto.modificado) : '',
+                'Modificado Por': produto.modificado_por || ''
             };
         });
         
@@ -845,8 +927,21 @@ async function exportToExcel() {
             { wch: 10 }, // Estoque
             { wch: 15 }, // Código Barras
             { wch: 15 }, // Marca
+            { wch: 20 }, // Fornecedor
             { wch: 30 }, // Descrição
-            { wch: 12 }  // Data Cadastro
+            { wch: 15 }, // Frequência
+            { wch: 10 }, // Peso
+            { wch: 10 }, // Altura
+            { wch: 10 }, // Largura
+            { wch: 12 }, // Comprimento
+            { wch: 12 }, // NCM
+            { wch: 10 }, // CFOP
+            { wch: 10 }, // ICMS
+            { wch: 10 }, // IPI
+            { wch: 8 },  // Ativo
+            { wch: 12 }, // Data Cadastro
+            { wch: 12 }, // Data Modificação
+            { wch: 15 }  // Modificado Por
         ];
         worksheet['!cols'] = colWidths;
         
@@ -866,11 +961,23 @@ async function exportToExcel() {
                     'Preço Custo': parseFloat(produto.preco_custo || 0),
                     'Preço Venda': parseFloat(produto.preco_venda || 0),
                     'Estoque': produto.quantidade_estoque || 0,
-                     'Código Barras': produto.codigo_barras || '',
-                     'Marca': produto.marca || '',
-                     'Descrição': produto.descricao || '',
-                     'Data Cadastro': produto.created_at ? new Date(produto.created_at).toLocaleDateString('pt-BR') : '',
-                     'Data Exclusão': produto.data_exclusao ? new Date(produto.data_exclusao).toLocaleDateString('pt-BR') : ''
+                    'Código Barras': produto.codigo_barras || '',
+                    'Marca': produto.marca || '',
+                    'Fornecedor': produto.fornecedor || '',
+                    'Descrição': produto.descricao || '',
+                    'Frequência': produto.frequencia || '',
+                    'Peso': produto.peso || '',
+                    'Altura': produto.altura || '',
+                    'Largura': produto.largura || '',
+                    'Comprimento': produto.comprimento || '',
+                    'NCM': produto.ncm || '',
+                    'CFOP': produto.cfop || '',
+                    'ICMS': produto.icms || '',
+                    'IPI': produto.ipi || '',
+                    'Data Cadastro': produto.created_at ? new Date(produto.created_at).toLocaleDateString('pt-BR') : '',
+                    'Data Modificação': produto.modificado ? new Date(produto.modificado).toLocaleDateString('pt-BR') : '',
+                    'Modificado Por': produto.modificado_por || '',
+                    'Data Exclusão': produto.data_exclusao ? new Date(produto.data_exclusao).toLocaleDateString('pt-BR') : ''
                 };
             });
             
@@ -887,8 +994,20 @@ async function exportToExcel() {
                 { wch: 10 }, // Estoque
                 { wch: 15 }, // Código Barras
                 { wch: 15 }, // Marca
+                { wch: 20 }, // Fornecedor
                 { wch: 30 }, // Descrição
+                { wch: 15 }, // Frequência
+                { wch: 10 }, // Peso
+                { wch: 10 }, // Altura
+                { wch: 10 }, // Largura
+                { wch: 12 }, // Comprimento
+                { wch: 12 }, // NCM
+                { wch: 10 }, // CFOP
+                { wch: 10 }, // ICMS
+                { wch: 10 }, // IPI
                 { wch: 12 }, // Data Cadastro
+                { wch: 12 }, // Data Modificação
+                { wch: 15 }, // Modificado Por
                 { wch: 12 }  // Data Exclusão
             ];
             deletedWorksheet['!cols'] = deletedColWidths;

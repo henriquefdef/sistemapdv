@@ -1,5 +1,5 @@
 // Dados e lógica de negócio - armazena carrinho, busca produtos/clientes e faz cálculos
-const PINNED_PRODUCTS_KEY = 'lume-pdv-pinned-products';
+// Constante de pin removida
 const MAX_RECENT_PRODUCTS = 20;
 const MIN_SEARCH_CHARS = 2;
 const MAX_SEARCH_RESULTS = 8;
@@ -55,8 +55,7 @@ function saveImageCacheToStorage() {
 
 // Limpar imagens do cache que não estão mais sendo usadas
 function cleanImageCache(currentProductIds) {
-    const pinnedIds = getPinnedProductIds();
-    const idsToKeep = new Set([...currentProductIds, ...pinnedIds]);
+    const idsToKeep = new Set(currentProductIds);
     
     let removedCount = 0;
     for (const [productId] of imageCache) {
@@ -83,32 +82,22 @@ function onProductsUpdated(newProducts) {
 
 // Função para limpar cache de um produto específico
 function removeProductFromCache(productId) {
-    const numericId = parseInt(productId);
-    const pinnedIds = getPinnedProductIds();
-    
-    // Só remove se o produto não estiver fixado
-    if (!pinnedIds.includes(numericId)) {
-        if (imageCache.has(productId.toString())) {
-            imageCache.delete(productId.toString());
-            saveImageCacheToStorage();
-            console.log(`Imagem do produto ${productId} removida do cache`);
-        }
+    if (imageCache.has(productId.toString())) {
+        imageCache.delete(productId.toString());
+        saveImageCacheToStorage();
+        console.log(`Imagem do produto ${productId} removida do cache`);
     }
 }
 
 // Função para limpar cache de múltiplos produtos
 function removeProductsFromCache(productIds) {
-    const pinnedIds = getPinnedProductIds();
     let removedCount = 0;
     
     productIds.forEach(productId => {
-        const numericId = parseInt(productId);
-        // Só remove se o produto não estiver fixado
-        if (!pinnedIds.includes(numericId)) {
-            if (imageCache.has(productId.toString())) {
-                imageCache.delete(productId.toString());
-                removedCount++;
-            }
+        // Remove produto do cache
+        if (imageCache.has(productId.toString())) {
+            imageCache.delete(productId.toString());
+            removedCount++;
         }
     });
     
@@ -243,62 +232,24 @@ function showNotification(message, type = 'info') {
     }, 4000);
 }
 
-function getPinnedProductIds() {
-    return JSON.parse(localStorage.getItem(PINNED_PRODUCTS_KEY)) || [];
-}
-
-function togglePinProduct(productId) {
-    let pinnedIds = getPinnedProductIds();
-    const numericId = parseInt(productId, 10);
-    if (pinnedIds.includes(numericId)) {
-        pinnedIds = pinnedIds.filter(id => id !== numericId);
-    } else {
-        pinnedIds.push(numericId);
-    }
-    localStorage.setItem(PINNED_PRODUCTS_KEY, JSON.stringify(pinnedIds));
-    fetchRecentProducts();
-}
+// Funções de pin removidas
 
 async function fetchRecentProducts() {
     const recentProductsGrid = document.getElementById('recent-products-grid');
     recentProductsGrid.innerHTML = '<p>Carregando produtos...</p>';
     
     try {
-        const pinnedIds = getPinnedProductIds();
+        const { data } = await supabaseClient
+            .from('produtos')
+            .select('*')
+            .eq('id_empresa', window.currentCompanyId)
+            .eq('ativo', true)
+            .order('created_at', { ascending: false })
+            .limit(MAX_RECENT_PRODUCTS);
         
-        let pinnedProducts = [];
-        if (pinnedIds.length > 0) {
-            const { data } = await supabaseClient
-                .from('produtos')
-                .select('*')
-                .in('id', pinnedIds)
-                .eq('id_empresa', window.currentCompanyId)
-                .eq('ativo', true);
-            pinnedProducts = data || [];
-        }
-
-        const limit = MAX_RECENT_PRODUCTS - pinnedProducts.length;
-        let recentProducts = [];
-        if (limit > 0) {
-            let query = supabaseClient
-                .from('produtos')
-                .select('*')
-                .eq('id_empresa', window.currentCompanyId)
-                .eq('ativo', true)
-                .order('created_at', { ascending: false })
-                .limit(limit);
-            
-            if (pinnedIds.length > 0) {
-                query = query.not('id', 'in', `(${pinnedIds.join(',')})`);
-            }
-            
-            const { data } = await query;
-            recentProducts = data || [];
-        }
-
-        const allProducts = [...pinnedProducts, ...recentProducts];
-        await fetchProductImages(allProducts);
-        renderRecentProducts(allProducts, pinnedIds);
+        const recentProducts = data || [];
+        await fetchProductImages(recentProducts);
+        renderRecentProducts(recentProducts);
 
     } catch (error) {
         console.error("Erro ao buscar produtos:", error);
@@ -306,7 +257,7 @@ async function fetchRecentProducts() {
     }
 }
 
-function renderRecentProducts(products, pinnedIds) {
+function renderRecentProducts(products) {
     const recentProductsGrid = document.getElementById('recent-products-grid');
     renderedProducts = products;
     if (!products || products.length === 0) {
@@ -315,27 +266,20 @@ function renderRecentProducts(products, pinnedIds) {
     }
     
     recentProductsGrid.innerHTML = products.map(product => {
-        const isPinned = pinnedIds.includes(product.id);
-        return createProductCard(product, isPinned);
+        return createProductCard(product);
     }).join('');
 }
 
-function createProductCard(product, isPinned = false) {
+function createProductCard(product) {
     const imageUrl = getImageUrl(product);
-    const pinnedClass = isPinned ? 'pinned' : '';
     
     return `
-        <div class="product-card ${pinnedClass}" data-product-id="${product.id}">
-            <button class="pin-btn ${pinnedClass}" title="Fixar/Desafixar produto">
-                <i class="fa-solid fa-thumbtack"></i>
-            </button>
-            <div class="card-content">
-                <img src="${imageUrl}" alt="${product.nome}" class="product-card-img" 
-                     onerror="this.onerror=null; this.src='nofoto.png';">
-                <div class="product-card-info">
-                    <div class="product-card-name">${product.nome}</div>
-                    <div class="product-card-price">${formatCurrency(product.preco_venda)}</div>
-                </div>
+        <div class="product-card" data-product-id="${product.id}">
+            <img src="${imageUrl}" alt="${product.nome}" class="product-card-img" 
+                 onerror="this.onerror=null; this.src='nofoto.png';">
+            <div class="product-card-info">
+                <div class="product-card-name">${product.nome}</div>
+                <div class="product-card-price">${formatCurrency(product.preco_venda)}</div>
             </div>
         </div>`;
 }
@@ -669,10 +613,18 @@ function cancelSale() {
         saleState.customer = null;
         saleState.generalDiscount = { type: 'none', value: 0 };
         
+        // Sincronizar com window.saleState
+        if (window.saleState) {
+            window.saleState.customer = null;
+        }
+        
         renderCart();
         updateCustomerDisplay();
         document.getElementById('search-input').focus();
         hideSearchDropdown();
+        
+        // Disparar evento global para sincronizar com modal de pagamento
+        document.dispatchEvent(new CustomEvent('customerSelected', { detail: null }));
         
         showNotification('Venda cancelada com sucesso!', 'info');
     }

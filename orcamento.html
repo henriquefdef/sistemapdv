@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Lume - Orçamentos</title>
     <link rel="icon" type="image/png" href="log.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -10,13 +12,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="header.css">
     <link rel="stylesheet" href="orcamento.css">
-    <!-- CSS do Modal de Pagamento -->
-    <link rel="stylesheet" href="nova-venda-pag.css">
 </head>
 <body>
     <header id="header-container"></header>
 
-    <div class="orcamento-layout">
+    <div class="orcamento-container">
         <!-- SEÇÃO PRINCIPAL -->
         <div class="main-section">
             <!-- Header -->
@@ -34,14 +34,9 @@
 
             <!-- Busca -->
             <div class="search-section">
-                <div class="search-bar">
-                    <div class="search-input">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="search-input" placeholder="Buscar produto por nome, código ou código de barras...">
-                    </div>
-                    <button class="btn btn-success" id="customer-btn">
-                        <i class="fas fa-user-plus"></i> Cliente
-                    </button>
+                <div class="search-input">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Buscar produto por nome ou código..." autocomplete="off">
                 </div>
             </div>
 
@@ -58,10 +53,10 @@
         </div>
 
         <!-- CARRINHO -->
-        <div class="cart-section">
+        <div class="carrinho">
             <!-- Header do Carrinho -->
-            <div class="cart-header">
-                <div class="cart-title">
+            <div class="carrinho-header">
+                <div class="carrinho-title">
                     <h2>
                         <i class="fas fa-shopping-cart"></i> Orçamento
                         <span class="item-count" id="item-count">0</span>
@@ -70,28 +65,32 @@
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
-                <div class="cart-info">
+                <div class="carrinho-info">
                     <span>Nº: <strong id="orcamento-number">Novo</strong></span>
                     <span id="orcamento-date">Hoje</span>
                 </div>
 
-                <!-- Cliente Selecionado -->
-                <div id="customer-display" class="customer-display" style="display: none;">
-                    <div class="customer-info">
+                <!-- Cliente -->
+                <div class="cliente-display" id="cliente-display">
+                    <div class="cliente-info">
                         <i class="fas fa-user"></i>
-                        <div class="customer-details">
-                            <div class="customer-name" id="customer-name"></div>
-                            <div class="customer-contact" id="customer-contact"></div>
+                        <div>
+                            <div class="cliente-nome" id="cliente-nome"></div>
+                            <div class="cliente-contato" id="cliente-contato"></div>
                         </div>
                     </div>
-                    <button class="remove-btn" id="remove-customer-btn">
+                    <button class="remove-btn" id="remove-cliente-btn">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
+                
+                <button class="btn btn-success" id="cliente-btn" style="margin-top: 1rem;">
+                    <i class="fas fa-user-plus"></i> Selecionar Cliente
+                </button>
             </div>
 
             <!-- Itens -->
-            <div class="cart-items" id="cart-items">
+            <div class="carrinho-items" id="carrinho-items">
                 <div class="empty-state">
                     <i class="fas fa-shopping-cart"></i>
                     <p>Nenhum item adicionado</p>
@@ -99,62 +98,56 @@
             </div>
 
             <!-- Ajustes -->
-            <div class="cart-adjustments">
-                <div class="adjustment-row">
+            <div class="carrinho-ajustes">
+                <div class="ajustes-row">
                     <div>
                         <label>Desconto</label>
                         <div class="input-group">
-                            <span class="input-prefix" id="discount-type">%</span>
-                            <input type="number" id="discount-input" placeholder="0" min="0" step="0.01">
+                            <span class="input-prefix" id="desconto-tipo">%</span>
+                            <input type="number" id="desconto-input" placeholder="0" min="0" step="0.01">
                         </div>
                     </div>
                     <div>
                         <label>Frete</label>
                         <div class="input-group">
                             <span class="input-prefix">R$</span>
-                            <input type="number" id="freight-input" placeholder="0,00" min="0" step="0.01">
+                            <input type="number" id="frete-input" placeholder="0,00" min="0" step="0.01">
                         </div>
                     </div>
                 </div>
-                <div class="observations">
-                    <textarea id="observations" placeholder="Observações, condições, prazo de entrega..."></textarea>
+                <div class="observacoes">
+                    <textarea id="observacoes" placeholder="Observações, condições, prazo de entrega..."></textarea>
                 </div>
             </div>
 
             <!-- Totais -->
-            <div class="cart-totals">
-                <div class="total-line">
+            <div class="carrinho-totais">
+                <div class="total-linha">
                     <span>Subtotal:</span>
                     <span id="subtotal">R$ 0,00</span>
                 </div>
-                <div class="total-line discount">
+                <div class="total-linha desconto">
                     <span>Desconto:</span>
-                    <span id="discount-total">- R$ 0,00</span>
+                    <span id="desconto-total">- R$ 0,00</span>
                 </div>
-                <div class="total-line">
+                <div class="total-linha">
                     <span>Frete:</span>
-                    <span id="freight-total">R$ 0,00</span>
+                    <span id="frete-total">R$ 0,00</span>
                 </div>
-                <div class="total-line final">
+                <div class="total-linha final">
                     <span>Total:</span>
-                    <span id="grand-total">R$ 0,00</span>
+                    <span id="total-geral">R$ 0,00</span>
                 </div>
             </div>
 
-            <!-- Actions -->
-            <div class="cart-actions">
-                <button class="btn btn-success" id="save-btn" disabled>
-                    <i class="fas fa-save"></i> Salvar Orçamento
-                </button>
-                <button class="btn btn-primary" id="convert-btn" disabled>
-                    <i class="fas fa-shopping-cart"></i> Converter em Venda
-                </button>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <!-- Ações -->
+            <div class="carrinho-acoes">
+                <div class="btn-grid">
+                    <button class="btn btn-success" id="salvar-btn" disabled>
+                        <i class="fas fa-save"></i> Salvar Orçamento
+                    </button>
                     <button class="btn btn-outline" id="pdf-btn" disabled>
                         <i class="fas fa-file-pdf"></i> PDF
-                    </button>
-                    <button class="btn btn-outline" id="whatsapp-btn" disabled>
-                        <i class="fab fa-whatsapp"></i> Enviar
                     </button>
                 </div>
             </div>
@@ -162,7 +155,7 @@
     </div>
 
     <!-- MODAL DE CLIENTE -->
-    <div class="modal hidden" id="customer-modal">
+    <div class="modal hidden" id="cliente-modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3><i class="fas fa-users"></i> Selecionar Cliente</h3>
@@ -171,55 +164,37 @@
             <div class="modal-body">
                 <div class="search-input" style="margin-bottom: 1rem;">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="customer-search" placeholder="Buscar por nome, telefone ou email...">
+                    <input type="text" id="cliente-search" placeholder="Buscar por nome, telefone ou email...">
                 </div>
-                <div class="customer-list" id="customer-list">
+                <div class="cliente-list" id="cliente-list">
                     <div class="loading"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DE LISTA DE ORÇAMENTOS -->
-    <div class="modal hidden" id="list-modal">
+    <!-- MODAL DE LISTA -->
+    <div class="modal hidden" id="lista-modal">
         <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
-                <h3><i class="fas fa-list"></i> Meus Orçamentos</h3>
+                <h3><i class="fas fa-list"></i> Lista de Orçamentos</h3>
                 <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="table-container" id="orcamentos-table">
+                <div class="search-input" style="margin-bottom: 1rem;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="orcamentos-search" placeholder="Buscar por número, cliente ou data...">
+                </div>
+                <div id="orcamentos-tabela">
                     <div class="loading" style="margin: 2rem auto;"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="header.js"></script>
-    
-    <!-- Funções de Compatibilidade (deve vir primeiro) -->
-    <script src="orcamento-compat.js"></script>
-    
-    <!-- Scripts do Modal de Pagamento -->
-    <script src="nova-venda-pag-config.js"></script>
-    <script src="nova-venda-pag-func.js"></script>
-    <script src="nova-venda-pag-logic.js"></script>
-    
-    <!-- Scripts do Sistema de Formas de Pagamento Especiais -->
-    <script src="nova-venda-formas-pag.js"></script>
-    
-    <!-- Scripts do Cupom e WhatsApp -->
-    <script src="nova-venda-cupom.js"></script>
-    <script src="nova-venda-whats.js"></script>
-    
-    <!-- Script Principal do Orçamento -->
     <script src="orcamento.js"></script>
-    
-    <!-- Correções e Melhorias -->
-    <script src="orcamento-fix.js"></script>
-    
-    <!-- Sistema de Conversão (deve vir por último) -->
-    <script src="orcamento-conversao.js"></script>
+    <script src="orcamento-pdf.js"></script>
+    <script src="orcamento-supa.js"></script>
 </body>
 </html>

@@ -94,6 +94,10 @@
                     <i class="fas fa-download"></i>
                     Exportar
                 </button>
+                <button class="frequency-btn" id="frequency-check">
+                    <i class="fas fa-clock"></i>
+                    Frequência
+                </button>
             </div>
         </div>
 
@@ -311,6 +315,41 @@
         </div>
     </main>
 
+    <!-- Modal de Controle de Frequência -->
+    <div class="frequency-modal" id="frequency-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Controle de Frequência de Recompra</h3>
+                <button class="modal-close" onclick="closeFrequencyModal()">&times;</button>
+            </div>
+            
+            <div class="modal-filters">
+                <div class="status-tabs">
+                    <button class="status-tab active" data-status="all">Todos</button>
+                    <button class="status-tab" data-status="ready">Prontos</button>
+                    <button class="status-tab" data-status="pending">Aguardando</button>
+                </div>
+                
+                <div class="filter-inputs">
+                    <input type="text" id="frequency-filter-client" placeholder="Filtrar por cliente..." oninput="filterFrequencyData()">
+                    <input type="text" id="frequency-filter-product" placeholder="Filtrar por produto..." oninput="filterFrequencyData()">
+                    <button class="clear-filter-btn" onclick="clearFrequencyFilters()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="modal-body">
+                <div id="frequency-loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>Carregando dados de frequência...</p>
+                </div>
+                
+                <div id="frequency-results"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="header.js"></script>
@@ -319,6 +358,7 @@
     <script src="relatorio-vendas-charts.js"></script>
     <script src="relatorio-vendas-ui.js"></script>
     <script src="relatorio-vendas-chart2.js"></script>
+    <script src="relatorio-vendas-freq.js"></script>
 
 </body>
 </html>

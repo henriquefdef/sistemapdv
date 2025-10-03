@@ -318,9 +318,10 @@ class PaymentModal extends PaymentModalConfig {
         const total = this.getCurrentTotal();
         const cashbackEnabled = this.paymentConfig.enableCashback;
         const cashbackPercentage = this.paymentConfig.cashbackPercentage || 0;
+        const currentCustomer = window.saleState?.customer;
         
-        // Só gerar cashback se estiver habilitado
-        if (cashbackEnabled) {
+        // Só gerar cashback se estiver habilitado E cliente selecionado
+        if (cashbackEnabled && currentCustomer) {
             this.paymentData.cashback = total * (cashbackPercentage / 100);
         } else {
             this.paymentData.cashback = 0;
@@ -427,9 +428,31 @@ class PaymentModal extends PaymentModalConfig {
     // ===== FUNCIONALIDADES DE PAGAMENTO MÚLTIPLO =====
     
     updateMultiplePayment() {
-        const amount1 = parseFloat(document.getElementById('payment-amount-1').value) || 0;
-        const amount2 = parseFloat(document.getElementById('payment-amount-2').value) || 0;
+        let amount1 = parseFloat(document.getElementById('payment-amount-1').value) || 0;
+        let amount2 = parseFloat(document.getElementById('payment-amount-2').value) || 0;
         const total = this.getCurrentTotal();
+        
+        // Validação: não permitir valores maiores que o total da venda
+        if (amount1 > total) {
+            amount1 = total;
+            document.getElementById('payment-amount-1').value = amount1.toFixed(2);
+            alert(`O valor do primeiro pagamento não pode ser maior que o total da venda (${this.formatCurrency(total)}).`);
+        }
+        
+        if (amount2 > total) {
+            amount2 = total;
+            document.getElementById('payment-amount-2').value = amount2.toFixed(2);
+            alert(`O valor do segundo pagamento não pode ser maior que o total da venda (${this.formatCurrency(total)}).`);
+        }
+        
+        // Validação: soma dos pagamentos não pode exceder o total
+        if (amount1 + amount2 > total) {
+            const maxAmount2 = total - amount1;
+            amount2 = maxAmount2;
+            document.getElementById('payment-amount-2').value = amount2.toFixed(2);
+            alert(`A soma dos pagamentos não pode exceder o total da venda. Segundo pagamento ajustado para ${this.formatCurrency(amount2)}.`);
+        }
+        
         const remaining = total - (amount1 + amount2);
         
         const method1 = document.getElementById('payment-method-1').value;
@@ -453,14 +476,50 @@ class PaymentModal extends PaymentModalConfig {
     
     updateCashbackUse() {
         const useAmount = parseFloat(document.getElementById('cashback-use-amount').value) || 0;
-        const available = this.paymentData.cashbackAvailable;
+        const available = this.paymentData.cashbackAvailable || 0;
+        const totalVenda = this.getCurrentTotal();
         
+        // Validar se o valor não excede o saldo disponível
         if (useAmount > available) {
             alert(`Você só possui ${this.formatCurrency(available)} de cashback disponível.`);
-            document.getElementById('cashback-use-amount').value = available.toFixed(2);
-            this.paymentData.cashbackUseAmount = available;
-        } else {
-            this.paymentData.cashbackUseAmount = useAmount;
+            document.getElementById('cashback-use-amount').value = Math.min(available, totalVenda).toFixed(2);
+            this.paymentData.cashbackUseAmount = Math.min(available, totalVenda);
+            return;
+        }
+        
+        // Validar se o valor não excede o total da venda
+        if (useAmount > totalVenda) {
+            alert(`O valor de cashback não pode ser maior que o total da venda (${this.formatCurrency(totalVenda)}).`);
+            document.getElementById('cashback-use-amount').value = Math.min(available, totalVenda).toFixed(2);
+            this.paymentData.cashbackUseAmount = Math.min(available, totalVenda);
+            return;
+        }
+        
+        this.paymentData.cashbackUseAmount = useAmount;
+    }
+
+    // Nova função para preencher automaticamente o cashback
+    autoFillCashback() {
+        const available = this.paymentData.cashbackAvailable || 0;
+        const totalVenda = this.getCurrentTotal();
+        const cashbackInput = document.getElementById('cashback-use-amount');
+        
+        if (available <= 0) {
+            alert('Não há saldo de cashback disponível para este cliente.');
+            return;
+        }
+        
+        // Usar o menor valor entre saldo disponível e total da venda
+        const valorUsar = Math.min(available, totalVenda);
+        
+        if (cashbackInput) {
+            cashbackInput.value = valorUsar.toFixed(2);
+            this.paymentData.cashbackUseAmount = valorUsar;
+        }
+        
+        if (valorUsar < totalVenda) {
+            const diferenca = totalVenda - valorUsar;
+            alert(`Cashback insuficiente. Saldo: ${this.formatCurrency(available)}. Faltam ${this.formatCurrency(diferenca)} para cobrir toda a venda.`);
         }
     }
 
@@ -476,15 +535,21 @@ class PaymentModal extends PaymentModalConfig {
             case 'Cashback':
                 const cashbackUse = parseFloat(document.getElementById('cashback-use-amount').value) || 0;
                 const totalVenda = this.getCurrentTotal();
+                const available = this.paymentData.cashbackAvailable || 0;
                 
                 if (cashbackUse <= 0) {
                     return alert('Informe o valor de cashback a ser utilizado.');
                 }
-                if (cashbackUse > this.paymentData.cashbackAvailable) {
-                    return alert('O valor de cashback utilizado não pode ser maior que o disponível.');
+                if (cashbackUse > available) {
+                    return alert(`O valor de cashback utilizado não pode ser maior que o disponível (${this.formatCurrency(available)}).`);
                 }
+                if (cashbackUse > totalVenda) {
+                    return alert(`O valor de cashback não pode ser maior que o total da venda (${this.formatCurrency(totalVenda)}).`);
+                }
+                // Para pagamento exclusivo com cashback, deve cobrir o total da venda
                 if (cashbackUse < totalVenda) {
-                    return alert('O valor de cashback utilizado deve ser igual ou maior que o total da venda para finalizar com cashback.');
+                    const diferenca = totalVenda - cashbackUse;
+                    return alert(`Para finalizar com cashback, o valor deve cobrir toda a venda. Faltam ${this.formatCurrency(diferenca)}. Use pagamento múltiplo se necessário.`);
                 }
                 break;
             case 'Multiplo':
@@ -539,6 +604,8 @@ class PaymentModal extends PaymentModalConfig {
             customer: saleState.customer,
             totals: calculateTotals(),
             payment: this.paymentData,
+            cashback_generated: this.paymentData.cashback || 0, // Cashback gerado nesta venda
+            cashback_used: this.paymentData.cashbackUseAmount || 0, // Cashback usado nesta venda
             adjustments: {
                 discount: this.paymentData.discount || 0,
                 surcharge: this.paymentData.surcharge || 0,

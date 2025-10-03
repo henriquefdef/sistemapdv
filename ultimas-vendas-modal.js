@@ -1,8 +1,32 @@
 // ultimas-vendas-modal.js - Modais e Ações para Últimas Vendas (Agrupado por ID_VENDA)
 // =====================================================================================
 
-function showReceiptModal(sale) {
-    console.log('🧾 Abrindo modal de comprovante para venda:', sale.id_venda);
+async function showReceiptModal(sale) {
+    console.log('🧾 Abrindo modal de comprovante unificado para venda:', sale.id_venda);
+    
+    try {
+        // Usar o modal unificado do nova-venda
+        if (window.openComprovanteUnificadoUltimasVendas) {
+            const result = await window.openComprovanteUnificadoUltimasVendas(sale.id_venda);
+            
+            if (!result.success) {
+                console.error('❌ Erro ao abrir modal unificado:', result.error);
+                // Fallback para o modal simples em caso de erro
+                showReceiptModalFallback(sale);
+            }
+        } else {
+            console.warn('⚠️ Modal unificado não disponível, usando fallback');
+            showReceiptModalFallback(sale);
+        }
+    } catch (error) {
+        console.error('❌ Erro ao abrir modal de comprovante:', error);
+        showReceiptModalFallback(sale);
+    }
+}
+
+// Função de fallback para o modal simples
+function showReceiptModalFallback(sale) {
+    console.log('🧾 Usando modal simples de fallback para venda:', sale.id_venda);
     
     const receiptContent = `
         <div class="receipt-content">

@@ -52,14 +52,14 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="nome-produto" class="required">Nome do Produto</label>
-                        <input type="text" id="nome-produto" class="input-field" placeholder="Ex: Camiseta Feminina" required>
+                        <input type="text" id="nome-produto" class="input-field" placeholder="" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="categoria-produto">Categoria de produto</label>
                         <div class="select-with-add">
                             <select id="categoria-produto" class="select-field">
-                                <option value="">Selecione</option>
+                                <option value=""></option>
                             </select>
                             <button type="button" class="btn-add-item" onclick="openModal('categoria')">
                                 <i class="fas fa-plus"></i>
@@ -133,7 +133,7 @@
                         <label for="marca">Marca</label>
                         <div class="select-with-add">
                             <select id="marca" class="select-field">
-                                <option value="">Ex: Gucci</option>
+                                <option value=""></option>
                             </select>
                             <button type="button" class="btn-add-item" onclick="openModal('marca')">
                                 <i class="fas fa-plus"></i>
@@ -145,7 +145,7 @@
                         <label for="colecao">Coleção</label>
                         <div class="select-with-add">
                             <select id="colecao" class="select-field">
-                                <option value="">Selecione</option>
+                                <option value=""></option>
                             </select>
                             <button type="button" class="btn-add-item" onclick="openModal('colecao')">
                                 <i class="fas fa-plus"></i>
@@ -157,7 +157,7 @@
                         <label for="fornecedor">Fornecedor</label>
                         <div class="select-with-add">
                             <select id="fornecedor" class="select-field">
-                                <option value="">Selecione</option>
+                                <option value=""></option>
                             </select>
                             <button type="button" class="btn-add-item" onclick="openModal('fornecedor')">
                                 <i class="fas fa-plus"></i>
@@ -175,17 +175,28 @@
                     <div class="form-group">
                         <label for="tipo-unidade">Tipo de Unidade</label>
                         <select id="tipo-unidade" class="select-field">
-                            <option value="UN">UN</option>
-                            <option value="KG">KG</option>
-                            <option value="L">L</option>
-                            <option value="M">M</option>
+                            <option value="UN">UN - Unidade</option>
+                            <option value="KG">KG - Quilograma</option>
+                            <option value="G">G - Grama</option>
+                            <option value="L">L - Litro</option>
+                            <option value="ML">ML - Mililitro</option>
+                            <option value="CX">CX - Caixa</option>
+                            <option value="PC">PC - Peça</option>
+                            <option value="MT">MT - Metro</option>
+                            <option value="M2">M2 - Metro quadrado</option>
+                            <option value="M3">M3 - Metro cúbico</option>
+                            <option value="PCT">PCT - Pacote</option>
+                            <option value="FD">FD - Fardo</option>
+                            <option value="DZ">DZ - Dúzia</option>
+                            <option value="SC">SC - Saco</option>
+                            <option value="RL">RL - Rolo</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
                         <label for="tamanho">Tamanho</label>
                         <select id="tamanho" class="select-field">
-                            <option value="">Selecione</option>
+                            <option value=""></option>
                             <optgroup label="Roupas - Letras">
                                 <option value="PP">PP</option>
                                 <option value="P">P</option>
@@ -289,7 +300,7 @@
                         <label for="cor">Cor</label>
                         <div class="select-with-add">
                             <select id="cor" class="select-field">
-                                <option value="">Ex: Preto, Branco, Azul, Vermelho...</option>
+                                <option value=""></option>
                             </select>
                             <button type="button" class="btn-add-item" onclick="openModal('cor')">
                                 <i class="fas fa-plus"></i>
@@ -302,7 +313,7 @@
                         <label for="material">Material</label>
                         <div class="select-with-add">
                             <select id="material" class="select-field">
-                                <option value="">Ex: Couro, Algodão, Plástico...</option>
+                                <option value=""></option>
                             </select>
                             <button type="button" class="btn-add-item" onclick="openModal('material')">
                                 <i class="fas fa-plus"></i>
@@ -311,14 +322,32 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="modelo">Modelo</label>
-                        <input type="text" id="modelo" class="input-field" placeholder="Quando o produto principal é o mesmo, mas muda o modelo">
+                        <label for="frequencia">Frequência de Uso</label>
+                                            <select id="frequencia" class="select-field">
+                        <option value=""></option>
+                        <option value="1 mês">1 mês</option>
+                        <option value="2 meses">2 meses</option>
+                        <option value="3 meses">3 meses</option>
+                        <option value="4 meses">4 meses</option>
+                        <option value="5 meses">5 meses</option>
+                        <option value="6 meses">6 meses</option>
+                        <option value="7 meses">7 meses</option>
+                        <option value="8 meses">8 meses</option>
+                        <option value="9 meses">9 meses</option>
+                        <option value="10 meses">10 meses</option>
+                        <option value="11 meses">11 meses</option>
+                        <option value="12 meses">12 meses (1 ano)</option>
+                        <option value="18 meses">18 meses (1,5 ano)</option>
+                        <option value="24 meses">24 meses (2 anos)</option>
+                    </select>
+
+                        <small class="field-description">Frequência estimada de uso dos clientes</small>
                     </div>
                     
                     <div class="form-group">
                         <label for="genero">Gênero</label>
                         <select id="genero" class="select-field">
-                            <option value="">Selecione</option>
+                            <option value=""></option>
                             <option value="masculino">Masculino</option>
                             <option value="feminino">Feminino</option>
                             <option value="unissex">Unissex</option>
@@ -351,7 +380,7 @@
                         <label for="localizacao">Localização no Estoque</label>
                         <div class="select-with-add">
                             <select id="localizacao" class="select-field">
-                                <option value="">Ex: Prateleira A1</option>
+                                <option value=""></option>
                             </select>
                             <button type="button" class="btn-add-item" onclick="openModal('localizacao')">
                                 <i class="fas fa-plus"></i>
@@ -449,7 +478,7 @@
                     <div class="form-group">
                         <label for="origem-produto">Origem do produto (0 a 8)</label>
                         <select id="origem-produto" class="select-field">
-                            <option value="">Selecione</option>
+                            <option value=""></option>
                             <option value="0">0 - Nacional, exceto as indicadas nos códigos 3, 4, 5 e 8</option>
                             <option value="1">1 - Estrangeira - Importação direta, exceto a indicada no código 6</option>
                             <option value="2">2 - Estrangeira - Adquirida no mercado interno, exceto a indicada no código 7</option>
@@ -465,7 +494,7 @@
                     <div class="form-group">
                         <label for="csosn">CSOSN (Simples Nacional)</label>
                         <select id="csosn" class="select-field">
-                            <option value="">Selecione</option>
+                            <option value=""></option>
                             <option value="101">101 - Tributada pelo Simples Nacional com permissão de crédito</option>
                             <option value="102">102 - Tributada pelo Simples Nacional sem permissão de crédito</option>
                             <option value="103">103 - Isenção do ICMS no Simples Nacional para faixa de receita bruta</option>
@@ -482,7 +511,7 @@
                     <div class="form-group">
                         <label for="cst-pis-cofins">CST PIS / CST COFINS</label>
                         <select id="cst-pis-cofins" class="select-field">
-                            <option value="">Selecione</option>
+                            <option value=""></option>
                             <option value="01">01 - Operação Tributável - Base de Cálculo = Valor da Operação Alíquota Normal</option>
                             <option value="02">02 - Operação Tributável - Base de Cálculo = Valor da Operação (Alíquota Diferenciada)</option>
                             <option value="03">03 - Operação Tributável - Base de Cálculo = Quantidade Vendida x Alíquota por Unidade de Produto</option>
@@ -570,6 +599,7 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="header.js"></script>
+    <script src="adicionar-produtos-busca.js"></script>
     <script src="adicionar-produtos-supa.js"></script>
     <script src="adicionar-produtos-img.js"></script>
     <script src="adicionar-produtos.js"></script>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Dashboard de Serviços</title>
+    <link rel="icon" type="image/png" href="log.png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="agenda-graficos.css">
+</head>
+
+<body>
+    <!-- Header Container -->
+    <header id="header-container"></header>
+
+    <!-- Container Principal -->
+    <div class="dashboard-container">
+        <!-- Cabeçalho do Dashboard -->
+        <div class="dashboard-header">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <a href="agenda-servicos.html" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Voltar
+                </a>
+                <h1>Dashboard de Serviços</h1>
+            </div>
+            
+            <div class="header-controls">
+                <div class="filter-group">
+                    <select class="filter-select" id="period-filter">
+                        <option value="hoje">Hoje</option>
+                        <option value="semana" selected>Esta Semana</option>
+                        <option value="mes">Este Mês</option>
+                        <option value="trimestre">Último Trimestre</option>
+                        <option value="ano">Este Ano</option>
+                        <option value="custom">Período Personalizado</option>
+                    </select>
+                    
+                    <select class="filter-select" id="professional-filter">
+                        <option value="todos">Todos os Profissionais</option>
+                    </select>
+                    
+                    <div class="date-range-inputs hidden" id="custom-date-range">
+                        <input type="date" id="start-date" class="date-input">
+                        <span>até</span>
+                        <input type="date" id="end-date" class="date-input">
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" id="refresh-dashboard">
+                    <i class="fas fa-sync-alt"></i>
+                    Atualizar
+                </button>
+                
+                <button class="btn btn-secondary" id="export-data">
+                    <i class="fas fa-download"></i>
+                    Exportar
+                </button>
+            </div>
+        </div>
+
+        <!-- Cards de Métricas -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value" id="total-appointments">0</div>
+                    <div class="metric-label">Total de Agendamentos</div>
+                    <div class="metric-change" id="appointments-change">+0%</div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-icon revenue">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value" id="total-revenue">R$ 0</div>
+                    <div class="metric-label">Receita Total</div>
+                    <div class="metric-change" id="revenue-change">+0%</div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-icon success">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value" id="completion-rate">0%</div>
+                    <div class="metric-label">Taxa de Conclusão</div>
+                    <div class="metric-change" id="completion-change">+0%</div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-icon warning">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value" id="cancellation-rate">0%</div>
+                    <div class="metric-label">Taxa de Cancelamento</div>
+                    <div class="metric-change" id="cancellation-change">+0%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Layout dos Gráficos -->
+        <div class="charts-container">
+            <!-- Linha 1 -->
+            <div class="chart-row">
+                <div class="chart-card large">
+                    <div class="chart-header">
+                        <h3>Agendamentos ao Longo do Tempo</h3>
+                        <div class="chart-controls">
+                            <select class="chart-filter" id="timeline-filter">
+                                <option value="appointments">Agendamentos</option>
+                                <option value="revenue">Receita</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-content">
+                        <canvas id="timeline-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card medium">
+                    <div class="chart-header">
+                        <h3>Distribuição de Serviços</h3>
+                    </div>
+                    <div class="chart-content">
+                        <canvas id="services-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Linha 2 -->
+            <div class="chart-row">
+                <div class="chart-card medium">
+                    <div class="chart-header">
+                        <h3>Performance por Profissional</h3>
+                    </div>
+                    <div class="chart-content">
+                        <canvas id="professionals-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card medium">
+                    <div class="chart-header">
+                        <h3>Status dos Agendamentos</h3>
+                    </div>
+                    <div class="chart-content">
+                        <canvas id="status-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Linha 3 -->
+            <div class="chart-row">
+                <div class="chart-card large">
+                    <div class="chart-header">
+                        <h3>Heatmap de Horários</h3>
+                        <div class="chart-info">
+                            <span>Intensidade de agendamentos por dia da semana e horário</span>
+                        </div>
+                    </div>
+                    <div class="chart-content">
+                        <div id="heatmap-chart"></div>
+                    </div>
+                </div>
+                
+                <div class="chart-card small">
+                    <div class="chart-header">
+                        <h3>Top Clientes</h3>
+                    </div>
+                    <div class="chart-content">
+                        <div id="top-clients" class="ranking-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de Dados Detalhados -->
+        <div class="data-table-section">
+            <div class="table-header">
+                <h3>Dados Detalhados</h3>
+                <div class="table-controls">
+                    <input type="text" placeholder="Buscar..." class="search-input" id="table-search">
+                    <select class="table-filter" id="table-status-filter">
+                        <option value="">Todos os Status</option>
+                        <option value="agendado">Agendado</option>
+                        <option value="concluido">Concluído</option>
+                        <option value="cancelado">Cancelado</option>
+                        <option value="em_andamento">Em Andamento</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table class="data-table" id="appointments-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Horário</th>
+                            <th>Cliente</th>
+                            <th>Serviço</th>
+                            <th>Profissional</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appointments-tbody">
+                        <!-- Dados serão carregados dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="table-pagination">
+                <div class="pagination-info" id="pagination-info">
+                    Mostrando 0 de 0 resultados
+                </div>
+                <div class="pagination-controls">
+                    <button class="btn-pagination" id="prev-page" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="page-numbers" id="page-numbers"></span>
+                    <button class="btn-pagination" id="next-page" disabled>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <span>Carregando dados...</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="header.js"></script>
+    <script src="agenda-graficos.js"></script>
+</body>
+</html>

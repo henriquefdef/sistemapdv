@@ -60,6 +60,18 @@ async function loadSelectOptions() {
             loadOptions('material', 'materiais', 'nome'),
             loadOptions('localizacao', 'localizacoes', 'nome')
         ]);
+        
+        // Inicializa os selects com funcionalidade de busca
+        initializeSearchableSelects([
+            'categoria-produto',
+            'marca', 
+            'colecao',
+            'fornecedor',
+            'cor',
+            'material',
+            'localizacao'
+        ]);
+        
         console.log('Todas as opções dos selects carregadas com sucesso');
     } catch (error) {
         console.error('Erro ao carregar opções dos selects:', error);
@@ -244,8 +256,27 @@ window.saveItem = async function() {
         const selectId = currentModalType === 'categoria' ? 'categoria-produto' : currentModalType;
         await loadOptions(selectId, config.table, config.nameField);
         
+        // Atualiza o select com busca se existir
+        const searchableContainer = document.querySelector(`[data-select-id="${selectId}"]`);
+        if (searchableContainer && searchableContainer.updateOptions) {
+            // Recarrega as opções do select original
+            const originalSelect = document.getElementById(selectId);
+            const options = Array.from(originalSelect.options).map(option => ({
+                value: option.value,
+                text: option.textContent,
+                selected: option.selected
+            }));
+            searchableContainer.updateOptions(options);
+        }
+        
         // Seleciona o item recém-criado
-        document.getElementById(selectId).value = data[0].id;
+        const originalSelect = document.getElementById(selectId);
+        originalSelect.value = data[0].id;
+        
+        // Atualiza também no select com busca
+        if (searchableContainer && searchableContainer.setValue) {
+            searchableContainer.setValue(data[0].id);
+        }
         
         // Limpa o campo de input
         document.getElementById('item-name').value = '';
@@ -396,7 +427,7 @@ async function searchProducts(filters = {}) {
                 categorias(nome),
                 marcas(nome),
                 colecoes(nome),
-                fornecedores(nome)
+                fornecedor(razao_social)
             `)
             .eq('id_empresa', window.currentCompanyId);
 
@@ -508,7 +539,7 @@ async function getProductById(productId) {
                 categorias(id, nome),
                 marcas(id, nome),
                 colecoes(id, nome),
-                fornecedores(id, nome)
+                fornecedor(id, nome)
             `)
             .eq('id', productId)
             .eq('id_empresa', window.currentCompanyId)

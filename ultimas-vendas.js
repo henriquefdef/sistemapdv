@@ -620,7 +620,14 @@ function handleRowAction(e) {
             showSaleDetailsModal(saleId);
             break;
         case 'receipt':
-            showReceiptModal(sale);
+            // Usar o modal unificado de comprovante
+            if (window.openComprovanteUnificadoUltimasVendas) {
+                window.openComprovanteUnificadoUltimasVendas(saleId);
+            } else {
+                // Fallback para o modal antigo se a função não estiver disponível
+                console.warn('⚠️ Função unificada não disponível, usando fallback');
+                showReceiptModal(sale);
+            }
             break;
         case 'return':
             showReturnModal(sale);

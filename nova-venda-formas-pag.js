@@ -19,11 +19,11 @@ async function processSpecialPayments(saleData, saleNumber) {
         const paymentMethod = saleData.payment.method;
         const clienteId = saleData.customer?.id || null;
 
-        // 1. PROCESSAR CASHBACK - SEMPRE GERAR SE HABILITADO (independente da forma de pagamento)
+        // 1. PROCESSAR CASHBACK - GERAR APENAS SE HABILITADO E CLIENTE SELECIONADO
         const cashbackEnabled = document.getElementById('enable-cashback')?.checked || false;
         const cashbackValue = saleData.adjustments?.cashback || 0;
         
-        if (cashbackEnabled && cashbackValue > 0) {
+        if (cashbackEnabled && cashbackValue > 0 && clienteId) {
             results.cashback = await processCashbackGeneration(
                 clienteId, 
                 saleNumber, 
@@ -106,6 +106,10 @@ async function processCashbackGeneration(clienteId, vendaId, valor) {
     try {
         if (valor <= 0) {
             return { processed: false, success: false, reason: 'Valor de cashback inválido' };
+        }
+        
+        if (!clienteId) {
+            return { processed: false, success: false, reason: 'Cliente não selecionado para cashback' };
         }
 
         const result = await creditCashback(clienteId, vendaId, valor, 'Cashback gerado na compra');
@@ -347,8 +351,8 @@ window.processAndSaveSale = async function(paymentData) {
 // ===== NOTIFICAÇÕES =====
 
 function showPaymentNotifications(results) {
-    // Notificações para cashback
-    if (results.cashback.processed && results.cashback.success) {
+    // Notificações para cashback - só exibe se há cliente
+    if (results.cashback.processed && results.cashback.success && results.cashback.clienteId) {
         if (results.cashback.type === 'generation') {
             showNotification(`💰 ${results.cashback.message}`, 'success');
         } else if (results.cashback.type === 'usage') {
@@ -375,21 +379,24 @@ function showPaymentNotifications(results) {
 // ===== FUNÇÕES AUXILIARES DO CASHBACK/CREDIÁRIO/CUPOM =====
 
 async function creditCashback(clienteId, vendaId, valor, descricao) {
+    // Não permite crédito de cashback sem cliente
+    if (!clienteId) {
+        return { success: false, error: 'Cliente é obrigatório para crédito de cashback' };
+    }
+    
     let saldoAnterior = 0;
     let novoSaldo = valor;
     
-    if (clienteId) {
-        const { data: ultimoRegistro } = await supabaseClient
-            .from('cashback')
-            .select('saldo_atual')
-            .eq('cliente_id', clienteId)
-            .eq('id_empresa', window.currentCompanyId)
-            .order('created_at', { ascending: false })
-            .limit(1);
+    const { data: ultimoRegistro } = await supabaseClient
+        .from('cashback')
+        .select('saldo_atual')
+        .eq('cliente_id', clienteId)
+        .eq('id_empresa', window.currentCompanyId)
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-        saldoAnterior = ultimoRegistro?.[0]?.saldo_atual || 0;
-        novoSaldo = saldoAnterior + valor;
-    }
+    saldoAnterior = ultimoRegistro?.[0]?.saldo_atual || 0;
+    novoSaldo = saldoAnterior + valor;
 
     const { error } = await supabaseClient
         .from('cashback')

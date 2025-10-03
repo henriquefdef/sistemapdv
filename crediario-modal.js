@@ -35,7 +35,11 @@ async function openPaymentModal(crediariaId) {
         // Configurar campos
         document.getElementById('payment-valor').value = currentPaymentData.saldoRestante.toFixed(2);
         document.getElementById('payment-valor').max = currentPaymentData.saldoRestante;
-        document.getElementById('payment-data').value = new Date().toISOString().split('T')[0];
+        
+        // Configurar data atual no fuso horário brasileiro
+        const now = new Date();
+        const brazilTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+        document.getElementById('payment-data').value = brazilTime.toISOString().split('T')[0];
         document.getElementById('payment-observacoes').value = '';
         
         // Configurar eventos do modal
@@ -104,12 +108,17 @@ async function confirmPayment() {
             novoStatus = 'parcial';
         }
         
+        // Converter data para horário brasileiro antes de salvar
+        const paymentDate = new Date(data + 'T00:00:00');
+        const brazilPaymentTime = new Date(paymentDate.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+        const brazilDateString = brazilPaymentTime.toISOString().split('T')[0];
+        
         // Atualizar na tabela crediario
         const { error: updateError } = await supabaseClient
             .from('crediario')
             .update({
                 valor_pago: novoValorPago,
-                data_pagamento: data,
+                data_pagamento: brazilDateString,
                 status: novoStatus,
                 observacoes: observacoes || null
             })
@@ -134,12 +143,17 @@ async function registrarMovimentacaoFinanceira(valor, data, forma, observacoes) 
     try {
         const descricao = `Recebimento Crediário - Venda #${currentPaymentData.venda} - Parcela ${currentPaymentData.parcela}`;
         
+        // Converter data para horário brasileiro
+        const paymentDate = new Date(data + 'T00:00:00');
+        const brazilPaymentTime = new Date(paymentDate.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+        const brazilDateString = brazilPaymentTime.toISOString().split('T')[0];
+        
         const movimentacao = {
             id_empresa: String(window.currentCompanyId),
             tipo: 'RECEBER',
             descricao: descricao,
             valor: valor,
-            data_vencimento: data,
+            data_vencimento: brazilDateString,
             categoria: 'Crediário',
             pessoa_empresa: currentPaymentData.cliente,
             documento: `${currentPaymentData.venda}-P${currentPaymentData.parcela}`,
@@ -169,47 +183,130 @@ function closePaymentModal() {
 }
 
 // ===== MODAL WHATSAPP =====
-async function openWhatsAppModal(clienteId, vendaId) {
+async function openWhatsAppModal(clienteId, vendaId, parcelaId = null) {
     try {
         // Buscar dados do cliente
-        const { data: cliente, error } = await supabaseClient
+        const { data: clienteData, error: clienteError } = await supabaseClient
             .from('clientes')
             .select('*')
             .eq('id', clienteId)
+            .eq('id_empresa', window.currentCompanyId)
             .single();
         
-        if (error) throw error;
+        if (clienteError) {
+            throw clienteError;
+        }
+        
+        const cliente = clienteData;
         
         if (!cliente.telefone) {
             showNotification('Cliente não possui telefone cadastrado', 'warning');
             return;
         }
         
-        // Buscar parcelas em aberto desta venda
-        const parcelasVenda = crediariosData.filter(c => 
-            c.cliente_id == clienteId && c.venda_id === vendaId && c.saldo_restante > 0
-        );
+        let valorParcela, diasAtraso, dataVencimento, qtdParcelas;
         
-        currentWhatsAppData = {
-            cliente: cliente,
+        if (parcelaId) {
+            // Se foi passado o ID da parcela específica, usar dados dessa parcela
+            const parcelaEspecifica = crediariosData.find(c => c.id == parcelaId);
+            
+            if (parcelaEspecifica) {
+                valorParcela = parcelaEspecifica.saldo_restante;
+                dataVencimento = formatDate(parcelaEspecifica.data_vencimento);
+                qtdParcelas = 1; // Uma parcela específica
+                
+                // Calcular dias de atraso para esta parcela específica
+                if (parcelaEspecifica.is_overdue && parcelaEspecifica.status_calculado !== 'pago') {
+                    diasAtraso = Math.floor((new Date() - new Date(parcelaEspecifica.data_vencimento)) / (1000 * 60 * 60 * 24));
+                } else {
+                    diasAtraso = 0;
+                }
+            } else {
+                showNotification('Parcela não encontrada', 'error');
+                return;
+            }
+        } else {
+             // Comportamento agregado: buscar todas as parcelas em aberto da venda
+             const parcelasEmAberto = crediariosData.filter(c => 
+                 c.cliente_id == clienteId && c.venda_id === vendaId && c.saldo_restante > 0 && c.status_calculado !== 'pago'
+             );
+             
+             if (parcelasEmAberto.length === 0) {
+                 showNotification('Não há parcelas em aberto para esta venda', 'warning');
+                 return;
+             }
+             
+             // Função auxiliar para verificar se uma parcela está vencida
+             const isParcelaVencida = (parcela) => {
+                 if (!parcela.data_vencimento) return false;
+                 const hoje = new Date();
+                 const dataVencimento = new Date(parcela.data_vencimento);
+                 hoje.setHours(0, 0, 0, 0);
+                 dataVencimento.setHours(0, 0, 0, 0);
+                 return dataVencimento < hoje;
+             };
+             
+             // Buscar apenas parcelas vencidas usando nossa própria lógica
+             const parcelasVencidas = parcelasEmAberto.filter(p => isParcelaVencida(p));
+             
+             console.log('Debug - Parcelas em aberto:', parcelasEmAberto.length);
+             console.log('Debug - Parcelas vencidas:', parcelasVencidas.length);
+             console.log('Debug - Parcelas vencidas detalhes:', parcelasVencidas.map(p => ({
+                 id: p.id,
+                 data_vencimento: p.data_vencimento,
+                 is_overdue: p.is_overdue,
+                 saldo_restante: p.saldo_restante
+             })));
+             
+             if (parcelasVencidas.length > 0) {
+                 // Calcular dados apenas das parcelas vencidas
+                 qtdParcelas = parcelasVencidas.length;
+                 valorParcela = parcelasVencidas.reduce((sum, p) => sum + p.saldo_restante, 0);
+                 
+                 // Maior atraso entre as parcelas vencidas
+                 diasAtraso = Math.max(...parcelasVencidas.map(p => 
+                     Math.floor((new Date() - new Date(p.data_vencimento)) / (1000 * 60 * 60 * 24))
+                 ));
+                 
+                 // Data de vencimento da parcela mais antiga vencida
+                 const parcelaMaisAntiga = parcelasVencidas.sort((a, b) => new Date(a.data_vencimento) - new Date(b.data_vencimento))[0];
+                 dataVencimento = formatDate(parcelaMaisAntiga.data_vencimento);
+             } else {
+                 // Se não há parcelas vencidas, mostrar que não há parcelas vencidas
+                 qtdParcelas = 0;
+                 valorParcela = 0;
+                 diasAtraso = 0;
+                 
+                 // Usar a próxima a vencer apenas para referência
+                 const proximaVencer = parcelasEmAberto.sort((a, b) => new Date(a.data_vencimento) - new Date(b.data_vencimento))[0];
+                 dataVencimento = formatDate(proximaVencer.data_vencimento);
+             }
+         }
+        
+        // Preparar dados customizados para o modal unificado
+        const customData = {
+            valorParcela: valorParcela,
+            diasAtraso: diasAtraso,
+            dataVencimento: dataVencimento,
+            qtdParcelas: qtdParcelas,
             vendaId: vendaId,
-            parcelas: parcelasVenda
+            parcelaId: parcelaId
         };
         
-        // Preencher modal
-        document.getElementById('whatsapp-cliente').textContent = cliente.nome;
-        document.getElementById('whatsapp-telefone').textContent = cliente.telefone;
+        // Adicionar dados ao cliente para o modal unificado
+        const clienteComDados = {
+            ...cliente,
+            valorParcela: valorParcela,
+            diasAtraso: diasAtraso,
+            dataVencimento: dataVencimento
+        };
         
-        // Configurar eventos do modal
-        setupWhatsAppModalEvents();
-        
-        // Gerar mensagem
-        updateWhatsAppMessage();
-        
-        // Mostrar modal
-        const modal = document.getElementById('whatsapp-modal');
-        modal.classList.remove('hidden');
-        setTimeout(() => modal.classList.add('show'), 10);
+        // Abrir modal unificado com tipo cobrança
+        if (window.whatsAppModalUnified) {
+            window.whatsAppModalUnified.open(clienteComDados, 'cobranca', customData);
+        } else {
+            showNotification('Modal do WhatsApp não está disponível', 'error');
+        }
         
     } catch (error) {
         console.error('Erro ao abrir modal WhatsApp:', error);
@@ -217,157 +314,9 @@ async function openWhatsAppModal(clienteId, vendaId) {
     }
 }
 
-function setupWhatsAppModalEvents() {
-    // Remover eventos existentes
-    const templateSelect = document.getElementById('whatsapp-template');
-    const sendBtn = document.getElementById('send-whatsapp');
-    const cancelBtn = document.getElementById('cancel-whatsapp');
-    
-    // Clonar e substituir para remover eventos existentes
-    const newTemplateSelect = templateSelect.cloneNode(true);
-    const newSendBtn = sendBtn.cloneNode(true);
-    const newCancelBtn = cancelBtn.cloneNode(true);
-    
-    templateSelect.parentNode.replaceChild(newTemplateSelect, templateSelect);
-    sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
-    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-    
-    // Adicionar novos eventos
-    newTemplateSelect.addEventListener('change', updateWhatsAppMessage);
-    newSendBtn.addEventListener('click', sendWhatsApp);
-    newCancelBtn.addEventListener('click', closeWhatsAppModal);
-}
+// Funções removidas - agora usando modal unificado do WhatsApp
 
-function updateWhatsAppMessage() {
-    if (!currentWhatsAppData) return;
-    
-    const template = document.getElementById('whatsapp-template').value;
-    const { cliente, vendaId, parcelas } = currentWhatsAppData;
-    
-    const parcelasVencidas = parcelas.filter(p => p.is_overdue);
-    const parcelasHoje = parcelas.filter(p => p.is_due_today);
-    const proximasParcelas = parcelas.filter(p => !p.is_overdue && !p.is_due_today).slice(0, 3);
-    
-    const totalAberto = parcelas.reduce((sum, p) => sum + p.saldo_restante, 0);
-    
-    let mensagem = '';
-    
-    // Cabeçalho da mensagem
-    switch (template) {
-        case 'profissional':
-            mensagem = `Prezado(a) ${cliente.nome},\n\n`;
-            mensagem += `Informamos sobre a situação do crediário referente à Venda #${vendaId}:\n\n`;
-            break;
-            
-        case 'cordial':
-            mensagem = `Olá ${cliente.nome}!\n\n`;
-            mensagem += `Esperamos que esteja tudo bem. Este é um lembrete sobre o crediário da Venda #${vendaId}:\n\n`;
-            break;
-            
-        case 'urgente':
-            mensagem = `${cliente.nome}, atenção!\n\n`;
-            mensagem += `Identificamos pendências no crediário da Venda #${vendaId} que necessitam regularização:\n\n`;
-            break;
-            
-        case 'personalizada':
-            mensagem = `${cliente.nome},\n\n`;
-            mensagem += `Sobre o crediário da Venda #${vendaId}:\n\n`;
-            break;
-    }
-    
-    // Detalhes das parcelas
-    if (parcelasVencidas.length > 0) {
-        mensagem += `🔴 *PARCELAS VENCIDAS:*\n`;
-        parcelasVencidas.forEach(p => {
-            mensagem += `• Parcela ${p.numero_parcela}: ${formatCurrency(p.saldo_restante)} (Venc: ${formatDate(p.data_vencimento)})\n`;
-        });
-        mensagem += `\n`;
-    }
-    
-    if (parcelasHoje.length > 0) {
-        mensagem += `⏰ *VENCEM HOJE:*\n`;
-        parcelasHoje.forEach(p => {
-            mensagem += `• Parcela ${p.numero_parcela}: ${formatCurrency(p.saldo_restante)}\n`;
-        });
-        mensagem += `\n`;
-    }
-    
-    if (proximasParcelas.length > 0) {
-        mensagem += `📅 *PRÓXIMAS PARCELAS:*\n`;
-        proximasParcelas.forEach(p => {
-            mensagem += `• Parcela ${p.numero_parcela}: ${formatCurrency(p.saldo_restante)} (Venc: ${formatDate(p.data_vencimento)})\n`;
-        });
-        mensagem += `\n`;
-    }
-    
-    mensagem += `💰 *Total em aberto:* ${formatCurrency(totalAberto)}\n\n`;
-    
-    // Finalização
-    switch (template) {
-        case 'profissional':
-            mensagem += `Solicitamos a regularização no menor prazo possível.\n\n`;
-            mensagem += `Para maiores informações, entre em contato conosco.\n\n`;
-            mensagem += `Atenciosamente,\nEquipe Financeira`;
-            break;
-            
-        case 'cordial':
-            mensagem += `Qualquer dúvida, estamos à disposição!\n\n`;
-            mensagem += `Obrigado pela confiança! 😊`;
-            break;
-            
-        case 'urgente':
-            mensagem += `⚠️ *ATENÇÃO:* Entre em contato HOJE para evitar complicações!\n\n`;
-            mensagem += `Aguardamos seu retorno urgente.`;
-            break;
-            
-        case 'personalizada':
-            mensagem += `[Personalize sua mensagem aqui]\n\n`;
-            mensagem += `Atenciosamente,\nSua Empresa`;
-            break;
-    }
-    
-    document.getElementById('whatsapp-mensagem').value = mensagem;
-}
-
-function sendWhatsApp() {
-    if (!currentWhatsAppData) return;
-    
-    const mensagem = document.getElementById('whatsapp-mensagem').value.trim();
-    
-    if (!mensagem) {
-        showNotification('Digite uma mensagem para enviar', 'error');
-        return;
-    }
-    
-    // Limpar e formatar número
-    let telefone = currentWhatsAppData.cliente.telefone.replace(/\D/g, '');
-    
-    // Adicionar código do país se necessário
-    if (telefone.length === 11) {
-        telefone = '55' + telefone;
-    } else if (telefone.length === 10) {
-        telefone = '55' + telefone;
-    }
-    
-    // Codificar mensagem
-    const mensagemCodificada = encodeURIComponent(mensagem);
-    
-    // Abrir WhatsApp
-    const url = `https://wa.me/${telefone}?text=${mensagemCodificada}`;
-    window.open(url, '_blank');
-    
-    showNotification('WhatsApp aberto! Envie a mensagem pelo aplicativo.', 'success');
-    closeWhatsAppModal();
-}
-
-function closeWhatsAppModal() {
-    const modal = document.getElementById('whatsapp-modal');
-    modal.classList.remove('show');
-    setTimeout(() => {
-        modal.classList.add('hidden');
-        currentWhatsAppData = null;
-    }, 300);
-}
+// Função removida - agora usando modal unificado do WhatsApp
 
 // ===== MODAL DE HISTÓRICO =====
 async function openHistoryModal(crediariaId) {
@@ -453,39 +402,39 @@ function closeHistoryModal() {
 // ===== COBRANÇA EM LOTE =====
 async function bulkCharge() {
     try {
-        const clientesVencidos = {};
+        const clientesComParcelas = {};
         
-        // Agrupar parcelas vencidas por cliente
+        // Agrupar parcelas em aberto por cliente
         crediariosData.forEach(item => {
-            if (item.is_overdue && item.saldo_restante > 0 && item.cliente?.telefone) {
+            if (item.saldo_restante > 0 && item.status_calculado !== 'pago' && item.cliente?.telefone) {
                 const clienteId = item.cliente_id;
-                if (!clientesVencidos[clienteId]) {
-                    clientesVencidos[clienteId] = {
+                if (!clientesComParcelas[clienteId]) {
+                    clientesComParcelas[clienteId] = {
                         cliente: item.cliente,
                         parcelas: []
                     };
                 }
-                clientesVencidos[clienteId].parcelas.push(item);
+                clientesComParcelas[clienteId].parcelas.push(item);
             }
         });
         
-        const clientesCount = Object.keys(clientesVencidos).length;
+        const clientesCount = Object.keys(clientesComParcelas).length;
         
         if (clientesCount === 0) {
-            showNotification('Não há clientes com parcelas vencidas e telefone cadastrado', 'warning');
+            showNotification('Não há clientes com parcelas em aberto e telefone cadastrado', 'warning');
             return;
         }
         
         const confirmacao = confirm(
-            `Deseja enviar cobrança via WhatsApp para ${clientesCount} cliente(s) com parcelas vencidas?`
+            `Deseja enviar cobrança via WhatsApp para ${clientesCount} cliente(s) com parcelas em aberto?`
         );
         
         if (!confirmacao) return;
         
         // Abrir WhatsApp para cada cliente (com delay)
         let index = 0;
-        for (const clienteId in clientesVencidos) {
-            const clienteData = clientesVencidos[clienteId];
+        for (const clienteId in clientesComParcelas) {
+            const clienteData = clientesComParcelas[clienteId];
             const primeiraVenda = clienteData.parcelas[0].venda_id;
             
             setTimeout(() => {
@@ -640,5 +589,10 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
         generateWhatsAppURL
     };
 }
+
+// Exportar funções globais para uso nos templates HTML
+window.openPaymentModal = openPaymentModal;
+window.openWhatsAppModal = openWhatsAppModal;
+window.openHistoryModal = openHistoryModal;
 
 console.log('✅ Sistema de Crediário inicializado - Arquivo de Modais');

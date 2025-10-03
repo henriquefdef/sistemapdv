@@ -1,87 +1,264 @@
-// agenda-servicos.js - Sistema Profissional de Agenda de Serviços
-// ================================================================
+// agenda-servicos.js - Sistema Principal de Agenda de Serviços INTEGRADO COM SUPABASE
+// ===========================================================
 
 class AgendaServicos {
     constructor() {
         this.currentDate = new Date();
         this.appointments = [];
-        this.professionals = [
-            { id: 'joao', name: 'João Silva', color: '#FF9800' },
-            { id: 'maria', name: 'Maria Santos', color: '#10b981' },
-            { id: 'carlos', name: 'Carlos Lima', color: '#3b82f6' }
-        ];
-        this.services = [
-            { id: 1, name: 'Consultoria em TI', price: 150.00, duration: 60 },
-            { id: 2, name: 'Manutenção de Computador', price: 80.00, duration: 90 },
-            { id: 3, name: 'Instalação de Software', price: 50.00, duration: 30 },
-            { id: 4, name: 'Treinamento', price: 200.00, duration: 120 }
-        ];
-        this.clients = [
-            { id: 1, name: 'Empresa ABC Ltda', phone: '(11) 99999-0001' },
-            { id: 2, name: 'João da Silva', phone: '(11) 99999-0002' },
-            { id: 3, name: 'Maria Oliveira', phone: '(11) 99999-0003' }
-        ];
+        this.professionals = [];
+        this.services = [];
+        this.clients = [];
+        this.selectedProfessional = null;
+        this.selectedAppointment = null;
         this.settings = this.loadSettings();
-        this.selectedProfessional = 'todos';
+        this.isLoading = false;
         
         this.init();
     }
 
-    init() {
-        this.loadHeader();
+    async init() {
         this.setupEventListeners();
         this.updateDateDisplay();
-        this.generateTimeSlots();
-        this.renderAppointments();
-        this.updateCurrentTimeIndicator();
         
-        // Atualizar indicador de tempo atual a cada minuto
-        setInterval(() => this.updateCurrentTimeIndicator(), 60000);
+        // SEMPRE gerar a timeline primeiro
+        this.generateTimeline();
         
-        console.log('✅ Agenda de Serviços inicializada');
+        // Aguardar dados do usuário estarem prontos
+        if (window.currentUser && window.currentCompanyId) {
+            await this.loadAllData();
+        } else {
+            document.addEventListener('userDataReady', async () => {
+                await this.loadAllData();
+            });
+        }
+        
+        this.waitForHeaderAndFixIcons();
+        console.log('✅ Agenda de Serviços inicializada com Supabase');
     }
 
-    async loadHeader() {
+    // ===== CARREGAMENTO DE DADOS DO SUPABASE =====
+    
+    async loadAllData() {
         try {
-            const response = await fetch('header.js');
-            if (response.ok) {
-                console.log('✅ Header carregado');
-            }
+            this.setLoadingState(true);
+            
+            // Carregar dados em paralelo
+            const [profissionais, servicos, clientes] = await Promise.all([
+                loadProfissionaisFromDB(),
+                loadServicosFromDB(),
+                loadClientesFromDB()
+            ]);
+            
+            this.professionals = profissionais;
+            this.services = servicos;
+            this.clients = clientes;
+            
+            // Atualizar select de profissionais
+            this.updateProfessionalSelect();
+            
+            // Carregar agendamentos do dia atual
+            await this.loadAppointmentsForCurrentDate();
+            
+            this.setLoadingState(false);
+            console.log('Dados carregados:', {
+                profissionais: this.professionals.length,
+                servicos: this.services.length,
+                clientes: this.clients.length,
+                agendamentos: this.appointments.length
+            });
+            
         } catch (error) {
-            console.warn('⚠️ Erro ao carregar header:', error);
+            console.error('Erro ao carregar dados:', error);
+            this.setLoadingState(false);
+            this.showNotification('Erro ao carregar dados da agenda', 'error');
         }
+    }
+    
+    async loadAppointmentsForCurrentDate() {
+        try {
+            const startDate = new Date(this.currentDate);
+            const endDate = new Date(this.currentDate);
+            
+            const agendamentos = await loadAgendamentosFromDB(startDate, endDate);
+            
+            // Converter para formato interno
+            this.appointments = agendamentos.map(agendamento => ({
+                id: agendamento.id,
+                service: agendamento.service,
+                client: agendamento.client,
+                clientPhone: agendamento.clientPhone,
+                clientEmail: agendamento.clientEmail,
+                professional: agendamento.professional,
+                professionalName: agendamento.professionalName,
+                date: agendamento.date,
+                time: agendamento.time,
+                endTime: agendamento.endTime,
+                price: agendamento.price,
+                status: agendamento.status,
+                notes: agendamento.notes,
+                internalNotes: agendamento.internalNotes,
+                paymentMethod: agendamento.paymentMethod,
+                createdAt: agendamento.createdAt,
+                group_id: agendamento.group_id  // INCLUIR GROUP_ID
+            }));
+            
+            // SEMPRE renderizar depois de carregar - mesmo que vazio
+            this.renderAppointments();
+            
+        } catch (error) {
+            console.error('Erro ao carregar agendamentos:', error);
+            this.appointments = [];
+            // SEMPRE renderizar mesmo com erro
+            this.renderAppointments();
+        }
+    }
+    
+    updateProfessionalSelect() {
+        const professionalFilter = document.getElementById('professional-filter');
+        const professionalSelect = document.getElementById('professional-select');
+        
+        if (professionalFilter) {
+            professionalFilter.innerHTML = '';
+            
+            // Encontrar o profissional logado usando múltiplas estratégias
+            let loggedProfessional = null;
+            if (window.currentUser) {
+                // Estratégia 1: Comparar por auth_user_id
+                loggedProfessional = this.professionals.find(prof => 
+                    prof.id === window.currentUser.auth_user_id
+                );
+                
+                // Estratégia 2: Comparar por nome (fallback)
+                if (!loggedProfessional && window.currentUser.nome) {
+                    loggedProfessional = this.professionals.find(prof => 
+                        prof.name === window.currentUser.nome
+                    );
+                }
+            }
+            
+            // Sempre criar uma lista ordenada com o usuário logado primeiro
+            let orderedProfessionals = [];
+            
+            if (loggedProfessional) {
+                // Adicionar o usuário logado primeiro
+                orderedProfessionals.push(loggedProfessional);
+                
+                // Adicionar os outros profissionais (excluindo o logado)
+                const otherProfessionals = this.professionals.filter(prof => 
+                    prof.id !== loggedProfessional.id
+                );
+                orderedProfessionals = orderedProfessionals.concat(otherProfessionals);
+            } else {
+                // Se não encontrou o usuário logado, usar a lista original
+                orderedProfessionals = [...this.professionals];
+            }
+            
+            // Adicionar opções ao select
+            orderedProfessionals.forEach(prof => {
+                const option = document.createElement('option');
+                option.value = prof.id;
+                option.textContent = prof.name;
+                professionalFilter.appendChild(option);
+            });
+            
+            // Selecionar o primeiro da lista (que deve ser o usuário logado)
+            if (orderedProfessionals.length > 0) {
+                const firstProfessional = orderedProfessionals[0];
+                professionalFilter.value = firstProfessional.id;
+                this.selectedProfessional = firstProfessional.name;
+            }
+        }
+        
+        if (professionalSelect) {
+            professionalSelect.innerHTML = '<option value="">Selecionar profissional</option>';
+            
+            // Usar a mesma lógica de ordenação para o select do modal
+            let loggedProfessional = null;
+            if (window.currentUser) {
+                loggedProfessional = this.professionals.find(prof => 
+                    prof.auth_user_id === window.currentUser.auth_user_id || 
+                    prof.id === window.currentUser.id
+                );
+            }
+            
+            let orderedProfessionals = [...this.professionals];
+            if (loggedProfessional) {
+                orderedProfessionals = this.professionals.filter(prof => 
+                    prof.auth_user_id !== window.currentUser.auth_user_id && 
+                    prof.id !== window.currentUser.id
+                );
+                orderedProfessionals.unshift(loggedProfessional);
+            }
+            
+            orderedProfessionals.forEach(prof => {
+                const option = document.createElement('option');
+                option.value = prof.id;
+                option.textContent = prof.name;
+                professionalSelect.appendChild(option);
+            });
+        }
+    }
+
+    // ===== EVENTOS E NAVEGAÇÃO =====
+    
+    waitForHeaderAndFixIcons() {
+        if (window.currentUser) {
+            setTimeout(() => this.forceIconsLoad(), 200);
+        } else {
+            document.addEventListener('userDataReady', () => {
+                setTimeout(() => this.forceIconsLoad(), 300);
+            });
+        }
+    }
+
+    forceIconsLoad() {
+        const prevBtn = document.getElementById('prev-day');
+        const nextBtn = document.getElementById('next-day');
+        const todayBtn = document.getElementById('today-btn');
+        const settingsBtn = document.getElementById('settings-btn');
+        const closePanelBtn = document.getElementById('close-panel');
+
+        const style = document.createElement('style');
+        style.textContent = `
+            .agenda-container #prev-day:before { content: "◀"; font-weight: bold; }
+            .agenda-container #next-day:before { content: "▶"; font-weight: bold; }
+            .agenda-container #settings-btn { width: 44px !important; height: 44px !important; font-size: 20px !important; }
+            .agenda-container #settings-btn:before { content: "⚙"; font-size: 22px; }
+            .details-panel #close-panel:before { content: "×"; font-size: 18px; font-weight: bold; }
+            .agenda-container #today-btn:before { content: "📅 "; }
+        `;
+        document.head.appendChild(style);
+
+        if (prevBtn) prevBtn.innerHTML = '';
+        if (nextBtn) nextBtn.innerHTML = '';
+        if (settingsBtn) settingsBtn.innerHTML = '';
+        if (closePanelBtn) closePanelBtn.innerHTML = '';
+        if (todayBtn) todayBtn.innerHTML = 'Hoje';
     }
 
     setupEventListeners() {
         // Navegação de data
         document.getElementById('prev-day').addEventListener('click', () => this.navigateDate(-1));
         document.getElementById('next-day').addEventListener('click', () => this.navigateDate(1));
-        document.getElementById('date-picker').addEventListener('change', (e) => this.setDate(new Date(e.target.value)));
         document.getElementById('today-btn').addEventListener('click', () => this.goToToday());
-
-        // Filtro de profissional
-        document.getElementById('professional-filter').addEventListener('change', (e) => {
-            this.selectedProfessional = e.target.value;
+        
+        // Filtros e ações
+        document.getElementById('professional-filter').addEventListener('change', async (e) => {
+            const selectedId = e.target.value;
+            const selectedProf = this.professionals.find(p => p.id === selectedId);
+            this.selectedProfessional = selectedProf ? selectedProf.name : null;
             this.renderAppointments();
+            this.updateAppointmentsCount();
         });
-
-        // Configurações
-        document.getElementById('settings-btn').addEventListener('click', () => this.openSettingsModal());
-
-        // Novo agendamento
-        document.getElementById('new-appointment-btn').addEventListener('click', () => this.openAppointmentModal());
-
-        // Event listeners dos modais
-        this.setupModalListeners();
-
-        // Cliques nos slots vazios
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('appointment-slot') && e.target.classList.contains('empty')) {
-                const time = e.target.dataset.time;
-                this.openAppointmentModal(time);
-            }
-        });
-
+        
+        document.getElementById('new-service-btn').addEventListener('click', () => this.openAppointmentModal());
+        document.getElementById('settings-btn').addEventListener('click', () => this.openSettings());
+        
+        // Painel lateral
+        document.getElementById('close-panel').addEventListener('click', () => this.clearPanel());
+        document.getElementById('complete-service').addEventListener('click', () => this.completeService());
+        document.getElementById('cancel-service').addEventListener('click', () => this.cancelService());
+        
         // Atalhos de teclado
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft' && e.ctrlKey) {
@@ -94,62 +271,38 @@ class AgendaServicos {
                 e.preventDefault();
                 this.openAppointmentModal();
             } else if (e.key === 'Escape') {
-                this.closeAllModals();
+                this.clearPanel();
             }
         });
-    }
-
-    setupModalListeners() {
-        // Fechar modais
-        document.querySelectorAll('.close-modal-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.closeAllModals());
-        });
-
-        document.querySelectorAll('.modal-overlay').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) this.closeAllModals();
-            });
-        });
-
-        // Configurações
-        document.getElementById('cancel-settings').addEventListener('click', () => this.closeAllModals());
-        document.getElementById('save-settings').addEventListener('click', () => this.saveSettings());
-
-        // Agendamento
-        document.getElementById('cancel-appointment').addEventListener('click', () => this.closeAllModals());
-        document.getElementById('save-appointment').addEventListener('click', () => this.saveAppointment());
-
-        // Auto-complete de serviços e clientes
-        document.getElementById('service-search').addEventListener('input', (e) => this.handleServiceSearch(e));
-        document.getElementById('client-search').addEventListener('input', (e) => this.handleClientSearch(e));
     }
 
     // ===== NAVEGAÇÃO DE DATA =====
-    navigateDate(days) {
-        const newDate = new Date(this.currentDate);
-        newDate.setDate(newDate.getDate() + days);
+    async navigateDate(days) {
+        this.currentDate.setDate(this.currentDate.getDate() + days);
+        this.updateDateDisplay();
         
-        // Pular fins de semana se não trabalha
-        if (!this.settings.workDays[newDate.getDay()]) {
-            // Encontrar próximo dia útil
-            const direction = days > 0 ? 1 : -1;
-            while (!this.settings.workDays[newDate.getDay()]) {
-                newDate.setDate(newDate.getDate() + direction);
-            }
+        // Garantir que timeline existe antes de carregar dados
+        const timeline = document.getElementById('timeline');
+        if (!timeline.querySelector('.time-slot')) {
+            this.generateTimeline();
         }
         
-        this.setDate(newDate);
+        await this.loadAppointmentsForCurrentDate();
+        this.clearPanel();
     }
 
-    setDate(date) {
-        this.currentDate = new Date(date);
+    async goToToday() {
+        this.currentDate = new Date();
         this.updateDateDisplay();
-        this.renderAppointments();
-        this.updateNavigationButtons();
-    }
-
-    goToToday() {
-        this.setDate(new Date());
+        
+        // Garantir que timeline existe antes de carregar dados
+        const timeline = document.getElementById('timeline');
+        if (!timeline.querySelector('.time-slot')) {
+            this.generateTimeline();
+        }
+        
+        await this.loadAppointmentsForCurrentDate();
+        this.clearPanel();
     }
 
     updateDateDisplay() {
@@ -161,107 +314,65 @@ class AgendaServicos {
         };
         
         const fullDate = this.currentDate.toLocaleDateString('pt-BR', options);
-        const shortDate = this.currentDate.toLocaleDateString('pt-BR', { 
-            day: 'numeric', 
-            month: 'short',
-            year: 'numeric'
-        });
+        document.getElementById('section-date').textContent = fullDate;
+        this.updateAppointmentsCount();
+    }
+
+    updateAppointmentsCount() {
+        let dayAppointments = this.appointments.filter(apt => apt.status !== 'cancelado');
         
-        document.getElementById('current-date').textContent = fullDate;
-        document.getElementById('date-info').textContent = shortDate;
-        document.getElementById('date-picker').value = this.currentDate.toISOString().split('T')[0];
-        
-        // Verificar se é fim de semana ou dia não útil
-        const dayOfWeek = this.currentDate.getDay();
-        const isWorkingDay = this.settings.workDays[dayOfWeek];
-        
-        if (!isWorkingDay) {
-            document.querySelector('.agenda-body').classList.add('non-working-day');
-        } else {
-            document.querySelector('.agenda-body').classList.remove('non-working-day');
+        if (this.selectedProfessional) {
+            dayAppointments = dayAppointments.filter(apt => apt.professional == this.selectedProfessional);
         }
+        
+        const count = dayAppointments.length;
+        const text = `${count} agendamento${count !== 1 ? 's' : ''}`;
+        document.getElementById('count-badge').textContent = text;
     }
 
-    updateNavigationButtons() {
-        const today = new Date();
-        const diffTime = this.currentDate.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // ===== GERAÇÃO DA TIMELINE =====
+    generateTimeline() {
+        const timeline = document.getElementById('timeline');
+        timeline.innerHTML = '';
         
-        // Desabilitar navegação para muito no passado (opcional)
-        const prevBtn = document.getElementById('prev-day');
-        const nextBtn = document.getElementById('next-day');
-        
-        // Você pode adicionar lógica aqui para limitar navegação
-        prevBtn.disabled = false;
-        nextBtn.disabled = false;
-    }
-
-    // ===== GERAÇÃO DE HORÁRIOS =====
-    generateTimeSlots() {
-        const timelineSlots = document.getElementById('timeline-slots');
-        const appointmentsGrid = document.getElementById('appointments-grid');
-        
-        timelineSlots.innerHTML = '';
-        appointmentsGrid.innerHTML = '';
-        
+        // Usar configurações para determinar horários
         const startHour = parseInt(this.settings.startTime.split(':')[0]);
+        const startMinute = parseInt(this.settings.startTime.split(':')[1]);
         const endHour = parseInt(this.settings.endTime.split(':')[0]);
+        const endMinute = parseInt(this.settings.endTime.split(':')[1]);
+        
+        const startTotalMinutes = startHour * 60 + startMinute;
+        const endTotalMinutes = endHour * 60 + endMinute;
         const interval = this.settings.slotInterval;
         
-        const currentTime = new Date();
-        const isToday = this.isToday(this.currentDate);
-        
-        for (let hour = startHour; hour < endHour; hour++) {
-            for (let minute = 0; minute < 60; minute += interval) {
-                const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                const slotTime = new Date(this.currentDate);
-                slotTime.setHours(hour, minute, 0, 0);
-                
-                // Timeline slot
-                const timelineSlot = document.createElement('div');
-                timelineSlot.className = 'timeline-slot';
-                timelineSlot.textContent = timeString;
-                
-                // Marcar hora atual
-                if (isToday && currentTime.getHours() === hour && currentTime.getMinutes() >= minute && currentTime.getMinutes() < minute + interval) {
-                    timelineSlot.classList.add('current-hour');
-                }
-                
-                // Marcar horário de almoço
-                if (this.settings.enableLunch && this.isLunchTime(hour, minute)) {
-                    timelineSlot.classList.add('lunch-time');
-                }
-                
-                timelineSlots.appendChild(timelineSlot);
-                
-                // Appointment slot
-                const appointmentSlot = document.createElement('div');
-                appointmentSlot.className = 'appointment-slot empty';
-                appointmentSlot.dataset.time = timeString;
-                
-                if (this.isLunchTime(hour, minute)) {
-                    appointmentSlot.innerHTML = '<span style="color: var(--warning-color);">🍽️ Horário de Almoço</span>';
-                    appointmentSlot.classList.remove('empty');
-                    appointmentSlot.style.background = '#fff3cd';
-                } else {
-                    appointmentSlot.innerHTML = '<span>+ Agendar serviço</span>';
-                }
-                
-                appointmentsGrid.appendChild(appointmentSlot);
-            }
+        // Gerar slots baseados nas configurações
+        for (let totalMinutes = startTotalMinutes; totalMinutes < endTotalMinutes; totalMinutes += interval) {
+            const hour = Math.floor(totalMinutes / 60);
+            const minute = totalMinutes % 60;
+            const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            const slot = this.createTimeSlot(timeString);
+            timeline.appendChild(slot);
         }
     }
 
-    isLunchTime(hour, minute) {
-        if (!this.settings.enableLunch) return false;
+    createTimeSlot(timeString) {
+        const slot = document.createElement('div');
+        slot.className = 'time-slot';
+        slot.dataset.time = timeString;
         
-        const lunchStart = this.settings.lunchStart.split(':');
-        const lunchEnd = this.settings.lunchEnd.split(':');
-        const lunchStartMinutes = parseInt(lunchStart[0]) * 60 + parseInt(lunchStart[1]);
-        const lunchEndMinutes = parseInt(lunchEnd[0]) * 60 + parseInt(lunchEnd[1]);
-        const currentMinutes = hour * 60 + minute;
+        // Verificar se é horário atual
+        const now = new Date();
+        const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes() >= 30 ? '30' : '00'}`;
+        const isToday = this.isToday(this.currentDate);
         
-        return currentMinutes >= lunchStartMinutes && currentMinutes < lunchEndMinutes;
+        slot.innerHTML = `
+            <div class="time-label ${isToday && currentTime === timeString ? 'current-time' : ''}">${timeString}</div>
+            <div class="slot-content empty" onclick="agendaServicos.openAppointmentModal('${timeString}')">
+                <span>+ Agendar serviço</span>
+            </div>
+        `;
+        
+        return slot;
     }
 
     isToday(date) {
@@ -269,341 +380,442 @@ class AgendaServicos {
         return date.toDateString() === today.toDateString();
     }
 
-    // ===== RENDERIZAÇÃO DE AGENDAMENTOS =====
+    // ===== RENDERIZAÇÃO DOS AGENDAMENTOS =====
     renderAppointments() {
-        const slots = document.querySelectorAll('.appointment-slot');
-        const dateStr = this.currentDate.toISOString().split('T')[0];
-        const dayAppointments = this.appointments.filter(apt => apt.date === dateStr);
+        const timeline = document.getElementById('timeline');
         
-        // Filtrar por profissional
-        const filteredAppointments = this.selectedProfessional === 'todos' ? 
-            dayAppointments : 
-            dayAppointments.filter(apt => apt.professional === this.selectedProfessional);
+        // Se não tem timeline, criar primeiro
+        if (!timeline.querySelector('.time-slot')) {
+            this.generateTimeline();
+        }
         
-        // Limpar slots ocupados
+        const slots = timeline.querySelectorAll('.time-slot');
+        
+        // Filtrar agendamentos
+        let dayAppointments = this.appointments.filter(apt => apt.status !== 'cancelado');
+        
+        if (this.selectedProfessional) {
+            dayAppointments = dayAppointments.filter(apt => apt.professional == this.selectedProfessional);
+        }
+        
+        // Resetar todos os slots para vazio
         slots.forEach(slot => {
-            if (!slot.innerHTML.includes('Almoço')) {
-                slot.className = 'appointment-slot empty';
-                slot.innerHTML = '<span>+ Agendar serviço</span>';
+            const slotContent = slot.querySelector('.slot-content');
+            const timeString = slot.dataset.time;
+            
+            slotContent.className = 'slot-content empty';
+            slotContent.innerHTML = '<span>+ Agendar serviço</span>';
+            slotContent.onclick = () => this.openAppointmentModal(timeString);
+        });
+        
+        // Renderizar agendamentos (se houver)
+        dayAppointments.forEach(appointment => {
+            const slot = timeline.querySelector(`[data-time="${appointment.time}"]`);
+            if (slot) {
+                this.renderAppointmentInSlot(slot, appointment);
             }
         });
         
-        // Preencher com agendamentos
-        filteredAppointments.forEach(appointment => {
-            const timeSlot = document.querySelector(`[data-time="${appointment.time}"]`);
-            if (timeSlot && !timeSlot.innerHTML.includes('Almoço')) {
-                timeSlot.className = 'appointment-slot occupied';
-                timeSlot.innerHTML = this.createAppointmentHTML(appointment);
-                timeSlot.addEventListener('click', () => this.viewAppointmentDetails(appointment));
-            }
-        });
-        
-        // Atualizar contador
-        document.getElementById('appointments-count').textContent = 
-            `${filteredAppointments.length} agendamento${filteredAppointments.length !== 1 ? 's' : ''}`;
+        this.updateAppointmentsCount();
     }
 
-    createAppointmentHTML(appointment) {
-        const professional = this.professionals.find(p => p.id === appointment.professional);
-        const statusClass = `status-${appointment.status}`;
+    renderAppointmentInSlot(slot, appointment) {
+        const slotContent = slot.querySelector('.slot-content');
+        const professional = this.professionals.find(p => p.name === appointment.professional);
         
-        return `
-            <div class="appointment-content">
-                <div class="appointment-info">
-                    <h4>${appointment.service}</h4>
-                    <div class="appointment-details">
-                        <i class="fa-solid fa-user"></i> ${appointment.client}
-                        <i class="fa-solid fa-user-tie"></i> ${professional?.name || appointment.professional}
-                    </div>
-                </div>
-                <div class="appointment-status ${statusClass}">
-                    ${this.getStatusLabel(appointment.status)}
+        // Verificar se é um agendamento agrupado
+        const isGrouped = appointment.group_id && this.getGroupedAppointments(appointment.group_id).length > 1;
+        const groupInfo = isGrouped ? this.getGroupInfo(appointment.group_id, appointment) : null;
+        
+        slotContent.className = `slot-content occupied ${isGrouped ? 'grouped' : ''}`;
+        slotContent.innerHTML = `
+            <div class="appointment-info">
+                <h4>${appointment.service}${isGrouped ? ` (${groupInfo.position}/${groupInfo.total})` : ''}</h4>
+                <div class="appointment-details">
+                    <span>👤 ${appointment.client}</span>
+                    <span>👨‍💼 ${appointment.professionalName || professional?.name || 'N/A'}</span>
+                    <span>💰 R$ ${appointment.price.toFixed(2)}</span>
+                    <span class="status-badge">${this.getStatusLabel(appointment.status)}</span>
+                    ${isGrouped ? `<span class="group-badge">${groupInfo.timeRange}</span>` : ''}
                 </div>
             </div>
         `;
+        
+        slotContent.onclick = (e) => {
+            e.stopPropagation();
+            
+            if (this.selectedAppointment && this.selectedAppointment.id === appointment.id) {
+                this.clearSelection();
+                this.clearPanel();
+            } else {
+                // Selecionar apenas o agendamento individual, mesmo se for agrupado
+                this.selectAppointment(appointment);
+                this.showAppointmentDetails(appointment);
+            }
+        };
     }
 
     getStatusLabel(status) {
         const labels = {
             'agendado': 'Agendado',
-            'andamento': 'Em Andamento',
+            'em_andamento': 'Em Andamento',
             'concluido': 'Concluído',
-            'cancelado': 'Cancelado'
+            'cancelado': 'Cancelado',
+            'nao_compareceu': 'Não Compareceu'
         };
         return labels[status] || status;
     }
 
-    // ===== INDICADOR DE TEMPO ATUAL =====
-    updateCurrentTimeIndicator() {
-        const existingIndicator = document.querySelector('.current-time-indicator');
-        if (existingIndicator) existingIndicator.remove();
+    // ===== DETALHES DO AGENDAMENTO =====
+    selectAppointment(appointment) {
+        this.clearSelection();
+        this.selectedAppointment = appointment;
         
-        if (!this.isToday(this.currentDate)) return;
+        const timeline = document.getElementById('timeline');
+        const slot = timeline.querySelector(`[data-time="${appointment.time}"]`);
+        if (slot) {
+            const slotContent = slot.querySelector('.slot-content');
+            slotContent.classList.add('selected');
+        }
+    }
+    
+    clearSelection() {
+        const timeline = document.getElementById('timeline');
+        const selectedSlots = timeline.querySelectorAll('.slot-content.selected');
+        selectedSlots.forEach(slot => slot.classList.remove('selected'));
         
-        const currentTime = new Date();
-        const currentHour = currentTime.getHours();
-        const currentMinute = currentTime.getMinutes();
-        
-        const startHour = parseInt(this.settings.startTime.split(':')[0]);
-        const endHour = parseInt(this.settings.endTime.split(':')[0]);
-        
-        if (currentHour < startHour || currentHour >= endHour) return;
-        
-        const totalMinutes = (currentHour - startHour) * 60 + currentMinute;
-        const slotHeight = 60; // altura do slot em pixels
-        const position = (totalMinutes / this.settings.slotInterval) * slotHeight;
-        
-        const indicator = document.createElement('div');
-        indicator.className = 'current-time-indicator';
-        indicator.style.top = `${position}px`;
-        
-        document.getElementById('appointments-grid').appendChild(indicator);
+        this.selectedAppointment = null;
     }
 
-    // ===== MODAIS =====
-    openSettingsModal() {
-        this.populateSettingsForm();
-        document.getElementById('settings-modal').classList.remove('hidden');
+    // Funções para gerenciar agendamentos agrupados
+    getGroupedAppointments(groupId) {
+        if (!groupId) return [];
+        return this.appointments.filter(appointment => appointment.group_id === groupId);
     }
 
-    openAppointmentModal(time = '') {
-        this.resetAppointmentForm();
+    getGroupInfo(groupId, currentAppointment = null) {
+        const groupedAppointments = this.getGroupedAppointments(groupId);
+        if (groupedAppointments.length === 0) return null;
         
-        if (time) {
-            document.getElementById('appointment-time').value = time;
+        // Ordenar por horário
+        groupedAppointments.sort((a, b) => a.time.localeCompare(b.time));
+        
+        const firstTime = groupedAppointments[0].time;
+        const lastTime = groupedAppointments[groupedAppointments.length - 1].time;
+        const timeRange = firstTime === lastTime ? firstTime : `${firstTime}-${lastTime}`;
+        
+        let position = 1;
+        if (currentAppointment) {
+            const index = groupedAppointments.findIndex(app => app.id === currentAppointment.id);
+            position = index >= 0 ? index + 1 : 1;
         }
         
-        document.getElementById('appointment-date').value = this.currentDate.toISOString().split('T')[0];
-        document.getElementById('appointment-modal').classList.remove('hidden');
-        document.getElementById('service-search').focus();
+        return {
+            total: groupedAppointments.length,
+            timeRange: timeRange,
+            position: position,
+            appointments: groupedAppointments
+        };
     }
 
-    viewAppointmentDetails(appointment) {
-        // Implementar modal de detalhes do agendamento
-        console.log('Ver detalhes:', appointment);
-        // Por enquanto, mostrar alert
-        alert(`Agendamento: ${appointment.service}\nCliente: ${appointment.client}\nHorário: ${appointment.time}\nStatus: ${appointment.status}`);
-    }
-
-    closeAllModals() {
-        document.querySelectorAll('.modal-overlay').forEach(modal => {
-            modal.classList.add('hidden');
+    selectGroupedAppointments(groupId) {
+        // Limpar seleção anterior
+        this.clearSelection();
+        
+        const groupedAppointments = this.getGroupedAppointments(groupId);
+        
+        groupedAppointments.forEach(appointment => {
+            const slot = document.querySelector(`[data-time="${appointment.time}"]`);
+            if (slot) {
+                const slotContent = slot.querySelector('.slot-content');
+                if (slotContent) {
+                    slotContent.classList.add('selected');
+                }
+            }
         });
+        
+        // Definir o primeiro agendamento do grupo como selecionado
+        if (groupedAppointments.length > 0) {
+            this.selectedAppointment = groupedAppointments[0];
+        }
+    }
+
+    showAppointmentDetails(appointment) {
+        const panelContent = document.getElementById('panel-content');
+        const panelActions = document.getElementById('panel-actions');
+        const panelTitle = document.getElementById('panel-title');
+        
+        panelTitle.textContent = appointment.service;
+        
+        const professional = this.professionals.find(p => p.name === appointment.professional);
+        
+        panelContent.innerHTML = `
+            <div class="service-detail">
+                <h3>${appointment.service}</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <i>👤</i>
+                        <div class="info-content">
+                            <div class="label">Cliente</div>
+                            <div class="value">${appointment.client}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i>📞</i>
+                        <div class="info-content">
+                            <div class="label">Telefone</div>
+                            <div class="value">${appointment.clientPhone || 'Não informado'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i>📅</i>
+                        <div class="info-content">
+                            <div class="label">Data</div>
+                            <div class="value">${new Date(appointment.date).toLocaleDateString('pt-BR')}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i>⏰</i>
+                        <div class="info-content">
+                            <div class="label">Horário</div>
+                            <div class="value">${appointment.time}${appointment.endTime ? ` - ${appointment.endTime}` : ''}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i>👨‍💼</i>
+                        <div class="info-content">
+                            <div class="label">Profissional</div>
+                            <div class="value">${appointment.professionalName || professional?.name || 'N/A'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i>💰</i>
+                        <div class="info-content">
+                            <div class="label">Valor</div>
+                            <div class="value">R$ ${appointment.price.toFixed(2)}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item full-width">
+                        <i>ℹ️</i>
+                        <div class="info-content">
+                            <div class="label">Status</div>
+                            <div class="value">${this.getStatusLabel(appointment.status)}</div>
+                        </div>
+                    </div>
+                    
+                    ${appointment.notes ? `
+                        <div class="info-item notes">
+                            <i>📝</i>
+                            <div class="info-content">
+                                <div class="label">Observações</div>
+                                <div class="value">${appointment.notes}</div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        
+        panelActions.style.display = 'flex';
+    }
+
+    clearPanel() {
+        const panelContent = document.getElementById('panel-content');
+        const panelActions = document.getElementById('panel-actions');
+        const panelTitle = document.getElementById('panel-title');
+        
+        panelTitle.textContent = 'Detalhes do Serviço';
+        panelActions.style.display = 'none';
+        
+        this.clearSelection();
+        
+        panelContent.innerHTML = `
+            <div class="empty-state">
+                <div style="font-size: 64px; margin-bottom: 20px; opacity: 0.4; color: var(--primary-orange);">👆</div>
+                <h4>Selecione um horário</h4>
+                <p>Clique em um horário vazio para agendar um novo serviço ou em um agendamento para ver detalhes.</p>
+            </div>
+        `;
+    }
+
+    // ===== AÇÕES DOS SERVIÇOS =====
+    async completeService() {
+        if (!this.selectedAppointment) return;
+        
+        try {
+            // Verificar se é um agendamento agrupado
+            if (this.selectedAppointment.group_id) {
+                const groupedAppointments = this.getGroupedAppointments(this.selectedAppointment.group_id);
+                
+                if (groupedAppointments.length > 1) {
+                    const confirmMessage = `Este agendamento faz parte de um grupo com ${groupedAppointments.length} horários. Deseja finalizar todos os horários do grupo?`;
+                    
+                    if (confirm(confirmMessage)) {
+                        // Finalizar todos os agendamentos do grupo
+                        for (const appointment of groupedAppointments) {
+                            await updateAgendamentoStatus(appointment.id, 'concluido', 'Serviço finalizado - Grupo');
+                        }
+                        this.showNotification(`${groupedAppointments.length} agendamentos do grupo finalizados com sucesso!`, 'success');
+                    } else {
+                        // Finalizar apenas o agendamento selecionado
+                        await updateAgendamentoStatus(this.selectedAppointment.id, 'concluido', 'Serviço finalizado');
+                        this.showNotification('Serviço finalizado com sucesso!', 'success');
+                    }
+                } else {
+                    // Agendamento único
+                    await updateAgendamentoStatus(this.selectedAppointment.id, 'concluido', 'Serviço finalizado');
+                    this.showNotification('Serviço finalizado com sucesso!', 'success');
+                }
+            } else {
+                // Agendamento sem grupo
+                await updateAgendamentoStatus(this.selectedAppointment.id, 'concluido', 'Serviço finalizado');
+                this.showNotification('Serviço finalizado com sucesso!', 'success');
+            }
+            
+            await this.loadAppointmentsForCurrentDate();
+            this.clearPanel();
+            
+        } catch (error) {
+            console.error('Erro ao finalizar serviço:', error);
+            this.showNotification('Erro ao finalizar serviço', 'error');
+        }
+    }
+
+    async cancelService() {
+        if (!this.selectedAppointment) return;
+        
+        try {
+            // Verificar se é um agendamento agrupado
+            if (this.selectedAppointment.group_id) {
+                const groupedAppointments = this.getGroupedAppointments(this.selectedAppointment.group_id);
+                
+                if (groupedAppointments.length > 1) {
+                    const confirmMessage = `Este agendamento faz parte de um grupo com ${groupedAppointments.length} horários. Deseja cancelar todos os horários do grupo?`;
+                    
+                    if (confirm(confirmMessage)) {
+                        // Cancelar todos os agendamentos do grupo
+                        for (const appointment of groupedAppointments) {
+                            await updateAgendamentoStatus(appointment.id, 'cancelado', 'Cancelado pelo usuário - Grupo');
+                        }
+                        this.showNotification(`${groupedAppointments.length} agendamentos do grupo cancelados`, 'info');
+                    } else {
+                        return; // Usuário cancelou a operação
+                    }
+                } else {
+                    // Agendamento único
+                    if (confirm('Deseja realmente cancelar este agendamento?')) {
+                        await updateAgendamentoStatus(this.selectedAppointment.id, 'cancelado', 'Cancelado pelo usuário');
+                        this.showNotification('Agendamento cancelado', 'info');
+                    } else {
+                        return;
+                    }
+                }
+            } else {
+                // Agendamento sem grupo
+                if (confirm('Deseja realmente cancelar este agendamento?')) {
+                    await updateAgendamentoStatus(this.selectedAppointment.id, 'cancelado', 'Cancelado pelo usuário');
+                    this.showNotification('Agendamento cancelado', 'info');
+                } else {
+                    return;
+                }
+            }
+            
+            await this.loadAppointmentsForCurrentDate();
+            this.clearPanel();
+            
+        } catch (error) {
+            console.error('Erro ao cancelar agendamento:', error);
+            this.showNotification('Erro ao cancelar agendamento', 'error');
+        }
+    }
+
+
+
+    // ===== MODAL DE AGENDAMENTO =====
+    openAppointmentModal(time = '', appointment = null) {
+        if (window.agendaModals) {
+            window.agendaModals.openAppointmentModal(time, appointment);
+        }
+    }
+
+    closeModal() {
+        if (window.agendaModals) {
+            window.agendaModals.closeModal();
+        }
     }
 
     // ===== CONFIGURAÇÕES =====
     loadSettings() {
         const defaultSettings = {
-            workDays: [false, true, true, true, true, true, false, false], // Dom, Seg, Ter, Qua, Qui, Sex, Sab
-            startTime: '08:00',
+            startTime: '07:00',
             endTime: '18:00',
             slotInterval: 30,
-            enableLunch: true,
-            lunchStart: '12:00',
-            lunchEnd: '13:00'
+            workDays: [1, 2, 3, 4, 5, 6],
+            notifications: true
         };
         
         const saved = localStorage.getItem('agenda-settings');
         return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
     }
 
-    populateSettingsForm() {
-        // Dias da semana
-        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        days.forEach((day, index) => {
-            const checkbox = document.getElementById(`work-${day}`);
-            if (checkbox) checkbox.checked = this.settings.workDays[index];
-        });
-        
-        // Horários
-        document.getElementById('start-time').value = this.settings.startTime;
-        document.getElementById('end-time').value = this.settings.endTime;
-        document.getElementById('slot-interval').value = this.settings.slotInterval;
-        
-        // Almoço
-        document.getElementById('enable-lunch').checked = this.settings.enableLunch;
-        document.getElementById('lunch-start').value = this.settings.lunchStart;
-        document.getElementById('lunch-end').value = this.settings.lunchEnd;
-    }
-
-    saveSettings() {
-        // Coletar dados do formulário
-        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const workDays = days.map(day => {
-            const checkbox = document.getElementById(`work-${day}`);
-            return checkbox ? checkbox.checked : false;
-        });
-        
-        this.settings = {
-            workDays: workDays,
-            startTime: document.getElementById('start-time').value,
-            endTime: document.getElementById('end-time').value,
-            slotInterval: parseInt(document.getElementById('slot-interval').value),
-            enableLunch: document.getElementById('enable-lunch').checked,
-            lunchStart: document.getElementById('lunch-start').value,
-            lunchEnd: document.getElementById('lunch-end').value
-        };
-        
-        localStorage.setItem('agenda-settings', JSON.stringify(this.settings));
-        
-        // Regenerar interface
-        this.generateTimeSlots();
-        this.renderAppointments();
-        this.closeAllModals();
-        
-        this.showNotification('Configurações salvas com sucesso!', 'success');
-    }
-
-    // ===== AGENDAMENTO =====
-    resetAppointmentForm() {
-        document.getElementById('service-search').value = '';
-        document.getElementById('client-search').value = '';
-        document.getElementById('professional-select').value = '';
-        document.getElementById('service-price').value = '';
-        document.getElementById('appointment-date').value = '';
-        document.getElementById('appointment-time').value = '';
-        document.getElementById('appointment-notes').value = '';
-        
-        // Limpar sugestões
-        document.getElementById('service-suggestions').classList.remove('show');
-        document.getElementById('client-suggestions').classList.remove('show');
-    }
-
-    handleServiceSearch(e) {
-        const query = e.target.value.toLowerCase();
-        const suggestions = document.getElementById('service-suggestions');
-        
-        if (query.length < 2) {
-            suggestions.classList.remove('show');
-            return;
-        }
-        
-        const matches = this.services.filter(service => 
-            service.name.toLowerCase().includes(query)
-        );
-        
-        if (matches.length > 0) {
-            suggestions.innerHTML = matches.map(service => `
-                <div class="suggestion-item" data-service-id="${service.id}">
-                    <strong>${service.name}</strong>
-                    <small>R$ ${service.price.toFixed(2)} - ${service.duration}min</small>
-                </div>
-            `).join('');
-            
-            suggestions.classList.add('show');
-            
-            // Event listeners para sugestões
-            suggestions.querySelectorAll('.suggestion-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const serviceId = parseInt(item.dataset.serviceId);
-                    const service = this.services.find(s => s.id === serviceId);
-                    this.selectService(service);
-                });
-            });
+    openSettings() {
+        if (window.agendaConfig) {
+            window.agendaConfig.openConfigModal();
         } else {
-            suggestions.classList.remove('show');
+            this.showNotification('Sistema de configurações carregando...', 'info');
         }
     }
 
-    handleClientSearch(e) {
-        const query = e.target.value.toLowerCase();
-        const suggestions = document.getElementById('client-suggestions');
-        
-        if (query.length < 2) {
-            suggestions.classList.remove('show');
-            return;
-        }
-        
-        const matches = this.clients.filter(client => 
-            client.name.toLowerCase().includes(query)
-        );
-        
-        if (matches.length > 0) {
-            suggestions.innerHTML = matches.map(client => `
-                <div class="suggestion-item" data-client-id="${client.id}">
-                    <strong>${client.name}</strong>
-                    <small>${client.phone}</small>
-                </div>
-            `).join('');
-            
-            suggestions.classList.add('show');
-            
-            // Event listeners para sugestões
-            suggestions.querySelectorAll('.suggestion-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const clientId = parseInt(item.dataset.clientId);
-                    const client = this.clients.find(c => c.id === clientId);
-                    this.selectClient(client);
+    // ===== UTILITÁRIOS =====
+    async addAppointment(appointmentData) {
+        try {
+            // Para múltiplos horários, criar um agendamento para cada
+            if (Array.isArray(appointmentData.times)) {
+                // Gerar um group_id único para agendamentos múltiplos
+                const groupId = appointmentData.times.length > 1 ? 
+                    `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : null;
+                
+                const promises = appointmentData.times.map(time => {
+                    const singleAppointment = {
+                        ...appointmentData,
+                        time: time,
+                        date: appointmentData.date,
+                        group_id: groupId  // Adicionar group_id para agendamentos múltiplos
+                    };
+                    delete singleAppointment.times;
+                    return saveAgendamento(singleAppointment);
                 });
-            });
-        } else {
-            suggestions.classList.remove('show');
+                
+                await Promise.all(promises);
+            } else {
+                await saveAgendamento(appointmentData);
+            }
+            
+            await this.loadAppointmentsForCurrentDate();
+            this.showNotification('Agendamento(s) salvo(s) com sucesso!', 'success');
+            
+        } catch (error) {
+            console.error('Erro ao salvar agendamento:', error);
+            throw error;
         }
     }
 
-    selectService(service) {
-        document.getElementById('service-search').value = service.name;
-        document.getElementById('service-price').value = service.price.toFixed(2);
-        document.getElementById('service-suggestions').classList.remove('show');
-    }
-
-    selectClient(client) {
-        document.getElementById('client-search').value = client.name;
-        document.getElementById('client-suggestions').classList.remove('show');
-    }
-
-    saveAppointment() {
-        // Validar formulário
-        const service = document.getElementById('service-search').value.trim();
-        const client = document.getElementById('client-search').value.trim();
-        const professional = document.getElementById('professional-select').value;
-        const date = document.getElementById('appointment-date').value;
-        const time = document.getElementById('appointment-time').value;
-        
-        if (!service || !client || !professional || !date || !time) {
-            this.showNotification('Por favor, preencha todos os campos obrigatórios.', 'error');
-            return;
+    async updateAppointment(appointmentData) {
+        try {
+            await updateAgendamento(appointmentData.id, appointmentData);
+            await this.loadAppointmentsForCurrentDate();
+            this.showNotification('Agendamento atualizado com sucesso!', 'success');
+            
+        } catch (error) {
+            console.error('Erro ao atualizar agendamento:', error);
+            throw error;
         }
-        
-        // Verificar conflito de horário
-        const dateStr = date;
-        const existingAppointment = this.appointments.find(apt => 
-            apt.date === dateStr && 
-            apt.time === time && 
-            (apt.professional === professional || this.selectedProfessional === 'todos')
-        );
-        
-        if (existingAppointment) {
-            this.showNotification('Já existe um agendamento neste horário!', 'error');
-            return;
-        }
-        
-        // Verificar se está dentro do horário de funcionamento
-        if (!this.isValidTime(time)) {
-            this.showNotification('Horário fora do funcionamento!', 'error');
-            return;
-        }
-        
-        // Criar novo agendamento
-        const newAppointment = {
-            id: Date.now(),
-            service: service,
-            client: client,
-            professional: professional,
-            date: dateStr,
-            time: time,
-            price: parseFloat(document.getElementById('service-price').value) || 0,
-            notes: document.getElementById('appointment-notes').value.trim(),
-            status: 'agendado',
-            createdAt: new Date().toISOString()
-        };
-        
-        this.appointments.push(newAppointment);
-        this.saveAppointmentsToStorage();
-        this.renderAppointments();
-        this.closeAllModals();
-        
-        this.showNotification('Agendamento criado com sucesso!', 'success');
     }
 
     isValidTime(time) {
@@ -613,21 +825,7 @@ class AgendaServicos {
         const startMinutes = this.timeToMinutes(this.settings.startTime);
         const endMinutes = this.timeToMinutes(this.settings.endTime);
         
-        if (timeMinutes < startMinutes || timeMinutes >= endMinutes) {
-            return false;
-        }
-        
-        // Verificar se não é horário de almoço
-        if (this.settings.enableLunch) {
-            const lunchStartMinutes = this.timeToMinutes(this.settings.lunchStart);
-            const lunchEndMinutes = this.timeToMinutes(this.settings.lunchEnd);
-            
-            if (timeMinutes >= lunchStartMinutes && timeMinutes < lunchEndMinutes) {
-                return false;
-            }
-        }
-        
-        return true;
+        return timeMinutes >= startMinutes && timeMinutes < endMinutes;
     }
 
     timeToMinutes(timeString) {
@@ -635,68 +833,40 @@ class AgendaServicos {
         return hours * 60 + minutes;
     }
 
-    // ===== STORAGE =====
-    saveAppointmentsToStorage() {
-        localStorage.setItem('agenda-appointments', JSON.stringify(this.appointments));
-    }
-
-    loadAppointmentsFromStorage() {
-        const saved = localStorage.getItem('agenda-appointments');
-        this.appointments = saved ? JSON.parse(saved) : this.generateSampleAppointments();
-    }
-
-    generateSampleAppointments() {
-        const today = new Date();
-        const dateStr = today.toISOString().split('T')[0];
+    setLoadingState(isLoading) {
+        this.isLoading = isLoading;
         
-        return [
-            {
-                id: 1,
-                service: 'Consultoria em TI',
-                client: 'Empresa ABC Ltda',
-                professional: 'joao',
-                date: dateStr,
-                time: '09:00',
-                price: 150.00,
-                notes: 'Análise de infraestrutura',
-                status: 'agendado',
-                createdAt: new Date().toISOString()
-            },
-            {
-                id: 2,
-                service: 'Manutenção de Computador',
-                client: 'João da Silva',
-                professional: 'maria',
-                date: dateStr,
-                time: '14:00',
-                price: 80.00,
-                notes: 'Limpeza e verificação geral',
-                status: 'agendado',
-                createdAt: new Date().toISOString()
-            },
-            {
-                id: 3,
-                service: 'Treinamento',
-                client: 'Maria Oliveira',
-                professional: 'carlos',
-                date: dateStr,
-                time: '16:00',
-                price: 200.00,
-                notes: 'Treinamento em Excel avançado',
-                status: 'concluido',
-                createdAt: new Date().toISOString()
+        if (isLoading) {
+            // Mostrar loading SEM destruir a timeline
+            const timeline = document.getElementById('timeline');
+            const existingLoading = timeline.querySelector('.loading-state');
+            
+            if (!existingLoading) {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'loading-state';
+                loadingDiv.innerHTML = `
+                    <div class="loading-spinner"></div>
+                    <span>Carregando agendamentos...</span>
+                `;
+                timeline.appendChild(loadingDiv);
             }
-        ];
+        } else {
+            // Remover apenas o loading, manter timeline
+            const timeline = document.getElementById('timeline');
+            const loadingDiv = timeline.querySelector('.loading-state');
+            if (loadingDiv) {
+                loadingDiv.remove();
+            }
+        }
     }
 
-    // ===== NOTIFICAÇÕES =====
     showNotification(message, type = 'info') {
         // Remover notificação existente
-        const existing = document.querySelector('.agenda-notification');
+        const existing = document.querySelector('.notification');
         if (existing) existing.remove();
 
         const notification = document.createElement('div');
-        notification.className = `agenda-notification ${type}`;
+        notification.className = 'notification';
         
         const bgColor = {
             'success': '#10b981',
@@ -706,75 +876,45 @@ class AgendaServicos {
         }[type];
         
         const icon = {
-            'success': 'fa-check-circle',
-            'error': 'fa-exclamation-circle',
-            'warning': 'fa-exclamation-triangle',
-            'info': 'fa-info-circle'
+            'success': '✅',
+            'error': '❌',
+            'warning': '⚠️',
+            'info': 'ℹ️'
         }[type];
         
         notification.style.cssText = `
             position: fixed;
-            top: 2rem;
-            right: 2rem;
-            background-color: ${bgColor};
+            top: 20px;
+            right: 20px;
+            background: ${bgColor};
             color: white;
-            padding: 1rem 1.5rem;
+            padding: 15px 20px;
             border-radius: 8px;
             font-weight: 500;
             z-index: 1001;
-            max-width: 400px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            animation: slideInRight 0.3s ease;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 10px;
         `;
         
         notification.innerHTML = `
-            <i class="fas ${icon}"></i>
+            <span>${icon}</span>
             <span>${message}</span>
-            <button onclick="this.parentElement.remove()" 
-                    style="background: none; border: none; color: white; margin-left: auto; cursor: pointer; padding: 0.25rem;">
-                <i class="fas fa-times"></i>
-            </button>
         `;
 
         document.body.appendChild(notification);
         
         setTimeout(() => {
             if (notification.parentNode) {
-                notification.style.animation = 'slideOutRight 0.3s ease forwards';
+                notification.style.animation = 'slideOut 0.3s ease forwards';
                 setTimeout(() => notification.remove(), 300);
             }
         }, 4000);
     }
-
-    // ===== MÉTODO DE INICIALIZAÇÃO FINAL =====
-    start() {
-        this.loadAppointmentsFromStorage();
-        this.renderAppointments();
-        console.log('🚀 Agenda de Serviços totalmente carregada!');
-    }
 }
-
-// ===== ESTILOS DAS NOTIFICAÇÕES =====
-const notificationStyles = document.createElement('style');
-notificationStyles.textContent = `
-    @keyframes slideInRight {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    
-    @keyframes slideOutRight {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-    }
-    
-    .agenda-notification {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-`;
-document.head.appendChild(notificationStyles);
 
 // ===== INICIALIZAÇÃO =====
 let agendaServicos;
@@ -782,21 +922,11 @@ let agendaServicos;
 document.addEventListener('DOMContentLoaded', () => {
     agendaServicos = new AgendaServicos();
     
-    // Aguardar um pouco para carregar dados
-    setTimeout(() => {
-        agendaServicos.start();
-    }, 500);
+    // Disponibilizar globalmente para os modais
+    window.agendaServicos = agendaServicos;
+    
+    console.log('🚀 Sistema de Agenda de Serviços integrado com Supabase carregado!');
 });
 
-// ===== ATALHOS GLOBAIS =====
-window.agendaServicos = agendaServicos;
-
-// Log de carregamento
-console.log('✅ Sistema de Agenda de Serviços carregado');
-console.log('📋 Funcionalidades disponíveis:');
-console.log('  - Navegação por data com setas (Ctrl+←/→)');
-console.log('  - Filtro por profissional');
-console.log('  - Configuração de dias úteis');
-console.log('  - Agendamento de serviços (Ctrl+N)');
-console.log('  - Indicador de tempo atual');
-console.log('  - Auto-complete para serviços e clientes');
+// Exportar para uso global
+window.AgendaServicos = AgendaServicos;
