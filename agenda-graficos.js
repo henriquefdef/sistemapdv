@@ -350,16 +350,10 @@ class ServicesDashboard {
     // ===== CÁLCULO DE MÉTRICAS =====
     
     calculateMetrics() {
-        let filteredAppointments = this.currentData.appointments;
+        // Aplicar filtro e deduplicação por agendamento (group_id/id)
+        const filteredAppointments = this.getUniqueFilteredAppointments();
 
-        // Filtrar por profissional se selecionado
-        if (this.filters.professional !== 'todos') {
-            filteredAppointments = filteredAppointments.filter(apt => 
-                apt.profissional === this.filters.professional
-            );
-        }
-
-        // Métricas atuais
+        // Métricas atuais com base em agendamentos únicos
         const totalAppointments = filteredAppointments.length;
         const totalRevenue = filteredAppointments
             .filter(apt => apt.status === 'concluido')
@@ -460,7 +454,7 @@ class ServicesDashboard {
     }
 
     generateTimelineData(type) {
-        const appointments = this.getFilteredAppointments();
+        const appointments = this.getUniqueFilteredAppointments();
         const labels = [];
         const data = [];
 
@@ -525,7 +519,7 @@ class ServicesDashboard {
     }
 
     generateServicesData() {
-        const appointments = this.getFilteredAppointments();
+        const appointments = this.getUniqueFilteredAppointments();
         const serviceCount = {};
 
         appointments.forEach(apt => {
@@ -576,7 +570,7 @@ class ServicesDashboard {
     }
 
     generateProfessionalsData() {
-        const appointments = this.getFilteredAppointments();
+        const appointments = this.getUniqueFilteredAppointments();
         const professionalCount = {};
 
         appointments.forEach(apt => {
@@ -626,7 +620,7 @@ class ServicesDashboard {
     }
 
     generateStatusData() {
-        const appointments = this.getFilteredAppointments();
+        const appointments = this.getUniqueFilteredAppointments();
         const statusCount = {};
 
         appointments.forEach(apt => {
@@ -687,7 +681,7 @@ class ServicesDashboard {
     }
 
     generateHeatmapData() {
-        const appointments = this.getFilteredAppointments();
+        const appointments = this.getUniqueFilteredAppointments();
         const heatmapData = {};
 
         appointments.forEach(apt => {
@@ -731,7 +725,7 @@ class ServicesDashboard {
     }
 
     generateTopClientsData() {
-        const appointments = this.getFilteredAppointments();
+        const appointments = this.getUniqueFilteredAppointments();
         const clientData = {};
 
         appointments.forEach(apt => {
@@ -850,6 +844,24 @@ class ServicesDashboard {
         return filtered;
     }
 
+    // Retorna a lista de agendamentos já deduplicada por group_id/id
+    getUniqueFilteredAppointments() {
+        const filtered = this.getFilteredAppointments();
+        return this.dedupeAppointments(filtered);
+    }
+
+    // Deduplica considerando um único agendamento para múltiplos horários
+    dedupeAppointments(appointments) {
+        const map = new Map();
+        appointments.forEach(apt => {
+            const key = apt.group_id || apt.id || `${apt.data_agendamento}|${apt.clientes?.nome || ''}|${apt.servicos?.nome || ''}`;
+            if (!map.has(key)) {
+                map.set(key, apt);
+            }
+        });
+        return Array.from(map.values());
+    }
+
     filterTable(searchTerm) {
         // Implementar busca na tabela
         this.searchTerm = searchTerm.toLowerCase();
@@ -897,36 +909,69 @@ class ServicesDashboard {
     }
 
     exportData() {
-        // Implementar exportação de dados
+        // Exportação de dados em CSV otimizado para Excel (pt-BR)
         const data = this.getFilteredAppointments();
         const csv = this.convertToCSV(data);
         this.downloadCSV(csv, 'relatorio-servicos.csv');
     }
 
     convertToCSV(data) {
+        const delimiter = ';';
         const headers = ['Data', 'Horário', 'Cliente', 'Serviço', 'Profissional', 'Valor', 'Status'];
-        const rows = data.map(apt => [
-            this.formatDateBR(apt.data_agendamento),
-            apt.hora_inicio ? apt.hora_inicio.substring(0, 5) : '-',
-            apt.clientes?.nome || 'Cliente não encontrado',
-            apt.servicos?.nome || 'Serviço não encontrado',
-            apt.profissional || 'Não informado',
-            `R$ ${parseFloat(apt.valor || 0).toFixed(2)}`,
-            this.getStatusLabel(apt.status)
-        ]);
 
-        return [headers, ...rows].map(row => row.join(',')).join('\n');
+        const escape = (val) => {
+            if (val === null || val === undefined) return '""';
+            const str = String(val).replace(/"/g, '""');
+            return `"${str}"`;
+        };
+
+        const rows = data.map(apt => {
+            const valor = parseFloat(apt.valor || 0)
+                .toFixed(2)
+                .replace('.', ','); // decimal vírgula para Excel pt-BR
+
+            const cols = [
+                this.formatDateBR(apt.data_agendamento),
+                apt.hora_inicio ? apt.hora_inicio.substring(0, 5) : '-',
+                apt.clientes?.nome || 'Cliente não encontrado',
+                apt.servicos?.nome || 'Serviço não encontrado',
+                apt.profissional || 'Não informado',
+                valor,
+                this.getStatusLabel(apt.status)
+            ];
+            return cols.map(escape).join(delimiter);
+        });
+
+        const headerLine = headers.map(escape).join(delimiter);
+        // dica para Excel reconhecer separador
+        const sepHint = 'sep=;';
+        return [sepHint, headerLine, ...rows].join('\n');
     }
 
     downloadCSV(csv, filename) {
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        // Gerar arquivo em UTF-16LE com BOM (compatibilidade total com Excel/Windows)
+        // Mantém acentuação correta e evita caracteres quebrados como "Ã".
+
+        const stringToUTF16LE = (str) => {
+            const buf = new Uint8Array(str.length * 2);
+            for (let i = 0; i < str.length; i++) {
+                const code = str.charCodeAt(i);
+                buf[i * 2] = code & 0xFF;         // low byte
+                buf[i * 2 + 1] = code >> 8;       // high byte
+            }
+            return buf;
+        };
+
+        const bom = new Uint8Array([0xFF, 0xFE]); // BOM UTF-16LE
+        const utf16Content = stringToUTF16LE(csv);
+        const blob = new Blob([bom, utf16Content], { type: 'text/csv;charset=utf-16le;' });
+
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
-        
         link.setAttribute('href', url);
         link.setAttribute('download', filename);
         link.style.visibility = 'hidden';
-        
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lume - Baixar Excel</title>
+    <link rel="icon" type="image/png" href="log.png">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Header CSS -->
+    <link href="header.css" rel="stylesheet">
+    <!-- Página CSS -->
+    <link href="baixar-excel.css" rel="stylesheet">
+</head>
+<body>
+    <div id="header-container"></div>
+
+    <main class="main-container">
+        <div class="financial-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <h1>Baixar Excel</h1>
+                    <span class="subtitle">Exporte qualquer conjunto de dados do sistema com filtros e múltiplas abas</span>
+                </div>
+                <div class="header-actions">
+                    <button id="export-btn" class="action-btn export">
+                        <i class="fas fa-file-export"></i>
+                        Baixar Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <section class="filters-section">
+            <div class="filters-card">
+                <div class="filters-header">
+                    <h3><i class="fas fa-filter"></i> Filtros</h3>
+                </div>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="start-date">Data inicial</label>
+                        <input type="date" id="start-date">
+                    </div>
+                    <div class="filter-group">
+                        <label for="end-date">Data final</label>
+                        <input type="date" id="end-date">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="sources-section">
+            <div class="sources-header">
+                <h3><i class="fas fa-database"></i> Fontes de dados</h3>
+                <p>Selecione as tabelas que deseja exportar. Cada tabela vira uma aba no Excel.</p>
+            </div>
+            <div class="sources-grid" id="sources-grid">
+                <!-- Itens gerados dinamicamente pelo JS -->
+            </div>
+        </section>
+
+        
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="header.js"></script>
+    <script src="baixar-excel.js"></script>
+</body>
+</html>

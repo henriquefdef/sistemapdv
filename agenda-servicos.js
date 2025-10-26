@@ -765,10 +765,20 @@ class AgendaServicos {
     }
 
     openSettings() {
-        if (window.agendaConfig) {
+        // Fallback: se o módulo de configurações ainda não estiver pronto, inicializar no ato
+        if (!window.agendaConfig && typeof window.AgendaConfig === 'function') {
+            try {
+                window.agendaConfig = new AgendaConfig(this);
+                console.log('⚙️ AgendaConfig inicializado on-demand');
+            } catch (error) {
+                console.error('Erro ao inicializar AgendaConfig on-demand:', error);
+            }
+        }
+
+        if (window.agendaConfig && typeof window.agendaConfig.openConfigModal === 'function') {
             window.agendaConfig.openConfigModal();
         } else {
-            this.showNotification('Sistema de configurações carregando...', 'info');
+            this.showNotification('Não foi possível abrir configurações agora. Tente novamente.', 'error');
         }
     }
 
@@ -924,6 +934,16 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Disponibilizar globalmente para os modais
     window.agendaServicos = agendaServicos;
+    
+    // Inicialização direta do módulo de configurações para garantir disponibilidade
+    try {
+        if (!window.agendaConfig && typeof window.AgendaConfig === 'function') {
+            window.agendaConfig = new AgendaConfig(window.agendaServicos);
+            console.log('⚙️ Sistema de configurações inicializado junto à Agenda');
+        }
+    } catch (error) {
+        console.error('Erro ao inicializar sistema de configurações:', error);
+    }
     
     console.log('🚀 Sistema de Agenda de Serviços integrado com Supabase carregado!');
 });

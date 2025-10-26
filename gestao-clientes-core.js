@@ -17,7 +17,16 @@ const gestaoState = {
         startDate: null,
         endDate: null
     },
-    initialized: false
+    initialized: false,
+    pagination: {
+        frequency: {
+            currentPage: 1,
+            pageSize: 10,
+            totalItems: 0,
+            totalPages: 1,
+            initialized: false
+        }
+    }
 };
 
 // ===== INICIALIZAÇÃO =====
@@ -116,13 +125,22 @@ function setupEventListeners() {
     // Filtros de frequência
     const frequencyStatusFilter = document.getElementById('frequency-status-filter');
     if (frequencyStatusFilter) {
-        frequencyStatusFilter.addEventListener('change', filterFrequencyTable);
+        frequencyStatusFilter.addEventListener('change', () => {
+            gestaoState.pagination.frequency.currentPage = 1;
+            filterFrequencyTable();
+        });
     }
     
     const frequencySearch = document.getElementById('frequency-search');
     if (frequencySearch) {
-        frequencySearch.addEventListener('input', debounce(filterFrequencyTable, 300));
+        frequencySearch.addEventListener('input', debounce(() => {
+            gestaoState.pagination.frequency.currentPage = 1;
+            filterFrequencyTable();
+        }, 300));
     }
+    
+    // Inicializar controles de paginação da Frequência
+    initFrequencyPaginationControls();
     
     console.log('✅ Event listeners configurados');
 }
@@ -508,58 +526,26 @@ function updateHeaderStats() {
 }
 
 function updateTopClientes() {
-    const rankingType = document.getElementById('ranking-type')?.value || 'valor';
-    let sortedClients = [...gestaoState.processedClients];
+    const listEl = document.getElementById('top-compradores-list');
+    if (!listEl) return;
 
-    switch (rankingType) {
-        case 'quantidade':
-            sortedClients.sort((a, b) => b.total_compras - a.total_compras);
-            break;
-        case 'frequencia':
-            sortedClients.sort((a, b) => {
-                const freqA = a.dias_sem_comprar || 999;
-                const freqB = b.dias_sem_comprar || 999;
-                return freqA - freqB;
-            });
-            break;
-        default:
-            sortedClients.sort((a, b) => b.total_gasto - a.total_gasto);
-    }
+    const sorted = [...gestaoState.processedClients]
+        .sort((a, b) => (b.total_gasto || 0) - (a.total_gasto || 0))
+        .slice(0, 10);
 
-    const tbody = document.getElementById('top-clientes-body');
-    if (!tbody) return;
-
-    const top20 = sortedClients.slice(0, 20);
-    
-    tbody.innerHTML = top20.map((client, index) => {
-        const statusClass = client.status === 'Ativo' ? 'status-ativo' : 'status-inativo';
+    listEl.innerHTML = sorted.map((client, index) => {
+        const pos = index + 1;
+        const details = `${client.cidade || 'N/A'} • ${client.total_compras || 0} compras`;
 
         return `
-            <tr onclick="showClientDetails('${client.nome}')" style="cursor: pointer;">
-                <td><strong>#${index + 1}</strong></td>
-                <td>
-                    <div class="client-info">
-                        <strong>${client.nome}</strong>
-                        <small>${client.cidade || 'Cidade não informada'}</small>
-                    </div>
-                </td>
-                <td>${client.cidade || 'N/A'}</td>
-                <td>${formatCurrency(client.total_gasto)}</td>
-                <td>${client.total_compras}</td>
-                <td>${client.ultima_compra ? formatDate(client.ultima_compra) : 'Nunca'}</td>
-                <td><span class="status-badge ${statusClass}">${client.status}</span></td>
-                <td>
-                    <div class="action-buttons">
-                        ${client.telefone ? 
-                            `<button onclick="event.stopPropagation(); openWhatsAppModal(${JSON.stringify(client).replace(/"/g, '&quot;')}, 'boas-vindas')" 
-                                     class="btn-whatsapp" title="Enviar WhatsApp">
-                                <i class="fab fa-whatsapp"></i>
-                            </button>` : 
-                            '<span class="no-phone">Sem telefone</span>'
-                        }
-                    </div>
-                </td>
-            </tr>
+            <div class="ranking-item" onclick="showClientDetails('${client.nome}')">
+                <div class="ranking-position">${pos}</div>
+                <div class="ranking-info">
+                    <div class="ranking-name">${client.nome}</div>
+                    <div class="ranking-details">${details}</div>
+                </div>
+                <div class="ranking-value">${formatCurrency(client.total_gasto || 0)}</div>
+            </div>
         `;
     }).join('');
 }
@@ -570,7 +556,15 @@ function updateFrequencyTable() {
 
     const filteredData = applyFrequencyFilters();
     
-    tbody.innerHTML = filteredData.map(item => {
+    // Atualizar estado de paginação
+    const p = gestaoState.pagination.frequency;
+    p.totalItems = filteredData.length;
+    p.totalPages = Math.max(1, Math.ceil(p.totalItems / p.pageSize));
+    if (p.currentPage > p.totalPages) p.currentPage = p.totalPages;
+    const startIndex = (p.currentPage - 1) * p.pageSize;
+    const pageItems = filteredData.slice(startIndex, startIndex + p.pageSize);
+
+    tbody.innerHTML = pageItems.map(item => {
         const statusClass = item.status_recompra === 'Atrasado' ? 'status-atrasado' : 
                            item.status_recompra === 'Em Breve' ? 'status-breve' : 'status-ok';
         
@@ -605,6 +599,48 @@ function updateFrequencyTable() {
             </tr>
         `;
     }).join('');
+    // Atualizar UI de paginação
+    renderFrequencyPagination();
+}
+
+function initFrequencyPaginationControls() {
+    const prevBtn = document.getElementById('freq-prev-page');
+    const nextBtn = document.getElementById('freq-next-page');
+    if (!prevBtn || !nextBtn) return;
+
+    if (!gestaoState.pagination.frequency.initialized) {
+        prevBtn.addEventListener('click', () => {
+            const p = gestaoState.pagination.frequency;
+            if (p.currentPage > 1) {
+                p.currentPage--;
+                updateFrequencyTable();
+            }
+        });
+        nextBtn.addEventListener('click', () => {
+            const p = gestaoState.pagination.frequency;
+            if (p.currentPage < p.totalPages) {
+                p.currentPage++;
+                updateFrequencyTable();
+            }
+        });
+        gestaoState.pagination.frequency.initialized = true;
+    }
+}
+
+function renderFrequencyPagination() {
+    const infoEl = document.getElementById('frequency-pagination-info');
+    const prevBtn = document.getElementById('freq-prev-page');
+    const nextBtn = document.getElementById('freq-next-page');
+    const pageLabel = document.getElementById('freq-page-numbers');
+    if (!infoEl || !prevBtn || !nextBtn || !pageLabel) return;
+
+    const p = gestaoState.pagination.frequency;
+    const startItem = p.totalItems === 0 ? 0 : (p.currentPage - 1) * p.pageSize + 1;
+    const endItem = Math.min(p.currentPage * p.pageSize, p.totalItems);
+    infoEl.textContent = `Mostrando ${startItem}–${endItem} de ${p.totalItems}`;
+    pageLabel.textContent = `Página ${p.currentPage} de ${p.totalPages}`;
+    prevBtn.disabled = p.currentPage <= 1;
+    nextBtn.disabled = p.currentPage >= p.totalPages;
 }
 
 function renderBirthdayList() {

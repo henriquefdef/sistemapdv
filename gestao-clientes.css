@@ -1239,3 +1239,253 @@ body.sidebar-expanded {
         justify-content: center;
     }
 }
+
+/* ===== PÓDIO TOP 20 ===== */
+.top-podium-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+.podium {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    align-items: end;
+}
+
+.podium-item {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.podium-bar {
+    width: 100%;
+    background: linear-gradient(180deg, var(--primary-color), rgba(0,0,0,0.08));
+    border-radius: 8px 8px 0 0;
+    min-height: 40px;
+}
+
+.podium-place {
+    margin-top: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.podium-name {
+    margin-top: 6px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.podium-value {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.ranking-list {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.ranking-item {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.ranking-item:hover {
+    background: rgba(0,0,0,0.02);
+}
+
+.ranking-position {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.ranking-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ranking-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.ranking-details {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.ranking-value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+    .podium { grid-template-columns: 1fr; }
+}
+/* ===== LAYOUT FREQUÊNCIA + TOP 10 ===== */
+.frequency-layout {
+    display: grid;
+    grid-template-columns: 20% 80%;
+    gap: 24px;
+    align-items: start;
+}
+
+.mini-card {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.frequency-main {
+    background: var(--surface-color);
+    border: none;
+    border-radius: 12px;
+}
+
+.ranking-small .ranking-item {
+    padding: 10px 12px;
+}
+
+.ranking-small .ranking-position {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+}
+
+.ranking-small .ranking-name {
+    font-size: 13px;
+}
+
+.ranking-small .ranking-details {
+    font-size: 11px;
+}
+
+.ranking-small .ranking-value {
+    font-size: 13px;
+}
+
+@media (max-width: 992px) {
+    .frequency-layout { grid-template-columns: 1fr; }
+}
+
+/* ===== Cards separados para Top 10 e Frequência ===== */
+.frequency-section { margin-bottom: 30px; }
+
+.top10-card {
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-light);
+    padding: 18px;
+}
+
+.top10-card .section-header {
+    margin-bottom: 12px;
+}
+
+.top10-card .ranking-list {
+    max-height: 420px;
+    overflow-y: auto;
+    border-top: 1px solid var(--border-color);
+}
+
+.frequency-card {
+    box-shadow: var(--shadow-light);
+    padding: 25px;
+}
+
+/* ===== Altura fixa e layout para cards Top 10 e Frequência ===== */
+.top10-card,
+.frequency-card {
+    height: 520px;
+    display: flex;
+    flex-direction: column;
+}
+
+.frequency-card .frequency-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.frequency-card .frequency-table-wrapper {
+    flex: 1;
+    overflow-x: auto;
+}
+
+/* Paginação da tabela de frequência */
+.table-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    margin-top: 8px;
+    border-top: 1px solid var(--border-color);
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-pagination {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-pagination:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-numbers {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+/* Ajustes Top 10 para ocupar a altura fixa */
+.top10-card .section-header { margin-bottom: 12px; }
+.top10-card .ranking-list {
+    flex: 1;
+    overflow-y: auto;
+    border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+    .top10-card,
+    .frequency-card {
+        height: auto;
+    }
+}

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Lume — Sistema de Gestão Empresarial</title>
+  <link rel="icon" type="image/png" href="log.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root { --lume: #ff8c00; --lume2: #ffa500; --primary: #0f172a; --muted: #64748b; --glass: rgba(255,255,255,.86); }
+    html, body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #eef2f7 100%); color: var(--primary); }
+
+    /* Animações premium */
+    @keyframes glowPulse { 0%{box-shadow:0 0 0 rgba(255,140,0,0)} 100%{box-shadow:0 8px 28px rgba(255,140,0,0.28)} }
+    @keyframes floatY { 0%{transform:translateY(0)} 50%{transform:translateY(-5px)} 100%{transform:translateY(0)} }
+    @keyframes slideIn { 0%{opacity:0; transform:translateY(16px)} 100%{opacity:1; transform:translateY(0)} }
+    
+    .btn-premium { background: linear-gradient(135deg, var(--lume), var(--lume2)); color: #fff; border-radius: 14px; padding: 14px 22px; font-weight: 800; letter-spacing: .3px; display: inline-flex; align-items: center; gap: 8px; animation: glowPulse 2s infinite alternate; }
+    .btn-outline { background: #fff; color: var(--primary); border: 2px solid #e2e8f0; border-radius: 14px; padding: 12px 18px; font-weight: 700; }
+    .btn-whatsapp { background: #25d366; color: #fff; border-radius: 14px; padding: 12px 18px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 8px 20px rgba(37,211,102,.2); }
+    .btn-whatsapp:hover { filter: brightness(1.05); }
+    .chip { background: rgba(255,140,0,.10); color: #ea580c; border: 1px solid rgba(255,140,0,.22); padding: 6px 12px; border-radius: 999px; font-weight: 700; font-size: 12px; }
+    .glass { background: var(--glass); border: 1px solid rgba(255,255,255,.70); backdrop-filter: blur(12px); border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.06); }
+    .card { border-radius: 16px; padding: 18px; background: #fff; border: 1px solid #eef2f7; box-shadow: 0 8px 20px rgba(0,0,0,.04); }
+    .reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal-show { opacity: 1; transform: translateY(0); }
+    .badge { font-size: 11px; font-weight: 800; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 4px 8px; border-radius: 999px; }
+
+    /* SVG gráficos */
+    .chart-card { position: relative; overflow: hidden; }
+    .chart-card:after { content: ""; position: absolute; inset: -40% -40% auto auto; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,140,0,.15), transparent 70%); filter: blur(30px); }
+
+    /* Carrossel */
+    .carousel { position: relative; overflow: hidden; border-radius: 0; }
+    .slides { display: flex; transition: transform .6s cubic-bezier(.25,.46,.45,.94); }
+    .slide { flex: 0 0 100vw; min-width: 100vw; padding: 0 7vw; box-sizing: border-box; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; margin: 0 4px; transition: all .3s ease; cursor: pointer; }
+    .dot.active { background: var(--lume); transform: scale(1.28); }
+    .full-bleed { width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); }
+    .carousel .slide img { border-radius: 12px; }
+
+    /* Decorações discretas */
+    .decoration { position: absolute; filter: blur(40px); opacity: .08; }
+    .decoration.d1 { width: 200px; height: 200px; background: radial-gradient(circle, #ffa500, transparent 70%); top: -50px; left: -30px; }
+    .decoration.d2 { width: 150px; height: 150px; background: radial-gradient(circle, #ff8c00, transparent 70%); top: 100px; right: -40px; }
+
+    /* Texto animado curto */
+    @keyframes wordIn { 0%{opacity:0; transform:translateY(8px)} 100%{opacity:1; transform:translateY(0)} }
+    .word { display:inline-block; opacity:0; animation: wordIn .6s ease forwards; margin-right: 6px; }
+
+    /* Modal premium e centralizado */
+    .modal-content { 
+      background: #fff; 
+      border: 1px solid #e2e8f0; 
+      border-radius: 20px; 
+      padding: 28px 24px; 
+      max-width: 380px; 
+      width: min(92vw, 380px); 
+      text-align: center; 
+      box-shadow: 0 20px 60px rgba(0,0,0,.15); 
+      animation: slideIn .35s ease forwards;
+      margin: auto;
+    }
+
+    /* Animação dos gráficos */
+    .metric-value {
+      font-size: 3rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    .metric-bar {
+      height: 8px;
+      background: #f1f5f9;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+    .metric-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+      border-radius: 20px;
+      width: 0;
+      transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card.reveal-show .metric-fill { width: var(--fill-width); }
+  </style>
+</head>
+<body>
+  <!-- Header minimalista -->
+  <header class="px-4 pt-4 pb-3 sticky top-0 z-30 glass">
+    <div class="decoration d1"></div><div class="decoration d2"></div>
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="log.png" alt="Logo Lume" class="w-10 h-10 rounded-xl shadow-sm" />
+        <div>
+          <div class="text-slate-800 font-extrabold text-lg">Lume</div>
+          <div class="text-[11px] text-slate-500 font-medium">Sistema de Gestão</div>
+        </div>
+      </div>
+      <button id="openMenu" class="text-slate-600 font-bold text-lg">☰</button>
+    </div>
+    <div id="mobileMenu" class="hidden mt-3 p-4 glass">
+      <button onclick="openDesktopModal()" class="block w-full py-3 font-bold text-slate-800 text-left">Acessar Sistema</button>
+      <a href="#resultados" class="block py-2 text-slate-600 font-medium">Resultados</a>
+      <a href="#hero" class="block py-2 text-slate-600 font-medium">Preços</a>
+      <a href="#contato" class="block py-2 text-slate-600 font-medium">Contato</a>
+    </div>
+  </header>
+
+  <!-- Carrossel com imagens bonitas e indicadores -->
+  <section id="funcionalidades" class="px-4 pt-6">
+    <div class="carousel reveal full-bleed">
+      <div id="slides" class="slides">
+        <div class="slide">
+          <img src="idx1.png" alt="Gestão de Estoque" class="w-full rounded-xl mb-3 shadow-sm" style="animation: floatY 4s ease-in-out infinite" />
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-900">Gestão de Estoque Inteligente</h3>
+            <span class="badge">−22% estoque parado</span>
+          </div>
+          <p class="text-sm text-slate-600">Alertas de reposição, curva ABC e movimentações automáticas.</p>
+        <div class="mt-2"><span class="chip">R$27/mês • 10 dias grátis</span></div>
+        </div>
+        <div class="slide">
+          <img src="idx2.png" alt="Vendas e Faturamento" class="w-full rounded-xl mb-3 shadow-sm" style="animation: floatY 4s ease-in-out infinite" />
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-900">Vendas e Faturamento</h3>
+            <span class="badge">−35% tempo de caixa</span>
+          </div>
+          <p class="text-sm text-slate-600">PDV rápido com atalhos, formas de pagamento e cupons fiscais.</p>
+          <div class="mt-2"><span class="chip">R$27/mês • 10 dias grátis</span></div>
+        </div>
+        <div class="slide">
+          <img src="idx3.png" alt="Relatórios e Analytics" class="w-full rounded-xl mb-3 shadow-sm" style="animation: floatY 4s ease-in-out infinite" />
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-900">Relatórios e Analytics</h3>
+            <span class="badge">+18% crescimento</span>
+          </div>
+          <p class="text-sm text-slate-600">Dashboards visuais e insights para decisões estratégicas.</p>
+          <div class="mt-2"><span class="chip">R$27/mês • 10 dias grátis</span></div>
+        </div>
+      </div>
+      <div class="flex items-center justify-center gap-2 py-3">
+        <div class="dot" data-dot="0"></div>
+        <div class="dot" data-dot="1"></div>
+        <div class="dot" data-dot="2"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comece Hoje, Pague Depois (movido para cima) -->
+  <section id="hero" class="px-4 pt-6">
+    <div class="text-center mb-4">
+      <h2 class="text-xl font-bold text-slate-900 mb-2">Comece Hoje, Pague Depois</h2>
+      <p class="text-sm text-slate-600">10 dias totalmente grátis. Cancele quando quiser.</p>
+    </div>
+    
+    <div class="card reveal" style="background: linear-gradient(135deg, #fff5ed 0%, #ffffff 100%); border: 2px solid #fed7aa;">
+      <span class="chip mb-3 inline-block">🔥 Mais Escolhido</span>
+      <div class="mb-2">
+        <span style="font-size: 2.5rem; font-weight: 900; color: #0f172a;">R$27</span>
+        <span class="text-slate-600">/mês</span>
+      </div>
+      <div style="color: #22c55e; font-weight: 700; margin-bottom: 1.5rem;">✓ 10 dias grátis para testar tudo</div>
+      
+      <div style="text-align: left; margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+          <span style="background: #dcfce7; color: #16a34a; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 900; flex-shrink: 0;">✓</span>
+          <span style="font-size: 0.95rem;"><strong>PDV Rápido</strong> - Vendas em segundos</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+          <span style="background: #dcfce7; color: #16a34a; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 900; flex-shrink: 0;">✓</span>
+          <span style="font-size: 0.95rem;"><strong>Gestão de Estoque</strong> - Controle total</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+          <span style="background: #dcfce7; color: #16a34a; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 900; flex-shrink: 0;">✓</span>
+          <span style="font-size: 0.95rem;"><strong>Relatórios Inteligentes</strong> - Decisões melhores</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span style="background: #dcfce7; color: #16a34a; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 900; flex-shrink: 0;">✓</span>
+          <span style="font-size: 0.95rem;"><strong>Suporte Dedicado</strong> - Sempre que precisar</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-3 mb-4">
+        <button onclick="openDesktopModal()" class="btn-premium w-full justify-center">Começar Agora • 100% Grátis</button>
+        <a href="https://wa.me/5534996612499?text=Quero começar no plano Básico do Lume." target="_blank" class="btn-outline w-full text-center">Falar com Especialista</a>
+      </div>
+
+      <div style="text-align: center; padding-top: 1rem; border-top: 1px solid #fed7aa; font-size: 0.9rem; color: #64748b;">
+        ⭐⭐⭐⭐⭐ Mais de 500 empresas usando
+      </div>
+    </div>
+  </section>
+
+  <!-- Seção de métricas animadas -->
+  <section id="resultados" class="px-4 pt-6">
+    <h2 class="text-xl font-bold text-slate-900 mb-4">Impacto Real no Seu Negócio</h2>
+    
+    <div class="card chart-card reveal mb-4">
+      <div class="flex items-center justify-between mb-2">
+        <div class="font-bold text-slate-800">Redução em Perdas</div>
+      </div>
+      <div class="metric-value" data-target="63">0%</div>
+      <div class="metric-bar">
+        <div class="metric-fill" style="--fill-width: 63%"></div>
+      </div>
+      <p class="text-sm text-slate-600 mt-2">Alertas inteligentes evitam rupturas e produtos parados.</p>
+    </div>
+
+    <div class="card chart-card reveal mb-4">
+      <div class="flex items-center justify-between mb-2">
+        <div class="font-bold text-slate-800">Tempo de Caixa</div>
+      </div>
+      <div class="metric-value" data-target="35">0%</div>
+      <div class="metric-bar">
+        <div class="metric-fill" style="--fill-width: 35%"></div>
+      </div>
+      <p class="text-sm text-slate-600 mt-2">Interface rápida reduz filas e melhora satisfação.</p>
+    </div>
+
+    <div class="card chart-card reveal mb-4">
+      <div class="flex items-center justify-between mb-2">
+        <div class="font-bold text-slate-800">Mais Controle</div>
+      </div>
+      <div class="metric-value" data-target="89">0%</div>
+      <div class="metric-bar">
+        <div class="metric-fill" style="--fill-width: 89%"></div>
+      </div>
+      <p class="text-sm text-slate-600 mt-2">Relatórios em tempo real mostram onde melhorar.</p>
+    </div>
+
+    <div class="card chart-card reveal">
+      <div class="flex items-center justify-between mb-2">
+        <div class="font-bold text-slate-800">Satisfação do Cliente</div>
+      </div>
+      <div class="metric-value" data-target="92">0%</div>
+      <div class="metric-bar">
+        <div class="metric-fill" style="--fill-width: 92%"></div>
+      </div>
+      <p class="text-sm text-slate-600 mt-2">Pós-vendas eficiente com gestão de crediário e cashback.</p>
+    </div>
+  </section>
+
+  <!-- Recursos Completos -->
+  <section class="px-4 pt-6">
+    <h2 class="text-xl font-bold text-slate-900 mb-4 text-center">Tudo que Você Precisa</h2>
+    <div class="card reveal">
+      <div class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+        <div class="flex items-center gap-2">
+          <span style="color: #22c55e; font-weight: 900;">✓</span>
+          <span>Usuários ilimitados</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span style="color: #22c55e; font-weight: 900;">✓</span>
+          <span>Produtos ilimitados</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span style="color: #22c55e; font-weight: 900;">✓</span>
+          <span>Vendas ilimitadas</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span style="color: #22c55e; font-weight: 900;">✓</span>
+          <span>Controle de estoque</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span style="color: #22c55e; font-weight: 900;">✓</span>
+          <span>Relatórios completos</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span style="color: #22c55e; font-weight: 900;">✓</span>
+          <span>Gestão de clientes</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span style="color: #22c55e; font-weight: 900;">✓</span>
+          <span>Controle Financeiro</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span style="color: #22c55e; font-weight: 900;">✓</span>
+          <span>Cupons não fiscais</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span style="color: #22c55e; font-weight: 900;">✓</span>
+          <span>Gerência de Crediário</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span style="color: #22c55e; font-weight: 900;">✓</span>
+          <span>Gestão de Cashback</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span style="color: #22c55e; font-weight: 900;">✓</span>
+          <span>Gráficos Modernos</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span style="color: #22c55e; font-weight: 900;">✓</span>
+          <span>Suporte via WhatsApp</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contato simplificado -->
+  <section id="contato" class="px-4 pt-6 pb-14">
+    <div class="card reveal text-center">
+      <h3 class="font-bold text-slate-900 text-lg mb-2">Dúvidas?</h3>
+      <p class="text-sm text-slate-600 mb-4">Nossa equipe responde em minutos no WhatsApp</p>
+      <a href="https://wa.me/5534996612499?text=Preciso de ajuda com o Lume." target="_blank" class="btn-premium w-full justify-center">💬 Chamar no WhatsApp</a>
+    </div>
+  </section>
+
+  <!-- WhatsApp flutuante -->
+  <a href="https://wa.me/5534996612499?text=Olá! Quero conhecer o Lume." target="_blank" class="fixed right-4 bottom-5 z-50 bg-[#25d366] text-white rounded-full w-56 max-w-[260px] px-4 h-12 flex items-center gap-2 shadow-lg" style="animation: floatY 3s ease-in-out infinite">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/></svg>
+    <span class="text-sm font-bold">Falar no WhatsApp</span>
+  </a>
+
+  <footer class="px-4 pb-8 text-center text-xs text-slate-400 mt-6">© 2025 Lume. Sistema de Gestão Empresarial.</footer>
+
+  <!-- Modal Desktop (centralizado) -->
+  <div id="desktopModal" class="fixed inset-0 bg-black/50 z-50" style="display: none; align-items: center; justify-content: center;">
+    <div class="modal-content" style="position: relative;">
+      <button aria-label="Fechar" class="absolute top-3 right-3 text-slate-400 hover:text-slate-700 text-xl leading-none" onclick="closeDesktopModal()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+      <div class="text-4xl mb-3">💻</div>
+      <h3 class="text-xl font-bold text-slate-900 mb-2">Use o Lume no Desktop</h3>
+      <p class="text-slate-600 mb-4 leading-relaxed">Para a experiência completa (PDV e relatórios), acesse pelo computador.</p>
+      <div class="bg-slate-50 p-3 rounded-xl mb-4">
+        <div class="font-semibold text-slate-800 text-sm">🌐 www.lume.com.br</div>
+      </div>
+      <div class="grid grid-cols-1 gap-3">
+        <a href="https://wa.me/5534996612499?text=Preciso de ajuda para acessar o Lume no desktop." target="_blank" class="btn-premium w-full justify-center">Falar com Especialista</a>
+        <button onclick="closeDesktopModal()" class="btn-outline w-full">Entendi</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Menu toggle
+    const openMenu = document.getElementById('openMenu');
+    const mobileMenu = document.getElementById('mobileMenu');
+    openMenu.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+
+    // Reveal on scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { 
+        if (e.isIntersecting) {
+          e.target.classList.add('reveal-show');
+          
+          // Animar números dos gráficos
+          const metricValue = e.target.querySelector('.metric-value');
+          if (metricValue && !metricValue.classList.contains('animated')) {
+            metricValue.classList.add('animated');
+            const target = parseInt(metricValue.dataset.target);
+            let current = 0;
+            const increment = target / 60;
+            const timer = setInterval(() => {
+              current += increment;
+              if (current >= target) {
+                metricValue.textContent = target + '%';
+                clearInterval(timer);
+              } else {
+                metricValue.textContent = Math.floor(current) + '%';
+              }
+            }, 25);
+          }
+        }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Modal
+    function openDesktopModal(){ 
+      const modal = document.getElementById('desktopModal');
+      modal.style.display = 'flex';
+    }
+    function closeDesktopModal(){ 
+      const modal = document.getElementById('desktopModal');
+      modal.style.display = 'none';
+    }
+    const modalOverlay = document.getElementById('desktopModal');
+    modalOverlay.addEventListener('click', (e) => { if (e.target.id === 'desktopModal') closeDesktopModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDesktopModal(); });
+
+    // Carrossel com autoplay e swipe
+    const slides = document.getElementById('slides');
+    if (slides) {
+      const dots = Array.from(document.querySelectorAll('.dot'));
+      let index = 0, startX = 0, currentX = 0, autoplayId;
+      function updateCarousel(i){ index = (i+3)%3; slides.style.transform = `translateX(-${index*100}%)`; dots.forEach((d,di)=>d.classList.toggle('active', di===index)); }
+      const startAutoplay = () => { clearInterval(autoplayId); autoplayId = setInterval(() => updateCarousel(index+1), 4000); };
+      slides.addEventListener('touchstart', e => { startX = e.touches[0].clientX; currentX = startX; clearInterval(autoplayId); });
+      slides.addEventListener('touchmove', e => { const x = e.touches[0].clientX; const dx = x - startX; slides.style.transform = `translateX(calc(-${index*100}% + ${dx}px))`; currentX = x; });
+      slides.addEventListener('touchend', () => { const dx = currentX - startX; if (Math.abs(dx) > 60) updateCarousel(index + (dx < 0 ? 1 : -1)); else updateCarousel(index); startAutoplay(); });
+      document.querySelectorAll('.dot').forEach(d => d.addEventListener('click', () => { updateCarousel(parseInt(d.dataset.dot,10)); startAutoplay(); }));
+      updateCarousel(0); startAutoplay();
+    }
+  </script>
+</body>
+</html>

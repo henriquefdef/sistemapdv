@@ -8,6 +8,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="index.css">
+    <script>
+      (function() {
+        try {
+          var isMobile = /Mobi|Android|iPhone|iPod|IEMobile|Opera Mini/.test(navigator.userAgent);
+          var bypass = new URLSearchParams(window.location.search).has('desktop');
+          if (isMobile && !bypass) {
+            window.location.replace('index_cel.html');
+          }
+        } catch (e) {
+          // fail silently
+        }
+      })();
+    </script>
 </head>
 <body>
 
@@ -69,7 +82,7 @@
                                 <p>Apenas <span class="price-value">R$23/mês</span> • 10 dias grátis!</p>
                             </div>
                             <div class="carousel-buttons">
-                                <a href="#" class="btn-premium">
+                                <a href="inscricao.html" class="btn-premium">
                                     Começar teste grátis
                                 </a>
                                 <a href="#prices" class="btn-secondary">
@@ -94,7 +107,7 @@
                             <h1>Estoque <span class="text-highlight">Otimizado</span>, Lucros Maximizados</h1>
                             <p>Mantenha seu inventário perfeito e aproveite <span class="text-highlight-bold">10 dias grátis</span> para ver a diferença!</p>
                             <div class="carousel-buttons">
-                                <a href="#" class="btn-premium">
+                                <a href="inscricao.html" class="btn-premium">
                                     Começar teste grátis
                                 </a>
                                 <a href="#prices" class="btn-secondary">

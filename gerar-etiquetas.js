@@ -1082,7 +1082,7 @@ function saveUserPreferences() {
         itemsPerPage: CONFIG.itemsPerPage,
         sortBy: CONFIG.sortBy,
         sortOrder: CONFIG.sortOrder,
-        filtersCollapsed: elements.filtersContent.classList.contains('collapsed')
+        filtersCollapsed: !!(elements.filtersContent && elements.filtersContent.classList.contains('collapsed'))
     };
     
     localStorage.setItem('gerar-etiquetas-preferences', JSON.stringify(preferences));

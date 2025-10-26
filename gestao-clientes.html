@@ -165,86 +165,66 @@
             </div>
         </div>
 
-        <!-- Top 20 Clientes -->
-        <div class="top-clientes-section">
-            <div class="section-card">
-                <div class="section-header">
-                    <h3>Top 20 Clientes por Valor</h3>
-                    <div class="section-actions">
-                        <select id="ranking-type">
-                            <option value="valor">Por Valor Total</option>
-                            <option value="quantidade">Por Quantidade de Compras</option>
-                            <option value="frequencia">Por Frequência</option>
-                        </select>
-                        <button class="btn-export-whatsapp" id="export-whatsapp-top">
-                            <i class="fab fa-whatsapp"></i>
-                            Enviar para Todos
-                        </button>
+        <!-- Top 10 e Frequência lado a lado -->
+        <div class="frequency-section">
+            <div class="frequency-layout">
+                <!-- Card: Top 10 -->
+                <div class="section-card top10-card">
+                    <div class="section-header">
+                        <h3>Top Maiores Compradores</h3>
                     </div>
+                    <div id="top-compradores-list" class="ranking-list ranking-small"></div>
                 </div>
-                <div class="top-clientes-container">
-                    <div class="clientes-table-wrapper">
-                        <table class="clientes-table" id="top-clientes-table">
-                            <thead>
-                                <tr>
-                                    <th>Posição</th>
-                                    <th>Cliente</th>
-                                    <th>Cidade</th>
-                                    <th>Total Gasto</th>
-                                    <th>Compras</th>
-                                    <th>Última Compra</th>
-                                    <th>Status</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="top-clientes-body">
-                                <!-- Será preenchido pelo JavaScript -->
-                            </tbody>
-                        </table>
+
+                <!-- Card: Frequência -->
+                <div class="section-card frequency-card">
+                    <div class="section-header">
+                        <h3>Análise de Frequência de Recompra</h3>
+                        <div class="frequency-filters">
+                            <select id="frequency-status-filter">
+                                <option value="all">Todos os Status</option>
+                                <option value="atrasado">Atrasados</option>
+                                <option value="breve">Em Breve</option>
+                                <option value="normal">Normal</option>
+                            </select>
+                            <input type="text" id="frequency-search" placeholder="Buscar cliente...">
+                        </div>
+                    </div>
+                    <div class="frequency-container">
+                        <div class="frequency-table-wrapper">
+                            <table class="frequency-table" id="frequency-table">
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Produto</th>
+                                        <th>Frequência</th>
+                                        <th>Última Compra</th>
+                                        <th>Próxima Esperada</th>
+                                        <th>Status</th>
+                                        <th>Dias Atraso</th>
+                                        <th>Valor Última</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="frequency-table-body">
+                                    <!-- Será preenchido pelo JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Paginação da Tabela de Frequência -->
+                        <div class="table-pagination" id="frequency-pagination">
+                            <div class="pagination-info" id="frequency-pagination-info">Mostrando 0–0 de 0</div>
+                            <div class="pagination-controls">
+                                <button class="btn-pagination" id="freq-prev-page" aria-label="Página anterior">◀</button>
+                                <span class="page-numbers" id="freq-page-numbers">Página 1 de 1</span>
+                                <button class="btn-pagination" id="freq-next-page" aria-label="Próxima página">▶</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Análise de Frequência de Recompra -->
-        <div class="frequency-section">
-            <div class="section-card">
-                <div class="section-header">
-                    <h3>Análise de Frequência de Recompra</h3>
-                    <div class="frequency-filters">
-                        <select id="frequency-status-filter">
-                            <option value="all">Todos os Status</option>
-                            <option value="atrasado">Atrasados</option>
-                            <option value="breve">Em Breve</option>
-                            <option value="normal">Normal</option>
-                        </select>
-                        <input type="text" id="frequency-search" placeholder="Buscar cliente...">
-                    </div>
-                </div>
-                <div class="frequency-container">
-                    <div class="frequency-table-wrapper">
-                        <table class="frequency-table" id="frequency-table">
-                            <thead>
-                                <tr>
-                                    <th>Cliente</th>
-                                    <th>Produto</th>
-                                    <th>Frequência</th>
-                                    <th>Última Compra</th>
-                                    <th>Próxima Esperada</th>
-                                    <th>Status</th>
-                                    <th>Dias Atraso</th>
-                                    <th>Valor Última</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="frequency-table-body">
-                                <!-- Será preenchido pelo JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- Loading Indicator -->
         <div class="loading-overlay" id="loading-overlay" style="display: none;">

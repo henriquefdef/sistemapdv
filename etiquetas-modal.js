@@ -182,7 +182,7 @@ function coletarDados() {
 }
 
 // ===== GERAR ETIQUETAS =====
-window.gerarEtiquetas = function() {
+window.gerarEtiquetas = async function() {
     const modelo = document.getElementById('modelo-etiqueta').value;
     
     if (!modelo) {
@@ -190,7 +190,32 @@ window.gerarEtiquetas = function() {
         return;
     }
     
-    const dadosCompletos = coletarDados();
+    const dadosBase = coletarDados();
+
+    // Buscar nome da empresa igual ao cupom fiscal
+    async function getCompanyDataEtiquetas() {
+        try {
+            if (typeof supabaseClient === 'undefined' || !supabaseClient || !window.currentCompanyId) {
+                return { nome: 'Lume Sistemas' };
+            }
+            const { data, error } = await supabaseClient
+                .from('empresas')
+                .select('nome_fantasia, razao_social')
+                .eq('id_empresa', window.currentCompanyId)
+                .single();
+            if (error) {
+                console.warn('Falha ao obter dados da empresa para etiquetas:', error);
+                return { nome: 'Lume Sistemas' };
+            }
+            return { nome: (data?.nome_fantasia || data?.razao_social || 'Lume Sistemas') };
+        } catch (e) {
+            console.warn('Erro ao buscar dados da empresa (etiquetas):', e);
+            return { nome: 'Lume Sistemas' };
+        }
+    }
+
+    const companyData = await getCompanyDataEtiquetas();
+    const dadosCompletos = { ...dadosBase, empresaNome: companyData.nome };
     
     console.log('Dados completos das etiquetas:', dadosCompletos);
     

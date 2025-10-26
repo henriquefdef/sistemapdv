@@ -75,6 +75,69 @@ class AgendaConfig {
         const styles = document.createElement('style');
         styles.id = 'config-styles';
         styles.textContent = `
+            /* Base de modal genérica para a Agenda */
+            .modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(44, 62, 80, 0.6);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1002;
+            }
+
+            .modal-content {
+                background: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+                width: 90%;
+                max-height: 85vh;
+                overflow: hidden;
+                animation: fadeIn 0.25s ease;
+            }
+
+            .modal-header {
+                padding: 18px 22px;
+                border-bottom: 1px solid #e5e7eb;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: #f8fafc;
+            }
+
+            .modal-body {
+                padding: 22px;
+                max-height: calc(85vh - 140px);
+                overflow-y: auto;
+                background: #ffffff;
+            }
+
+            .modal-footer {
+                padding: 16px 22px;
+                border-top: 1px solid #e5e7eb;
+                background: #f8fafc;
+                display: flex;
+                gap: 10px;
+                justify-content: flex-end;
+            }
+
+            .close-btn {
+                background: none;
+                border: none;
+                font-size: 20px;
+                color: #6b7280;
+                cursor: pointer;
+                width: 32px;
+                height: 32px;
+                border-radius: 6px;
+            }
+
+            .close-btn:hover { background: #eef2f7; color: #111827; }
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
             /* Ícone da engrenagem maior */
             #settings-btn {
                 width: 44px !important;

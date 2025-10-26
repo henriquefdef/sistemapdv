@@ -2,9 +2,19 @@
 
 // Configurações dos modelos de etiqueta
 const MODELOS_ETIQUETA = {
-    '90x30': { width: '90mm', height: '30mm', colunas: 3, fontSize: { nome: '12px', codigo: '10px', preco: '14px' } },
-    '50x20': { width: '50mm', height: '20mm', colunas: 4, fontSize: { nome: '10px', codigo: '8px', preco: '12px' } },
-    '40x20': { width: '40mm', height: '20mm', colunas: 5, fontSize: { nome: '8px', codigo: '7px', preco: '10px' } }
+    // Modelos existentes
+    '90x30': { width: '90mm', height: '30mm', colunas: 3, fontSize: { nome: '12px', codigo: '10px', preco: '14px' }, barcodeWidthPercent: 95, barcodeHeightMm: 18, qrcodeSizeMm: 18, paddingMm: 3 },
+    '50x20': { width: '50mm', height: '20mm', colunas: 4, fontSize: { nome: '10px', codigo: '8px', preco: '12px' }, barcodeWidthPercent: 92, barcodeHeightMm: 12, qrcodeSizeMm: 12, paddingMm: 2 },
+    '40x20': { width: '40mm', height: '20mm', colunas: 5, fontSize: { nome: '8px', codigo: '7px', preco: '10px' }, barcodeWidthPercent: 90, barcodeHeightMm: 10, qrcodeSizeMm: 10, paddingMm: 2 },
+
+    // Modelos comuns no Brasil adicionados
+    '60x40': { width: '60mm', height: '40mm', colunas: 3, fontSize: { nome: '12px', codigo: '10px', preco: '14px' }, barcodeWidthPercent: 95, barcodeHeightMm: 18, qrcodeSizeMm: 18, paddingMm: 3 },
+    '50x30': { width: '50mm', height: '30mm', colunas: 4, fontSize: { nome: '12px', codigo: '10px', preco: '14px' }, barcodeWidthPercent: 95, barcodeHeightMm: 14, qrcodeSizeMm: 14, paddingMm: 3 },
+    '35x22': { width: '35mm', height: '22mm', colunas: 5, fontSize: { nome: '9px', codigo: '8px', preco: '11px' }, barcodeWidthPercent: 88, barcodeHeightMm: 10, qrcodeSizeMm: 10, paddingMm: 1.5 },
+    '40x60': { width: '40mm', height: '60mm', colunas: 4, fontSize: { nome: '12px', codigo: '10px', preco: '14px' }, barcodeWidthPercent: 92, barcodeHeightMm: 20, qrcodeSizeMm: 16, paddingMm: 3 },
+    '80x40': { width: '80mm', height: '40mm', colunas: 2, fontSize: { nome: '14px', codigo: '12px', preco: '16px' }, barcodeWidthPercent: 95, barcodeHeightMm: 20, qrcodeSizeMm: 20, paddingMm: 4 },
+    '100x50': { width: '100mm', height: '50mm', colunas: 2, fontSize: { nome: '14px', codigo: '12px', preco: '16px' }, barcodeWidthPercent: 95, barcodeHeightMm: 24, qrcodeSizeMm: 24, paddingMm: 4 },
+    '100x150': { width: '100mm', height: '150mm', colunas: 1, fontSize: { nome: '16px', codigo: '14px', preco: '18px' }, barcodeWidthPercent: 95, barcodeHeightMm: 40, qrcodeSizeMm: 35, paddingMm: 6 }
 };
 
 // ===== FUNÇÃO PRINCIPAL DE GERAÇÃO =====
@@ -30,6 +40,7 @@ function criarHTMLEtiquetas(dados) {
     if (!modelo) {
         throw new Error('Modelo de etiqueta não encontrado: ' + dados.modelo);
     }
+    const colunasEfetivas = Math.max(1, Math.min(modelo.colunas, (dados.produtos?.length || 1)));
     
     let html = `
     <!DOCTYPE html>
@@ -40,14 +51,13 @@ function criarHTMLEtiquetas(dados) {
         <title>Etiquetas - ${new Date().toLocaleDateString()}</title>
         <style>${gerarCSS(modelo)}</style>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     </head>
     <body>
         <div class="toolbar">
             <button onclick="window.print()" class="btn-action">
-                🖨️ Imprimir Etiquetas
-            </button>
-            <button onclick="baixarHTML()" class="btn-action">
-                💾 Baixar HTML
+                🖨️ Imprimir
             </button>
             <button onclick="baixarPDF()" class="btn-action">
                 📄 Baixar PDF
@@ -55,7 +65,7 @@ function criarHTMLEtiquetas(dados) {
             <span class="info">Total: ${dados.produtos.length} etiquetas</span>
         </div>
         
-        <div class="etiquetas-container" id="etiquetas-container">
+        <div class="etiquetas-container" id="etiquetas-container" style="grid-template-columns: repeat(${colunasEfetivas}, ${modelo.width}); grid-auto-rows: auto;">
     `;
     
     // Gerar cada etiqueta
@@ -67,36 +77,48 @@ function criarHTMLEtiquetas(dados) {
         </div>
         
         <script>
-            function baixarHTML() {
-                const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'etiquetas-' + new Date().toISOString().slice(0,10) + '.html';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }
-            
             function baixarPDF() {
                 try {
-                    const { jsPDF } = window.jspdf;
+                    const { jsPDF } = window.jspdf || {};
+                    if (!jsPDF) throw new Error('jsPDF não carregado');
+                    if (typeof html2canvas === 'undefined') throw new Error('html2canvas não carregado');
+
+                    const container = document.getElementById('etiquetas-container');
                     const pdf = new jsPDF('p', 'mm', 'a4');
-                    
-                    pdf.html(document.getElementById('etiquetas-container'), {
+                    const margin = 10;
+                    const pageWidth = pdf.internal.pageSize.getWidth();
+                    const usableWidth = pageWidth - margin * 2;
+
+                    pdf.html(container, {
                         callback: function (doc) {
                             doc.save('etiquetas-' + new Date().toISOString().slice(0,10) + '.pdf');
                         },
-                        x: 10,
-                        y: 10,
-                        width: 190,
-                        windowWidth: 800
+                        x: margin,
+                        y: margin,
+                        width: usableWidth,
+                        windowWidth: container.scrollWidth || 1024,
+                        html2canvas: { scale: 2, useCORS: true, allowTaint: true }
                     });
                 } catch (error) {
-                    alert('Erro ao gerar PDF. Use a opção de imprimir e salve como PDF.');
+                    console.error('Erro ao gerar PDF:', error);
+                    alert('Erro ao gerar PDF. Tente Imprimir e salvar como PDF.');
                 }
             }
+        </script>
+        <script>
+            // Renderização de QR Codes usando QRCode.js (visual padrão)
+            (function(){
+                function mmToPx(mm){ return Math.round(mm * 3.78); }
+                var nodes = document.querySelectorAll('.qrcode-svg[data-code]');
+                nodes.forEach(function(node){
+                    var text = node.getAttribute('data-code') || '';
+                    var sizePx = mmToPx(${MODELOS_ETIQUETA[dados.modelo]?.qrcodeSizeMm || 16});
+                    node.innerHTML = '';
+                    try {
+                        new QRCode(node, { text: text, width: sizePx, height: sizePx, correctLevel: QRCode.CorrectLevel.M });
+                    } catch(e) { console.error('Falha ao renderizar QR Code:', e); }
+                });
+            })();
         </script>
     </body>
     </html>`;
@@ -110,7 +132,8 @@ function criarEtiquetaIndividual(produto, dados, modelo) {
     
     // Nome da empresa (sempre no topo)
     if (dados.informacoesAdicionais === 'empresa') {
-        etiquetaHTML += '<div class="etiqueta-empresa-topo">Sua Empresa</div>';
+        const nomeEmpresa = dados.empresaNome || 'Sua Empresa';
+        etiquetaHTML += `<div class="etiqueta-empresa-topo">${nomeEmpresa}</div>`;
     }
     
     // Preço (logo após empresa)
@@ -119,11 +142,17 @@ function criarEtiquetaIndividual(produto, dados, modelo) {
     }
     
     // Código de barras ou QR Code
-    if (produto.codigo_barras) {
-        if (dados.tipoCodigo === 'qrcode') {
-            etiquetaHTML += criarQRCodeMelhorado(produto.codigo_barras);
-        } else {
-            etiquetaHTML += criarCodigoBarrasMelhorado(produto.codigo_barras);
+    const sku = produto.codigo_sku || produto.sku || '';
+    const barcode = produto.codigo_barras || '';
+    if (dados.tipoCodigo === 'qrcode') {
+        if (sku) {
+            etiquetaHTML += criarQRCodeMelhorado(sku);
+        } else if (barcode) {
+            etiquetaHTML += criarQRCodeMelhorado(barcode);
+        }
+    } else {
+        if (barcode) {
+            etiquetaHTML += criarCodigoBarrasMelhorado(barcode);
         }
     }
     
@@ -203,53 +232,77 @@ function gerarBarrasReais(codigo) {
 
 // ===== QR CODE MELHORADO =====
 function criarQRCodeMelhorado(codigo) {
-    const qrSVG = gerarQRCodeReal(codigo);
-    
     return `
         <div class="qrcode-container">
-            <div class="qrcode-svg">${qrSVG}</div>
+            <div class="qrcode-svg" data-code="${codigo}"></div>
             <div class="codigo-texto">${codigo}</div>
         </div>
     `;
 }
 
 function gerarQRCodeReal(codigo) {
-    // QR Code mais realista baseado no código
-    const size = 25;
-    const cellSize = 8;
+    // QR Code visual mais próximo do padrão oficial (Versão 1)
+    const size = 21;            // módulos (versão 1)
+    const quietZone = 4;        // zona silenciosa
+    const cellSize = 6;         // pixels por módulo
     const hash = complexHash(codigo);
-    
+
+    const totalSize = (size + quietZone * 2) * cellSize;
+    const offset = quietZone * cellSize;
     let qrPattern = '';
-    
-    // Gerar padrão baseado no código
+
+    // Desenha padrões de localização (finder patterns)
+    function drawFinder(xCells, yCells) {
+        const x = offset + xCells * cellSize;
+        const y = offset + yCells * cellSize;
+        const outer = 7 * cellSize, inner = 5 * cellSize, core = 3 * cellSize;
+        qrPattern += `<rect x="${x}" y="${y}" width="${outer}" height="${outer}" fill="#000"/>`;
+        qrPattern += `<rect x="${x + cellSize}" y="${y + cellSize}" width="${inner}" height="${inner}" fill="#fff"/>`;
+        qrPattern += `<rect x="${x + 2 * cellSize}" y="${y + 2 * cellSize}" width="${core}" height="${core}" fill="#000"/>`;
+    }
+    drawFinder(0, 0);                         // topo-esquerda
+    drawFinder(size - 7, 0);                  // topo-direita
+    drawFinder(0, size - 7);                  // base-esquerda
+
+    // Linhas de temporização (timing patterns) no eixo central
+    for (let i = 0; i < size; i++) {
+        // Linha horizontal
+        const xH = offset + i * cellSize;
+        const yH = offset + 6 * cellSize;
+        // Pular sobre os padrões de localização
+        if (i < 7 || i > size - 8) continue;
+        const fillH = i % 2 === 0 ? '#000' : '#fff';
+        qrPattern += `<rect x="${xH}" y="${yH}" width="${cellSize}" height="${cellSize}" fill="${fillH}"/>`;
+
+        // Linha vertical
+        const xV = offset + 6 * cellSize;
+        const yV = offset + i * cellSize;
+        if (i < 7 || i > size - 8) continue;
+        const fillV = i % 2 === 0 ? '#000' : '#fff';
+        qrPattern += `<rect x="${xV}" y="${yV}" width="${cellSize}" height="${cellSize}" fill="${fillV}"/>`;
+    }
+
+    // Preenche módulos de dados baseado em hash (aparência típica)
     for (let row = 0; row < size; row++) {
         for (let col = 0; col < size; col++) {
-            const cellHash = (hash + row * size + col) * 31;
-            
-            // Adicionar padrões característicos do QR Code
-            let shouldFill = false;
-            
-            // Cantos de localização (sempre preenchidos)
-            if ((row < 8 && col < 8) || 
-                (row < 8 && col >= size - 8) || 
-                (row >= size - 8 && col < 8)) {
-                shouldFill = (row === 0 || row === 6 || col === 0 || col === 6 || 
-                             (row >= 2 && row <= 4 && col >= 2 && col <= 4));
-            } else {
-                // Resto baseado no hash
-                shouldFill = Math.abs(cellHash) % 3 === 0;
-            }
-            
+            // Áreas reservadas (finder + timing)
+            const inTopLeft = row < 7 && col < 7;
+            const inTopRight = row < 7 && col >= size - 7;
+            const inBottomLeft = row >= size - 7 && col < 7;
+            const onTiming = row === 6 || col === 6;
+            if (inTopLeft || inTopRight || inBottomLeft || onTiming) continue;
+
+            const cellHash = (hash + row * size + col) % 7;
+            const shouldFill = cellHash === 0 || cellHash === 2 || cellHash === 4; // densidade moderada
             if (shouldFill) {
-                const x = col * cellSize;
-                const y = row * cellSize;
+                const x = offset + col * cellSize;
+                const y = offset + row * cellSize;
                 qrPattern += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#000"/>`;
             }
         }
     }
-    
-    const totalSize = size * cellSize;
-    return `<svg width="${totalSize}" height="${totalSize}" viewBox="0 0 ${totalSize} ${totalSize}" style="background: white;">${qrPattern}</svg>`;
+
+    return `<svg width="${totalSize}" height="${totalSize}" viewBox="0 0 ${totalSize} ${totalSize}" style="background: white; image-rendering: pixelated;">${qrPattern}</svg>`;
 }
 
 function complexHash(str) {
@@ -301,6 +354,11 @@ function formatarPreco(preco) {
 
 // ===== CSS MELHORADO =====
 function gerarCSS(modelo) {
+    const alturaMm = parseFloat(String(modelo.height).replace('mm','')) || 0;
+    const isPequena = alturaMm && alturaMm <= 30;
+    const gapVerticalMm = isPequena ? 0.5 : 1;
+    const barcodeAlturaMm = Math.min(modelo.barcodeHeightMm || 14, Math.max(10, alturaMm * 0.45));
+    const clampLinhasNome = isPequena ? 1 : 2;
     return `
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -308,6 +366,11 @@ function gerarCSS(modelo) {
             font-family: Arial, sans-serif;
             background: #f5f5f5;
             padding: 0;
+        }
+
+        @page {
+            size: A4;
+            margin: 10mm;
         }
         
         .toolbar {
@@ -350,32 +413,37 @@ function gerarCSS(modelo) {
         
         .etiquetas-container {
             display: grid;
-            grid-template-columns: repeat(${modelo.colunas}, 1fr);
+            grid-template-columns: repeat(${modelo.colunas}, ${modelo.width});
+            grid-auto-rows: auto;
             gap: 5mm;
-            padding: 20mm;
-            max-width: 210mm;
+            padding: 10mm;
+            width: max-content;
             margin: 0 auto;
-            background: white;
+            background: transparent;
         }
         
         .etiqueta {
             width: ${modelo.width};
-            height: ${modelo.height};
-            padding: 3mm;
+            min-width: ${modelo.width};
+            min-height: ${modelo.height};
+            height: auto;
+            padding: ${modelo.paddingMm ?? 3}mm;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
             text-align: center;
             background: white;
+            box-sizing: border-box;
             page-break-inside: avoid;
+            break-inside: avoid;
         }
         
         .etiqueta-empresa-topo {
             font-size: calc(${modelo.fontSize.nome} + 2px);
             font-weight: bold;
             color: #000;
-            margin-bottom: 1mm;
+            margin-bottom: ${gapVerticalMm}mm;
             width: 100%;
         }
         
@@ -383,18 +451,18 @@ function gerarCSS(modelo) {
             font-size: ${modelo.fontSize.nome};
             font-weight: bold;
             line-height: 1.1;
-            margin-top: 1mm;
+            margin-top: ${gapVerticalMm}mm;
             overflow: hidden;
             text-overflow: ellipsis;
             display: -webkit-box;
-            -webkit-line-clamp: 2;
+            -webkit-line-clamp: ${clampLinhasNome};
             -webkit-box-orient: vertical;
             width: 100%;
             color: #000;
         }
         
         .codigo-barras-container, .qrcode-container {
-            margin: 1mm 0;
+            margin: ${gapVerticalMm}mm 0;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
@@ -404,19 +472,23 @@ function gerarCSS(modelo) {
         }
         
         .codigo-barras-svg, .qrcode-svg {
-            margin-bottom: 1mm;
+            margin-bottom: ${gapVerticalMm}mm;
             max-width: 100%;
             height: auto;
         }
         
         .codigo-barras-svg svg {
-            width: 100%;
-            height: 15mm;
+            width: ${modelo.barcodeWidthPercent}%;
+            height: ${barcodeAlturaMm}mm;
         }
         
         .qrcode-svg svg {
-            width: 15mm;
-            height: 15mm;
+            width: ${modelo.qrcodeSizeMm}mm;
+            height: ${modelo.qrcodeSizeMm}mm;
+        }
+        .qrcode-svg canvas, .qrcode-svg img {
+            width: ${modelo.qrcodeSizeMm}mm;
+            height: ${modelo.qrcodeSizeMm}mm;
         }
         
         .codigo-texto {
@@ -424,7 +496,7 @@ function gerarCSS(modelo) {
             font-family: monospace;
             letter-spacing: 0.5px;
             font-weight: bold;
-            margin-bottom: 1mm;
+            margin-bottom: ${gapVerticalMm}mm;
             color: #000;
         }
         
@@ -437,7 +509,7 @@ function gerarCSS(modelo) {
             font-size: calc(${modelo.fontSize.preco} + 2px);
             font-weight: bold;
             color: #000;
-            margin: 1mm 0;
+            margin: ${gapVerticalMm}mm 0;
         }
         
         .preco-parcelado {
@@ -461,12 +533,16 @@ function gerarCSS(modelo) {
             .toolbar { display: none !important; }
             .etiquetas-container { 
                 padding: 0;
-                max-width: none;
+                width: max-content;
                 margin: 0;
                 gap: 2mm;
+                grid-template-columns: repeat(${modelo.colunas}, ${modelo.width});
+                grid-auto-rows: ${modelo.height};
             }
             .etiqueta {
                 border: 1px solid #000;
+                height: ${modelo.height};
+                min-height: ${modelo.height};
             }
         }
         
@@ -498,24 +574,18 @@ function gerarCSS(modelo) {
 
 // ===== ABRIR NO NAVEGADOR =====
 function abrirEtiquetasNoNavegador(html) {
-    // Criar blob com o HTML
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    
-    // Abrir em nova aba
-    const novaAba = window.open(url, '_blank');
+    // Abrir em nova aba e escrever o conteúdo para garantir funcionamento dos botões
+    const novaAba = window.open('', '_blank');
     
     if (!novaAba) {
         alert('Pop-up bloqueado! Permita pop-ups para este site e tente novamente.');
         return;
     }
     
+    novaAba.document.open();
+    novaAba.document.write(html);
+    novaAba.document.close();
     console.log('Etiquetas abertas em nova aba com sucesso!');
-    
-    // Limpeza da URL após 5 segundos
-    setTimeout(() => {
-        URL.revokeObjectURL(url);
-    }, 5000);
 }
 
 console.log('Sistema de geração de etiquetas melhorado carregado ✓');
