@@ -81,7 +81,7 @@
       min-width: 100vw; 
       padding: 0;
       box-sizing: border-box;
-      background: #1F2937;
+      background: #d6d6d4;
     }
     .slide img {
       width: 100%;
@@ -103,10 +103,10 @@
     }
     .carousel .slide h3,
     .carousel .slide p {
-      color: white;
+      color: #334155;
     }
     .carousel {
-      background: #1F2937;
+      background: #F8FAFC;
     }
 
     /* Decorações discretas */
@@ -117,6 +117,23 @@
     /* Texto animado curto */
     @keyframes wordIn { 0%{opacity:0; transform:translateY(8px)} 100%{opacity:1; transform:translateY(0)} }
     .word { display:inline-block; opacity:0; animation: wordIn .6s ease forwards; margin-right: 6px; }
+    
+    /* Animação do subtítulo hero */
+    @keyframes slideInFromRight { 
+      0% { 
+        opacity: 0; 
+        transform: translateX(100px); 
+      } 
+      100% { 
+        opacity: 1; 
+        transform: translateX(0); 
+      } 
+    }
+    .hero-subtitle {
+      animation: slideInFromRight 1s ease-out 0.5s forwards;
+      opacity: 0;
+      color: #6b7280 !important;
+    }
 
     /* Modal premium e centralizado */
     .modal-content { 
@@ -157,6 +174,35 @@
       transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .card.reveal-show .metric-fill { width: var(--fill-width); }
+
+    /* FAQ Styles */
+    .faq-item {
+      transition: all 0.3s ease;
+    }
+    .faq-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(0,0,0,.08);
+    }
+    .faq-answer {
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      max-height: 0;
+    }
+    .faq-question:hover {
+      color: var(--lume);
+    }
+    .faq-icon {
+      transition: all 0.3s ease;
+      font-weight: bold;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
@@ -230,12 +276,12 @@
   <!-- Comece Hoje, Pague Depois (movido para cima) -->
   <section id="hero" class="px-4 pt-6">
     <div class="text-center mb-4">
-      <h2 class="text-xl font-bold text-slate-900 mb-2">Comece Hoje, Pague Depois</h2>
-      <p class="text-sm text-slate-600">10 dias totalmente grátis. Cancele quando quiser.</p>
+      <h2 class="text-xl font-bold text-slate-900 mb-2 hero-subtitle">Um sistema ultramoderno, desenvolvido para impulsionar o crescimento do pequeno empreendedor.</h2>
+      <p class="text-sm text-slate-600">10 dias totalmente grátis. Sem cartão de crédito.</p>
     </div>
     
     <div class="card reveal" style="background: linear-gradient(135deg, #fff5ed 0%, #ffffff 100%); border: 2px solid #fed7aa;">
-      <span class="chip mb-3 inline-block">🔥 Mais Escolhido</span>
+      <span class="chip mb-3 inline-block">🔥 Plano Completo</span>
       <div class="mb-2">
         <span style="font-size: 2.5rem; font-weight: 900; color: #0f172a;">R$27</span>
         <span class="text-slate-600">/mês</span>
@@ -267,7 +313,7 @@
       </div>
 
       <div style="text-align: center; padding-top: 1rem; border-top: 1px solid #fed7aa; font-size: 0.9rem; color: #64748b;">
-        ⭐⭐⭐⭐⭐ Mais de 500 empresas usando
+        ⭐⭐⭐⭐⭐ Clientes altamente satisfeitos
       </div>
     </div>
   </section>
@@ -372,7 +418,75 @@
         </div>
         <div class="flex items-center gap-2">
           <span style="color: #22c55e; font-weight: 900;">✓</span>
-          <span>Suporte via WhatsApp</span>
+          <span>Suporte WhatsApp</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Perguntas Frequentes -->
+  <section class="px-4 pt-6">
+    <h2 class="text-xl font-bold text-slate-900 mb-4 text-center">Perguntas Frequentes</h2>
+    <div class="space-y-3">
+
+
+      <div class="card reveal faq-item">
+        <div class="faq-question flex items-center justify-between cursor-pointer" onclick="toggleFaq(this)">
+          <span class="font-semibold text-slate-800">Pra quem é esse sistema?</span>
+          <span class="faq-icon text-slate-500 text-xl transition-transform duration-300">+</span>
+        </div>
+        <div class="faq-answer mt-3 text-sm text-slate-600 hidden">
+          Pequenas empresas! Não importa o segmento — temos soluções ideais para diversos tipos de empreendimentos.
+        </div>
+      </div>
+      
+      <div class="card reveal faq-item">
+        <div class="faq-question flex items-center justify-between cursor-pointer" onclick="toggleFaq(this)">
+          <span class="font-semibold text-slate-800">É possível testar a ferramenta?</span>
+          <span class="faq-icon text-slate-500 text-xl transition-transform duration-300">+</span>
+        </div>
+        <div class="faq-answer mt-3 text-sm text-slate-600 hidden">
+          Sim! Oferecemos 10 dias totalmente grátis para você testar todas as funcionalidades do sistema sem compromisso.
+        </div>
+      </div>
+
+      <div class="card reveal faq-item">
+        <div class="faq-question flex items-center justify-between cursor-pointer" onclick="toggleFaq(this)">
+          <span class="font-semibold text-slate-800">Os planos possuem fidelidade?</span>
+          <span class="faq-icon text-slate-500 text-xl transition-transform duration-300">+</span>
+        </div>
+        <div class="faq-answer mt-3 text-sm text-slate-600 hidden">
+          Não! Nossos planos são mensais e você pode cancelar quando quiser, sem multas ou taxas de cancelamento.
+        </div>
+      </div>
+
+      <div class="card reveal faq-item">
+        <div class="faq-question flex items-center justify-between cursor-pointer" onclick="toggleFaq(this)">
+          <span class="font-semibold text-slate-800">Existe algum custo de instalação?</span>
+          <span class="faq-icon text-slate-500 text-xl transition-transform duration-300">+</span>
+        </div>
+        <div class="faq-answer mt-3 text-sm text-slate-600 hidden">
+          Não há custos de instalação! O sistema é 100% online e você pode começar a usar imediatamente após o cadastro.
+        </div>
+      </div>
+
+      <div class="card reveal faq-item">
+        <div class="faq-question flex items-center justify-between cursor-pointer" onclick="toggleFaq(this)">
+          <span class="font-semibold text-slate-800">Posso emitir NF's pelo sistema?</span>
+          <span class="faq-icon text-slate-500 text-xl transition-transform duration-300">+</span>
+        </div>
+        <div class="faq-answer mt-3 text-sm text-slate-600 hidden">
+          Ainda Nâo! Focamos em oferencer o melhor sistema de gestão com o menor custo possivel para pequenos empresarios. 
+        </div>
+      </div>
+
+      <div class="card reveal faq-item">
+        <div class="faq-question flex items-center justify-between cursor-pointer" onclick="toggleFaq(this)">
+          <span class="font-semibold text-slate-800">É possivel usar o sistema no celular?</span>
+          <span class="faq-icon text-slate-500 text-xl transition-transform duration-300">+</span>
+        </div>
+        <div class="faq-answer mt-3 text-sm text-slate-600 hidden">
+          Ainda não! Mas em breve lançaremos as telas de vendas, cadastro de estoque, e visualizações de gestão para o celular,
         </div>
       </div>
     </div>
@@ -387,11 +501,6 @@
     </div>
   </section>
 
-  <!-- WhatsApp flutuante -->
-  <a href="https://wa.me/5534996612499?text=Olá! Quero conhecer o Lume." target="_blank" class="fixed right-4 bottom-5 z-50 bg-[#25d366] text-white rounded-full w-56 max-w-[260px] px-4 h-12 flex items-center gap-2 shadow-lg">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/></svg>
-    <span class="text-sm font-bold">Falar no WhatsApp</span>
-  </a>
 
   <footer class="px-4 pb-8 text-center text-xs text-slate-400 mt-6">© 2025 Lume. Sistema de Gestão Empresarial.</footer>
 
@@ -471,6 +580,28 @@
       slides.addEventListener('touchend', () => { const dx = currentX - startX; if (Math.abs(dx) > 60) updateCarousel(index + (dx < 0 ? 1 : -1)); else updateCarousel(index); startAutoplay(); });
       document.querySelectorAll('.dot').forEach(d => d.addEventListener('click', () => { updateCarousel(parseInt(d.dataset.dot,10)); startAutoplay(); }));
       updateCarousel(0); startAutoplay();
+    }
+
+    // FAQ Toggle
+    function toggleFaq(element) {
+      const faqItem = element.parentElement;
+      const answer = faqItem.querySelector('.faq-answer');
+      const icon = element.querySelector('.faq-icon');
+      
+      // Toggle answer visibility
+      if (answer.classList.contains('hidden')) {
+        answer.classList.remove('hidden');
+        answer.style.maxHeight = answer.scrollHeight + 'px';
+        icon.textContent = '−';
+        icon.style.transform = 'rotate(180deg)';
+      } else {
+        answer.style.maxHeight = '0px';
+        setTimeout(() => {
+          answer.classList.add('hidden');
+        }, 300);
+        icon.textContent = '+';
+        icon.style.transform = 'rotate(0deg)';
+      }
     }
   </script>
 </body>
